@@ -34,11 +34,11 @@ class StatsCollector {
      * A frame was swapped. [sensorTimestampNs] is the camera's timestamp (start of exposure),
      * [arrivalNs] the monotonic time the render thread learnt the frame was there.
      */
-    fun onDraw(sensorTimestampNs: Long, arrivalNs: Long, gpuMs: Float?) {
+    fun onDraw(sensorTimestampNs: Long?, arrivalNs: Long, gpuMs: Float?) {
         draws++
         this.gpuMs = gpuMs ?: this.gpuMs
         val swapNs = System.nanoTime()
-        toMonotonic(sensorTimestampNs)?.let { capture ->
+        sensorTimestampNs?.let(::toMonotonic)?.let { capture ->
             captureToArrival += (arrivalNs - capture) / 1e6f
             captureToSwap += (swapNs - capture) / 1e6f
         }

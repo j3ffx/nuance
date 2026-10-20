@@ -9,10 +9,11 @@ import java.nio.FloatBuffer
 /**
  * The whole filter: read the camera pixel, look it up in the 3D LUT (trilinear, done by the
  * texture unit), write it. All colour logic lives in :core; changing an algorithm never touches
- * this shader.
+ * this shader. [external] reads a camera (external OES) texture; otherwise an ordinary 2D texture,
+ * for the dev variant's synthetic sources.
  */
-class LutProgram {
-    private val program = link(VERTEX, FRAGMENT)
+class LutProgram(private val external: Boolean) {
+    private val program = link(VERTEX, fragment(external))
     private val aPosition = GLES30.glGetAttribLocation(program, "aPosition")
     private val aTexCoord = GLES30.glGetAttribLocation(program, "aTexCoord")
     private val uMvp = GLES30.glGetUniformLocation(program, "uMvp")
@@ -30,11 +31,11 @@ class LutProgram {
         1f, 1f, 1f, 1f
     )
 
-    /** Draws the camera texture [cameraTexture] through [lut] into the current viewport. */
-    fun draw(cameraTexture: Int, texMatrix: FloatArray, mvp: FloatArray, lut: LutTexture) {
+    /** Draws the source texture [sourceTexture] through [lut] into the current viewport. */
+    fun draw(sourceTexture: Int, texMatrix: FloatArray, mvp: FloatArray, lut: LutTexture) {
         GLES30.glUseProgram(program)
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
-        GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, cameraTexture)
+        GLES30.glBindTexture(if (external) GLES11Ext.GL_TEXTURE_EXTERNAL_OES else GLES30.GL_TEXTURE_2D, sourceTexture)
         GLES30.glUniform1i(uCamera, 0)
         GLES30.glActiveTexture(GLES30.GL_TEXTURE1)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_3D, lut.id)
@@ -68,10 +69,10 @@ void main() {
 }
 """
 
-        private const val FRAGMENT = """#version 300 es
-#extension GL_OES_EGL_image_external_essl3 : require
+        private fun fragment(external: Boolean) = """#version 300 es
+${if (external) "#extension GL_OES_EGL_image_external_essl3 : require" else ""}
 precision mediump float;
-uniform samplerExternalOES uCamera;
+uniform ${if (external) "samplerExternalOES" else "sampler2D"} uCamera;
 uniform mediump sampler3D uLut;
 uniform float uLutScale;
 uniform float uLutOffset;
