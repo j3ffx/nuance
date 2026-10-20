@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Privacy, format, lint, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history: the privacy check inspects every commit identity, gitleaks every commit.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # Caches Gradle and checks that the wrapper jar is an official one.
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: npm ci
+
+      - name: Privacy check (no private file or identity tracked)
+        run: npm run check:private
+
+      - name: Commit messages (Conventional Commits)
+        run: >-
+          node scripts/check-commits.mjs
+          ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}..${{ github.sha }}
+
+      - name: Secrets (gitleaks, whole history)
+        run: |
+          version=8.30.1
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          ./gitleaks git --redact --no-banner .
+
+      - run: npm run format:check
+
+      - name: Format, JVM tests, Android lint, debug APK
+        run: ./gradlew spotlessCheck jvmTest :androidApp:lintDebug :androidApp:assembleDebug --console=plain
+
+      - name: Upload test and lint reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: '**/build/reports/'
+          retention-days: 7
+
+  ios:
+    # No Mac on the developer's desk yet: this job keeps the shared code truly multiplatform.
+    name: iOS targets and Xcode project
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Core tests on the iOS simulator, shared framework
+        run: ./gradlew :core:iosSimulatorArm64Test :shared:linkDebugFrameworkIosSimulatorArm64 --console=plain
+
+      - name: Build the app for the simulator (unsigned)
+        run: >-
+          xcodebuild -project iosApp/iosApp.xcodeproj -target iosApp
+          -sdk iphonesimulator -arch arm64 -configuration Debug
+          CODE_SIGNING_ALLOWED=NO build
