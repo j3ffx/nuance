@@ -17,6 +17,8 @@ kotlin {
         androidResources {
             enable = true
         }
+        // commonTest also runs on the JVM, without a device.
+        withHostTest {}
     }
 
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->

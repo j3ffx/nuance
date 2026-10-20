@@ -3,4 +3,34 @@
     <string name="app_name">Nuance</string>
     <string name="camera_permission_rationale">Nuance a besoin de la caméra pour te montrer la scène avec ses couleurs corrigées. L’image ne quitte jamais ton téléphone.</string>
     <string name="camera_permission_grant">Autoriser la caméra</string>
+
+    <string name="mode_correct">Corriger</string>
+    <string name="mode_isolate">Isoler</string>
+    <string name="mode_simulate">Simuler</string>
+    <string name="mode_compare">Comparer</string>
+
+    <string name="axis_protan">protan</string>
+    <string name="axis_deutan">deutan</string>
+    <string name="axis_tritan">tritan</string>
+
+    <string name="severity_value">Sévérité : %1$d %</string>
+    <string name="intensity_value">Intensité : %1$d %</string>
+    <string name="compare_four">4 vues</string>
+    <string name="compare_two">2 vues</string>
+
+    <string name="view_original">Original</string>
+    <string name="view_real">Réel</string>
+    <string name="view_real_seen">Réel, vu %1$s</string>
+    <string name="view_corrected">Corrigé</string>
+    <string name="view_corrected_seen">Corrigé, vu %1$s</string>
+    <string name="view_isolated">Seulement le %1$s</string>
+    <string name="hold_for_original">Image de la caméra. Reste appuyé pour voir l’original.</string>
+
+    <string name="hue_red">rouge</string>
+    <string name="hue_orange">orange</string>
+    <string name="hue_yellow">jaune</string>
+    <string name="hue_green">vert</string>
+    <string name="hue_blue">bleu</string>
+    <string name="hue_violet">violet</string>
+    <string name="hue_pink">rose</string>
 </resources>

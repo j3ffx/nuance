@@ -15,7 +15,7 @@ npm install          # also points git at .githooks/
 npm run phone        # build the dev variant, install it on the paired phone, launch it (< 30 s)
 npm run phone:find   # only (re)connect to the phone over wireless ADB
 npm run phone:logs   # install, launch, then follow the app's log
-npm test             # every Kotlin test (JVM; iOS targets on a Mac)
+npm test             # every Kotlin test, on the JVM (the CI also runs core on the iOS simulator)
 npm run lint         # ktlint (Spotless) + Android Lint, warnings are errors
 npm run format       # ktlint and Prettier, in place
 npm run check        # what the CI's Linux job runs, but gitleaks on the history

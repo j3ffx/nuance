@@ -57,7 +57,7 @@ jobs:
       - run: npm run format:check
 
       - name: Format, JVM tests, Android lint, debug APK
-        run: ./gradlew spotlessCheck jvmTest :androidApp:lintDebug :androidApp:assembleDebug --console=plain
+        run: ./gradlew spotlessCheck jvmTest :shared:testAndroidHostTest :androidApp:lintDebug :androidApp:assembleDebug --console=plain
 
       - name: Upload test and lint reports
         if: failure()
