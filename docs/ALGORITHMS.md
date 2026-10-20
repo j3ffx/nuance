@@ -39,6 +39,11 @@ entre la fonction exacte et ce que le GPU calcule :
   (25 ms de cuisson sur le PC, contre 7 ms en 33³ ; à mesurer sur le téléphone en J3).
 - **Pendant le glissement d'un curseur**, la table sera cuite en 17³ (1,4 ms sur le PC), puis en
   33³ au relâchement : c'est imperceptible en mouvement.
+- **Sur le téléphone de test** (variante debug, sans compilation anticipée, en ms : premier essai puis
+  essais suivants une fois le JIT chaud) : correction 33³ 176 puis 59 à 92 ; correction 17³ 15 puis
+  7 à 9 ; isolement 49³ 288 puis 149. La caméra reste à 30 images/s pendant la cuisson, faite hors
+  du fil de rendu. La variante publiée (R8, compilation anticipée) sera plus rapide ; si besoin, la
+  cuisson se parallélise par tranches de bleu.
 
 ## 2. Espaces de couleur
 
