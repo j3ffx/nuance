@@ -12,6 +12,7 @@
     "phone": "node scripts/phone.mjs",
     "phone:find": "node scripts/phone.mjs --find",
     "phone:logs": "node scripts/phone.mjs --logs",
+    "phone:latency": "node scripts/latency.mjs",
     "test": "node scripts/gradle.mjs allTests",
     "build": "node scripts/gradle.mjs :androidApp:assembleDebug",
     "lint": "node scripts/gradle.mjs spotlessCheck :androidApp:lintDebug",
