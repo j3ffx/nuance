@@ -1,5 +1,8 @@
 package io.github.j3ffx.nuance.core
 
+import io.github.j3ffx.nuance.core.color.Srgb
+import io.github.j3ffx.nuance.core.color.Vec3
+
 /**
  * A 3D colour lookup table: [size]³ entries, each the RGB output for an input on a regular grid
  * over the sRGB cube. Entry (r, g, b) is at index `(b * size + g) * size + r`, red varying fastest,
@@ -73,7 +76,38 @@ class Lut3d(val size: Int, val data: FloatArray) {
             return Lut3d(size, data)
         }
 
-        /** 33 entries per axis: the usual size for colour grading LUTs; J2 measures whether it is enough. */
+        /**
+         * Samples [linear], a function of linear RGB, on a [size]³ grid of sRGB-encoded inputs.
+         * Faster than [bake]: the grid is decoded once per axis value, and nothing is allocated
+         * per entry but the function's own result.
+         */
+        fun bakeLinear(size: Int, linear: (Vec3) -> Vec3): Lut3d {
+            val decoded = DoubleArray(size) { Srgb.decode(it / (size - 1.0)) }
+            val data = FloatArray(size * size * size * 3)
+            var i = 0
+            for (b in 0 until size) {
+                for (g in 0 until size) {
+                    for (r in 0 until size) {
+                        val out = linear(Vec3(decoded[r], decoded[g], decoded[b]))
+                        data[i++] = Srgb.encode(out.x.coerceIn(0.0, 1.0)).toFloat()
+                        data[i++] = Srgb.encode(out.y.coerceIn(0.0, 1.0)).toFloat()
+                        data[i++] = Srgb.encode(out.z.coerceIn(0.0, 1.0)).toFloat()
+                    }
+                }
+            }
+            return Lut3d(size, data)
+        }
+
+        /** This table after the round trip through an RGBA8 texture: what the GPU really samples. */
+        fun fromRgba8(size: Int, bytes: ByteArray): Lut3d {
+            val count = size * size * size
+            return Lut3d(size, FloatArray(count * 3) { (bytes[(it / 3) * 4 + it % 3].toInt() and 0xFF) / 255f })
+        }
+
+        /**
+         * 33 entries per axis, 8 bits per channel: measured in docs/ALGORITHMS.md ("LUT size") as
+         * the smallest size whose error stays below a just-noticeable difference for every mode.
+         */
         const val DEFAULT_SIZE = 33
     }
 }

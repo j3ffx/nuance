@@ -45,4 +45,23 @@ class Lut3dTest {
         assertEquals(255, bytes[7].toInt() and 0xFF) // alpha of the first entry
         assertEquals(255, bytes[4].toInt() and 0xFF) // red of entry (1, 0, 0)
     }
+
+    @Test
+    fun bakeLinearMatchesBakeOnEncodedValues() {
+        val darken: (io.github.j3ffx.nuance.core.color.Vec3) -> io.github.j3ffx.nuance.core.color.Vec3 = { it * 0.5 }
+        val viaLinear = Lut3d.bakeLinear(9, darken)
+        val viaRgb = Lut3d.bake(9) {
+            io.github.j3ffx.nuance.core.color.Srgb.fromLinear(
+                darken(io.github.j3ffx.nuance.core.color.Srgb.toLinear(it))
+            )
+        }
+        for (i in viaLinear.data.indices) assertTrue(abs(viaLinear.data[i] - viaRgb.data[i]) < 1e-5, "entry $i")
+    }
+
+    @Test
+    fun rgba8RoundTripStaysWithinHalfAStep() {
+        val lut = Lut3d.bake(5, Transforms.Invert)
+        val back = Lut3d.fromRgba8(5, lut.toRgba8())
+        for (i in lut.data.indices) assertTrue(abs(lut.data[i] - back.data[i]) <= 0.5f / 255 + 1e-6f, "entry $i")
+    }
 }
