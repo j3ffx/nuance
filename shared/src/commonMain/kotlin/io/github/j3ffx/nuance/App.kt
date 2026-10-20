@@ -28,7 +28,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.Lut3d
-import io.github.j3ffx.nuance.core.color.Vec3
+import io.github.j3ffx.nuance.core.correction.CorrectionMetrics
+import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
+import io.github.j3ffx.nuance.core.correction.ErrorRedistribution
+import io.github.j3ffx.nuance.core.correction.LabRemap
 import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.cvd.CvdProfile
 import io.github.j3ffx.nuance.core.modes.ColorFunction
@@ -85,24 +88,46 @@ private fun CameraPermissionPrompt(onRequestCamera: () -> Unit, modifier: Modifi
     }
 }
 
-/** Dev variant: LUTs to check the pipeline and time the bake on the phone (labels are technical). */
-private enum class TestLut(val label: String, val size: Int, val function: () -> LinearFunction) {
-    Identity("id", Lut3d.DEFAULT_SIZE, { ColorFunction.identity }),
-    Invert("inv", Lut3d.DEFAULT_SIZE, { { Vec3.One - it } }),
-    SimulateDeutan("sim D", Lut3d.DEFAULT_SIZE, { ColorFunction.simulation(CvdProfile(Axis.Deutan, 1.0)) }),
-    CorrectDeutan("corr D", Lut3d.DEFAULT_SIZE, { ColorFunction.correction(Settings(CvdProfile(Axis.Deutan, 1.0))) }),
-    CorrectDeutanSmall("corr D 17", 17, { ColorFunction.correction(Settings(CvdProfile(Axis.Deutan, 1.0))) }),
-    IsolateRed("iso R 49", 49, { ColorFunction.isolation(Settings(CvdProfile(Axis.Deutan, 1.0))) })
+/**
+ * Dev variant: LUTs to check the pipeline and compare corrections by eye on the phone (labels are
+ * technical), for the axis picked in the overlay at 100 %. A = error redistribution, B = lightness
+ * remap, C = recolouring (the lost opponent difference written onto the other opponent axis).
+ * "vu" = as a person with that axis sees it.
+ */
+private enum class TestLut(val label: String, val size: Int, val function: (Axis) -> LinearFunction) {
+    Identity("réel", Lut3d.DEFAULT_SIZE, { ColorFunction.identity }),
+    Simulate("réel vu", Lut3d.DEFAULT_SIZE, { ColorFunction.simulation(CvdProfile(it, 1.0)) }),
+    CorrectA("A", Lut3d.DEFAULT_SIZE, { corrected(it, ErrorRedistribution, 1.0) }),
+    SeenA("A vu", Lut3d.DEFAULT_SIZE, { seen(it, ErrorRedistribution, 1.0) }),
+    CorrectB("B", Lut3d.DEFAULT_SIZE, { corrected(it, LabRemap.Default, 0.7) }),
+    SeenB("B vu", Lut3d.DEFAULT_SIZE, { seen(it, LabRemap.Default, 0.7) }),
+    CorrectC("C", Lut3d.DEFAULT_SIZE, { corrected(it, RECOLOUR, 1.0) }),
+    SeenC("C vu", Lut3d.DEFAULT_SIZE, { seen(it, RECOLOUR, 1.0) }),
+    IsolateRed("iso R", 49, { ColorFunction.isolation(Settings(CvdProfile(it, 1.0))) })
+}
+
+private val RECOLOUR = LabRemap(chromaGain = 1.0, lightnessGain = 0.15)
+
+private fun corrected(axis: Axis, strategy: CorrectionStrategy, intensity: Double): LinearFunction {
+    val correct = strategy.build(CvdProfile(axis, 1.0), intensity)
+    return { CorrectionMetrics.clampLinear(correct(it)) }
+}
+
+private fun seen(axis: Axis, strategy: CorrectionStrategy, intensity: Double): LinearFunction {
+    val correct = corrected(axis, strategy, intensity)
+    val simulate = ColorFunction.simulation(CvdProfile(axis, 1.0))
+    return { simulate(correct(it)) }
 }
 
 @Composable
 private fun DevTools(renderer: CameraRenderer, requested: String?, modifier: Modifier) {
     val stats by renderer.stats.collectAsState()
     var lut by remember { mutableStateOf(TestLut.Identity) }
+    var axis by remember { mutableStateOf(Axis.Deutan) }
     LaunchedEffect(requested) { TestLut.entries.firstOrNull { it.label == requested }?.let { lut = it } }
-    LaunchedEffect(lut) {
+    LaunchedEffect(lut, axis) {
         val (table, took) = withContext(Dispatchers.Default) {
-            measureTimedValue { Lut3d.bakeLinear(lut.size, lut.function()) }
+            measureTimedValue { Lut3d.bakeLinear(lut.size, lut.function(axis)) }
         }
         renderer.setLut(table, took.inWholeMicroseconds / 1000f)
     }
@@ -111,6 +136,11 @@ private fun DevTools(renderer: CameraRenderer, requested: String?, modifier: Mod
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(stats.describe(), fontFamily = FontFamily.Monospace, color = Color.White)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (option in Axis.entries) {
+                FilterChip(axis == option, { axis = option }, { Text(option.name) })
+            }
+        }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (option in TestLut.entries) FilterChip(lut == option, { lut = option }, { Text(option.label) })
         }
