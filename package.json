@@ -1,0 +1,28 @@
+{
+  "name": "nuance-repo",
+  "private": true,
+  "description": "Repository tooling for Nuance: git hooks, privacy and commit checks, phone shortcuts.",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare": "node scripts/setup-hooks.mjs",
+    "phone": "node scripts/phone.mjs",
+    "phone:find": "node scripts/phone.mjs --find",
+    "phone:logs": "node scripts/phone.mjs --logs",
+    "test": "node scripts/gradle.mjs allTests",
+    "build": "node scripts/gradle.mjs :androidApp:assembleDebug",
+    "lint": "node scripts/gradle.mjs spotlessCheck :androidApp:lintDebug",
+    "format": "node scripts/gradle.mjs spotlessApply && prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run check:private && npm run format:check && node scripts/gradle.mjs spotlessCheck jvmTest :androidApp:lintDebug :androidApp:assembleDebug",
+    "check:private": "node scripts/check-tracked.mjs",
+    "check:commits": "node scripts/check-commits.mjs",
+    "fix:dates": "node scripts/commit-date.mjs --fix"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}

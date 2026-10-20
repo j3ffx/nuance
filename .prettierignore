@@ -1,0 +1,5 @@
+.claude
+**/build
+package-lock.json
+gradle
+iosApp

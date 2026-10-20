@@ -1,0 +1,41 @@
+# The brief for the coding agent holds personal details: never committed
+PROMPT_V0.md
+
+# Local working notes (handoff, diagnostics, phone dumps, measurements), never committed
+.claude/
+
+# Optional local deny-list used by scripts/check-tracked.mjs
+.private-patterns
+
+# Release signing: the key and its passwords live on the PC and in GitHub secrets only
+*.jks
+*.keystore
+keystore.properties
+
+# Android / Gradle / Kotlin
+local.properties
+.gradle/
+.kotlin/
+build/
+captures/
+*.apk
+*.aab
+*.hprof
+
+# Xcode
+iosApp/**/xcuserdata/
+iosApp/**/*.xcworkspace/xcuserdata/
+iosApp/build/
+DerivedData/
+
+# Node
+node_modules/
+
+# Local tooling
+*.log
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
