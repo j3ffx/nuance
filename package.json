@@ -21,6 +21,8 @@
     "check": "npm run check:private && npm run format:check && node scripts/gradle.mjs spotlessCheck jvmTest :androidApp:lintDebug :androidApp:assembleDebug",
     "check:private": "node scripts/check-tracked.mjs",
     "check:commits": "node scripts/check-commits.mjs",
+    "golden": "node scripts/gradle.mjs :core:jvmTest --tests *GoldenTest* -Pnuance.updateGolden=true --rerun",
+    "report": "node scripts/gradle.mjs :core:jvmTest --tests *ReportTest* -Pnuance.report=docs/report --rerun",
     "fix:dates": "node scripts/commit-date.mjs --fix"
   },
   "devDependencies": {
