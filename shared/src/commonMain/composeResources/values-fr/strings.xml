@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nuance</string>
-    <string name="lut_identity">Original</string>
-    <string name="lut_invert">Inversé</string>
     <string name="camera_permission_rationale">Nuance a besoin de la caméra pour te montrer la scène avec ses couleurs corrigées. L’image ne quitte jamais ton téléphone.</string>
     <string name="camera_permission_grant">Autoriser la caméra</string>
 </resources>

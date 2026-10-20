@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -27,15 +28,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.Lut3d
-import io.github.j3ffx.nuance.core.Rgb
-import io.github.j3ffx.nuance.core.Transforms
+import io.github.j3ffx.nuance.core.color.Vec3
+import io.github.j3ffx.nuance.core.cvd.Axis
+import io.github.j3ffx.nuance.core.cvd.CvdProfile
+import io.github.j3ffx.nuance.core.modes.ColorFunction
+import io.github.j3ffx.nuance.core.modes.LinearFunction
+import io.github.j3ffx.nuance.core.modes.Settings
 import io.github.j3ffx.nuance.render.CameraRenderer
 import io.github.j3ffx.nuance.render.RenderStats
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.camera_permission_grant
 import io.github.j3ffx.nuance.resources.camera_permission_rationale
-import io.github.j3ffx.nuance.resources.lut_identity
-import io.github.j3ffx.nuance.resources.lut_invert
 import kotlin.time.measureTimedValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,6 +55,8 @@ fun App(
     devTools: Boolean,
     cameraGranted: Boolean,
     onRequestCamera: () -> Unit,
+    /** Dev variant: a test LUT asked for by a script (its label), or null. */
+    devLut: String? = null,
     camera: @Composable (Modifier) -> Unit
 ) {
     MaterialTheme(colorScheme = darkColorScheme()) {
@@ -62,7 +67,7 @@ fun App(
                     return@Box
                 }
                 camera(Modifier.fillMaxSize())
-                if (devTools) DevTools(renderer, Modifier.align(Alignment.TopStart))
+                if (devTools) DevTools(renderer, devLut, Modifier.align(Alignment.TopStart))
             }
         }
     }
@@ -80,15 +85,24 @@ private fun CameraPermissionPrompt(onRequestCamera: () -> Unit, modifier: Modifi
     }
 }
 
-private enum class TestLut(val transform: (Rgb) -> Rgb) { Identity(Transforms.Identity), Invert(Transforms.Invert) }
+/** Dev variant: LUTs to check the pipeline and time the bake on the phone (labels are technical). */
+private enum class TestLut(val label: String, val size: Int, val function: () -> LinearFunction) {
+    Identity("id", Lut3d.DEFAULT_SIZE, { ColorFunction.identity }),
+    Invert("inv", Lut3d.DEFAULT_SIZE, { { Vec3.One - it } }),
+    SimulateDeutan("sim D", Lut3d.DEFAULT_SIZE, { ColorFunction.simulation(CvdProfile(Axis.Deutan, 1.0)) }),
+    CorrectDeutan("corr D", Lut3d.DEFAULT_SIZE, { ColorFunction.correction(Settings(CvdProfile(Axis.Deutan, 1.0))) }),
+    CorrectDeutanSmall("corr D 17", 17, { ColorFunction.correction(Settings(CvdProfile(Axis.Deutan, 1.0))) }),
+    IsolateRed("iso R 49", 49, { ColorFunction.isolation(Settings(CvdProfile(Axis.Deutan, 1.0))) })
+}
 
 @Composable
-private fun DevTools(renderer: CameraRenderer, modifier: Modifier) {
+private fun DevTools(renderer: CameraRenderer, requested: String?, modifier: Modifier) {
     val stats by renderer.stats.collectAsState()
     var lut by remember { mutableStateOf(TestLut.Identity) }
+    LaunchedEffect(requested) { TestLut.entries.firstOrNull { it.label == requested }?.let { lut = it } }
     LaunchedEffect(lut) {
         val (table, took) = withContext(Dispatchers.Default) {
-            measureTimedValue { Lut3d.bake(Lut3d.DEFAULT_SIZE, lut.transform) }
+            measureTimedValue { Lut3d.bakeLinear(lut.size, lut.function()) }
         }
         renderer.setLut(table, took.inWholeMicroseconds / 1000f)
     }
@@ -97,11 +111,8 @@ private fun DevTools(renderer: CameraRenderer, modifier: Modifier) {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(stats.describe(), fontFamily = FontFamily.Monospace, color = Color.White)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(lut == TestLut.Identity, {
-                lut = TestLut.Identity
-            }, { Text(stringResource(Res.string.lut_identity)) })
-            FilterChip(lut == TestLut.Invert, { lut = TestLut.Invert }, { Text(stringResource(Res.string.lut_invert)) })
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (option in TestLut.entries) FilterChip(lut == option, { lut = option }, { Text(option.label) })
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (name in renderer.pipelines) {
