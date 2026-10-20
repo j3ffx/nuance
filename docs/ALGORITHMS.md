@@ -119,13 +119,13 @@ L'interface `CorrectionStrategy` (`core/.../correction/`) en propose deux. L'int
 (l'image d'origine) à 1. Aucune ne bouge les gris ni le blanc : une couleur neutre ne perd rien
 dans la simulation, il n'y a donc rien à déplacer (vérifié par les tests, ΔE < 0,5).
 
-- **Redistribution de l'erreur**, d'après Fidaner, Lin et Ozguven (2005), _Analysis of Color
+- **Redistribution de l'erreur** (stratégie par défaut, intensité 100 %), d'après Fidaner, Lin et Ozguven (2005), _Analysis of Color
   Blindness_, Stanford EE368. On simule, on calcule ce que la personne perd (original − simulé), et
   on l'ajoute aux canaux qu'elle perçoit encore. Pour protan et deutan, la matrice de l'article
   (le rouge perdu va vers le vert et le bleu) ; pour tritan, l'adaptation habituelle (le bleu perdu
   va vers le rouge et le vert), que l'article ne traite pas. Calculée en RGB linéaire, alors que
   l'original travaillait sur des valeurs encodées.
-- **Remappage CIELAB** (stratégie par défaut). Ce que la simulation retire sur l'axe opposé perdu
+- **Remappage CIELAB** (dans le panneau Avancé). Ce que la simulation retire sur l'axe opposé perdu
   (rouge-vert, a\*, pour protan et deutan ; bleu-jaune, b\*, pour tritan) est réécrit sur les axes
   que la personne perçoit encore : surtout la clarté, un peu l'autre axe opposé.
 
@@ -151,13 +151,26 @@ d'un ΔE moyen de 8, et l'on compte la part des paires confondues qui deviennent
 | Tritan 60 %  |                    33 % |             65 % |
 | Tritan 100 % |                    33 % |             38 % |
 
-Le remappage l'emporte partout ; il est donc la stratégie par défaut, et la redistribution d'erreur
-reste dans le panneau Avancé.
+Selon ce critère, le remappage l'emporte partout.
 
 Les variantes du remappage, mesurées de la même façon, montrent que mettre surtout la différence
 perdue dans la **clarté**, que tous les axes perçoivent, sépare le mieux et décale le moins la
 teinte des tons chair. D'où les gains retenus : 0,65 sur la clarté, 0,2 sur l'autre axe opposé,
 calibrés pour qu'une intensité de 100 % reste supportable (ΔE moyen de l'ordre de 13 à 15).
+
+### Le choix final : à l'œil, à travers la simulation
+
+Le critère dit si deux couleurs deviennent _différentes_, pas si l'image reste lisible. Sur le
+téléphone, en comparant pour les trois axes l'image corrigée **vue à travers la simulation** (le
+seul moyen pour une personne à la vision typique de juger), la redistribution d'erreur a été
+préférée partout. Explication probable : elle **recolore** (les rouges perdus partent vers des
+teintes que la personne perçoit), et garde des couleurs franches et cohérentes d'un objet à
+l'autre ; le remappage sépare surtout par la clarté, ce qui se lit comme des ombres ou des reflets
+plutôt que comme des couleurs. Elle est donc la stratégie par défaut, à intensité 100 %, et le
+remappage reste dans le panneau Avancé.
+
+Ce jugement reste celui d'un œil typique regardant une simulation : le test avec une personne
+daltonienne tranchera.
 
 ### À intensité 100 % (extrait)
 
@@ -171,9 +184,9 @@ calibrés pour qu'une intensité de 100 % reste supportable (ΔE moyen de l'ordr
 ### Limites connues
 
 - **Tons chair** : à intensité et sévérité maximales, certains tons chair clairs changent nettement
-  de teinte (jusqu'à 49°, le plus souvent bien moins). D'où une intensité par défaut de 70 %. À 70 %
-  et 60 % de sévérité, le décalage reste sous 20° et les tons chair bougent moins que le reste de
-  l'image (testé).
+  de teinte (jusqu'à 39° avec la redistribution, 49° avec le remappage, le plus souvent bien moins).
+  À 70 % et 60 % de sévérité, le décalage reste sous 20° et les tons chair bougent moins que le reste
+  de l'image (testé).
 - **Tritan** : ses lignes de confusion sont courtes dans CIELAB ; à coût égal, la correction en
   sauve moins (environ 40 % des paires à 100 %). Dans les couleurs très claires, le gain de clarté
   bute sur le blanc.

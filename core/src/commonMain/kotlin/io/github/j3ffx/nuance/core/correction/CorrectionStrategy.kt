@@ -25,8 +25,11 @@ interface CorrectionStrategy {
 
         fun byId(id: String): CorrectionStrategy = all.firstOrNull { it.id == id } ?: Default
 
-        /** Chosen on measurements (docs/ALGORITHMS.md, "Corrections"). */
-        val Default: CorrectionStrategy get() = LabRemap.Default
+        /**
+         * Chosen by eye on the test phone, through the simulation of all three axes, over the
+         * CIELAB remap the separation measure preferred (docs/ALGORITHMS.md, "Corrections").
+         */
+        val Default: CorrectionStrategy get() = ErrorRedistribution
     }
 }
 
@@ -87,10 +90,9 @@ class LabRemap(
     }
     companion object {
         /**
-         * Chosen on measurements (docs/ALGORITHMS.md): at equal image change, putting most of the
-         * lost difference into lightness, which every axis still perceives, rescues the most
-         * confused pairs and shifts skin hues the least. The scale makes 100 % a strong but
-         * bearable correction (mean ΔE2000 change about 12).
+         * The best gains by the separation measure (docs/ALGORITHMS.md): at equal image change,
+         * putting most of the lost difference into lightness rescues the most confused pairs and
+         * shifts skin hues the least. The scale makes 100 % a strong but bearable correction.
          */
         val Default = LabRemap(chromaGain = 0.2, lightnessGain = 0.65)
     }

@@ -49,8 +49,8 @@ class ReportTest {
     }
 
     private val strategies: List<Pair<String, CorrectionStrategy>> = listOf(
-        "redistribution d’erreur" to ErrorRedistribution,
-        "remappage CIELAB (défaut)" to LabRemap.Default
+        "redistribution d’erreur (défaut)" to ErrorRedistribution,
+        "remappage CIELAB" to LabRemap.Default
     )
 
     private fun corrections(md: StringBuilder) {
@@ -96,7 +96,7 @@ class ReportTest {
         md.appendLine()
         md.appendLine(
             "Chaque stratégie est réglée pour modifier l’image d’un ΔE moyen de 8, puis on compare ce qu’elle " +
-                "sépare. Les variantes du remappage (gains chroma / clarté) montrent d’où vient le choix par défaut."
+                "sépare. Les variantes du remappage (gains chroma / clarté) montrent d’où viennent ses gains."
         )
         md.appendLine()
         md.appendLine("| Axe | Sévérité | Stratégie | Distinctes | Avant → après | Teinte peau |")
@@ -188,13 +188,13 @@ class ReportTest {
         md.appendLine("## Images de comparaison")
         md.appendLine()
         md.appendLine(
-            "De haut en bas : réel, réel vu avec le profil, corrigé (stratégie par défaut, intensité 70 %), " +
+            "De haut en bas : réel, réel vu avec le profil, corrigé (stratégie par défaut, intensité 100 %), " +
                 "corrigé vu avec le profil. Sévérité 100 %."
         )
         md.appendLine()
         for (axis in Axis.entries) {
             val name = axis.name.lowercase()
-            val views = ColorFunction.comparer(Settings(CvdProfile(axis, 1.0), intensity = 0.7)).map(ColorFunction::rgb)
+            val views = ColorFunction.comparer(Settings(CvdProfile(axis, 1.0))).map(ColorFunction::rgb)
             val labels = listOf("Réel", "Réel, vu $name", "Corrigé", "Corrigé, vu $name")
             val charts = listOf(
                 "rayures" to SyntheticCharts.confusionStripes(axis),

@@ -34,7 +34,7 @@ enum class HuePreset(val swatch: Rgb) {
 data class Settings(
     val profile: CvdProfile,
     /** Correction strength, 0 (original) to 1. */
-    val intensity: Double = 0.7,
+    val intensity: Double = 1.0,
     val strategyId: String = CorrectionStrategy.Default.id,
     /** Extra contrast and saturation, 0 (none) to 1 (strong); applied after the correction. */
     val contrast: Double = 0.0,
