@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nuance</string>
-    <string name="placeholder_tagline">Colours, told apart.</string>
+    <string name="lut_identity">Original</string>
+    <string name="lut_invert">Inverted</string>
+    <string name="camera_permission_rationale">Nuance needs the camera to show you the scene with its colours corrected. The image never leaves your phone.</string>
+    <string name="camera_permission_grant">Allow the camera</string>
 </resources>

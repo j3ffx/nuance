@@ -31,6 +31,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
         resValues = true
     }
@@ -53,6 +54,12 @@ kotlin {
 dependencies {
     implementation(projects.shared)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.ui)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
     debugImplementation(libs.compose.ui.tooling)
 }
