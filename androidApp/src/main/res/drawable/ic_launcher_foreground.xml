@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Provisional icon: an eye whose iris is split into three hues of clearly different lightness,
+     so it reads the same with any colour vision. The final logo comes with the interface (J4). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M24,54 Q54,24 84,54 Q54,84 24,54 Z" />
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M54,54 L54,40 A14,14 0 0,1 66.124,61 Z" />
+    <path
+        android:fillColor="#FFD84315"
+        android:pathData="M54,54 L66.124,61 A14,14 0 0,1 41.876,61 Z" />
+    <path
+        android:fillColor="#FF1E3A8A"
+        android:pathData="M54,54 L41.876,61 A14,14 0 0,1 54,40 Z" />
+    <path
+        android:fillColor="#FF101418"
+        android:pathData="M54,49 A5,5 0 1,1 53.99,49 Z" />
+</vector>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The dev variant's icon has a light background (the real one is near black), to tell them apart
+     at a glance by lightness, not by hue. -->
+<resources>
+    <color name="ic_launcher_background">#FF9AA3AF</color>
+</resources>
