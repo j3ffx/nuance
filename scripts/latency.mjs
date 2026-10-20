@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Measures camera-to-display latency on the phone, frame by frame, for the dev variant.
 //   npm run phone:latency                       the pipeline currently shown
-//   npm run phone:latency -- --pipeline raw     switch first (B direct, A effect, raw), then measure
+//   npm run phone:latency -- --pipeline raw     switch first (direct, raw), then measure
 //   npm run phone:latency -- --fps 60           ask the camera for 60 frames a second first
 //
 // SurfaceFlinger keeps, for the last 127 frames of each layer, the time the frame wanted to be

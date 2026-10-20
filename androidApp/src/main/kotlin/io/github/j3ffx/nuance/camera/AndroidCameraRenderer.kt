@@ -9,7 +9,6 @@ import android.view.Display
 import android.view.SurfaceView
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
-import androidx.camera.core.UseCaseGroup
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -36,16 +35,15 @@ import io.github.j3ffx.nuance.render.StatsCollector
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Android's [CameraRenderer]: CameraX for the camera, OpenGL ES 3 for the LUT. Three pipelines
- * can be compared in the dev variant (J1):
- * - [DIRECT]: our SurfaceTexture → render thread → SurfaceView (pipeline B);
- * - [EFFECT]: a CameraX effect drawing into the PreviewView (pipeline A);
- * - [RAW]: the PreviewView alone, no filter: the latency baseline.
+ * Android's [CameraRenderer]: CameraX for the camera, OpenGL ES 3 for the LUT.
+ * - [DIRECT]: our SurfaceTexture → render thread → SurfaceView. Chosen over a CameraX effect in J1
+ *   (same latency, and we own the screen layout the Comparer mode needs: docs/ALGORITHMS.md).
+ * - [RAW]: the PreviewView alone, no filter: the latency baseline, dev variant only.
  */
 class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     private val collector = StatsCollector()
     override val stats: StateFlow<RenderStats> = collector.stats
-    override val pipelines = listOf(DIRECT, EFFECT, RAW)
+    override val pipelines = listOf(DIRECT, RAW)
 
     private var pipeline by mutableStateOf(DIRECT)
     private var frameRate by mutableStateOf(30)
@@ -88,8 +86,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         key(pipeline, frameRate) {
             when (pipeline) {
                 DIRECT -> DirectView(lifecycleOwner, modifier)
-                EFFECT -> PreviewViewWithEffect(lifecycleOwner, modifier, withEffect = true)
-                RAW -> PreviewViewWithEffect(lifecycleOwner, modifier, withEffect = false)
+                RAW -> RawPreview(lifecycleOwner, modifier)
             }
         }
     }
@@ -110,10 +107,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     }
 
     @Composable
-    private fun PreviewViewWithEffect(lifecycleOwner: LifecycleOwner, modifier: Modifier, withEffect: Boolean) {
-        val thread = if (withEffect) rememberGlThread("nuance-gl-effect") else null
-        val effect = remember(thread) { thread?.let { EffectPipeline(it, collector) } }
-        DisposableEffect(effect) { onDispose { effect?.release() } }
+    private fun RawPreview(lifecycleOwner: LifecycleOwner, modifier: Modifier) {
         var previewView by remember { mutableStateOf<PreviewView?>(null) }
         AndroidView(
             factory = {
@@ -129,9 +123,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         val view = previewView ?: return
         BindCamera(lifecycleOwner) { provider ->
             val preview = preview().apply { surfaceProvider = view.surfaceProvider }
-            val group = UseCaseGroup.Builder().addUseCase(preview)
-            effect?.let { group.addEffect(it.effect) }
-            provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, group.build())
+            provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview)
         }
     }
 
@@ -182,8 +174,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         .build()
 
     companion object {
-        const val DIRECT = "B direct"
-        const val EFFECT = "A effect"
+        const val DIRECT = "direct"
         const val RAW = "raw"
 
         private fun thermalName(status: Int) = when (status) {
