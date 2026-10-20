@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Measures camera-to-display latency on the phone, frame by frame, for the dev variant.
 //   npm run phone:latency                       the pipeline currently shown
-//   npm run phone:latency -- --pipeline raw     switch first (direct, raw), then measure
+//   npm run phone:latency -- --source raw     switch first (camera, raw), then measure
 //   npm run phone:latency -- --fps 60           ask the camera for 60 frames a second first
 //
 // SurfaceFlinger keeps, for the last 127 frames of each layer, the time the frame wanted to be
@@ -36,11 +36,11 @@ const arg = (name) => {
   return at === -1 ? undefined : process.argv[at + 1];
 };
 
-const pipeline = arg('--pipeline');
+const source = arg('--source');
 const fps = arg('--fps');
-if (pipeline || fps) {
+if (source || fps) {
   const extras = [
-    ...(pipeline ? ['--es', 'pipeline', pipeline] : []),
+    ...(source ? ['--es', 'source', source] : []),
     ...(fps ? ['--ei', 'fps', fps] : []),
   ];
   adb('shell', 'am', 'start', '-n', `${APP_ID}/${ACTIVITY}`, ...extras.map((e) => `'${e}'`));

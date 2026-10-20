@@ -19,7 +19,7 @@ import io.github.j3ffx.nuance.camera.AndroidCameraRenderer
 
 class MainActivity : ComponentActivity() {
     private val renderer by lazy { AndroidCameraRenderer(this) }
-    private var devLut by mutableStateOf<String?>(null)
+    private var devCommand by mutableStateOf<DevCommand?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
                 devTools = BuildConfig.DEBUG,
                 cameraGranted = granted,
                 onRequestCamera = { request.launch(Manifest.permission.CAMERA) },
-                devLut = devLut,
+                devCommand = devCommand,
                 camera = { modifier -> renderer.CameraView(this, modifier) }
             )
         }
@@ -49,14 +49,16 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Dev variant only: lets scripts switch pipelines without touching the screen, e.g.
-     * `am start -n <app>/<activity> --es pipeline raw --ei fps 60 --es lut "corr D"`.
+     * Dev variant only: lets scripts drive the app without touching the screen, e.g.
+     * `am start -n <app>/<activity> --es source "stripes D" --es mode compare --ei views 4 --ei fps 30`.
      */
     private fun applyDevExtras(intent: Intent) {
         if (!BuildConfig.DEBUG) return
-        intent.getStringExtra("pipeline")?.takeIf { it in renderer.pipelines }?.let(renderer::selectPipeline)
+        intent.getStringExtra("source")?.takeIf { it in renderer.sources }?.let(renderer::selectSource)
         intent.getIntExtra("fps", 0).takeIf { it == 30 || it == 60 }?.let(renderer::selectFrameRate)
-        intent.getStringExtra("lut")?.let { devLut = it }
+        val mode = intent.getStringExtra("mode")
+        val views = intent.getIntExtra("views", 0).takeIf { it > 0 }
+        if (mode != null || views != null) devCommand = DevCommand(mode, views)
     }
 
     private fun hasCamera() =

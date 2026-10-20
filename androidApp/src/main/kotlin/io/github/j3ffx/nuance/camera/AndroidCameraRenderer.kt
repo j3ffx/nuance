@@ -27,7 +27,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import io.github.j3ffx.nuance.BuildConfig
 import io.github.j3ffx.nuance.core.Lut3d
+import io.github.j3ffx.nuance.core.charts.SyntheticCharts
+import io.github.j3ffx.nuance.core.charts.SyntheticImage
+import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.render.CameraRenderer
 import io.github.j3ffx.nuance.render.GlThread
 import io.github.j3ffx.nuance.render.RenderStats
@@ -35,38 +39,45 @@ import io.github.j3ffx.nuance.render.StatsCollector
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Android's [CameraRenderer]: CameraX for the camera, OpenGL ES 3 for the LUT.
- * - [DIRECT]: our SurfaceTexture → render thread → SurfaceView. Chosen over a CameraX effect in J1
- *   (same latency, and we own the screen layout the Comparer mode needs: docs/ALGORITHMS.md).
- * - [RAW]: the PreviewView alone, no filter: the latency baseline, dev variant only.
+ * Android's [CameraRenderer]: CameraX for the camera, OpenGL ES 3 for the LUTs.
+ * - [CAMERA]: our SurfaceTexture → render thread → SurfaceView ([DirectPipeline]), chosen in J1
+ *   over a CameraX effect (docs/ALGORITHMS.md, "Choix du pipeline caméra").
+ * - Dev variant only: [RAW], the PreviewView alone without filter (the latency baseline), and
+ *   synthetic sources drawn through the same views and LUTs ([FakePipeline]).
  */
 class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     private val collector = StatsCollector()
     override val stats: StateFlow<RenderStats> = collector.stats
-    override val pipelines = listOf(DIRECT, RAW)
 
-    private var pipeline by mutableStateOf(DIRECT)
+    private val synthetic: Map<String, () -> SyntheticImage> = mapOf(
+        "chart" to { SyntheticCharts.patchGrid() },
+        "hues" to { SyntheticCharts.hueSweep(720, 240) },
+        "stripes P" to { SyntheticCharts.confusionStripes(Axis.Protan) },
+        "stripes D" to { SyntheticCharts.confusionStripes(Axis.Deutan) },
+        "stripes T" to { SyntheticCharts.confusionStripes(Axis.Tritan) },
+        MOVING to { SyntheticCharts.hueSweep(720, 240) }
+    )
+    override val sources = if (BuildConfig.DEBUG) listOf(CAMERA, RAW) + synthetic.keys else listOf(CAMERA)
+
+    private var source by mutableStateOf(CAMERA)
     private var frameRate by mutableStateOf(30)
-    private var lut: Lut3d? = null
+    private var luts: List<Lut3d> = emptyList()
     private var gl: GlThread? = null
 
     init {
-        collector.update { it.copy(pipeline = pipeline) }
+        collector.update { it.copy(source = source) }
         val power = context.getSystemService(PowerManager::class.java)
         collector.update { it.copy(thermal = thermalName(power.currentThermalStatus)) }
         power.addThermalStatusListener(ContextCompat.getMainExecutor(context)) { status ->
             collector.update { it.copy(thermal = thermalName(status)) }
         }
-        val refreshRate = context.getSystemService(
-            DisplayManager::class.java
-        ).getDisplay(Display.DEFAULT_DISPLAY).refreshRate
-        collector.update { it.copy(vsyncMs = 1000f / refreshRate) }
+        collector.update { it.copy(vsyncMs = 1000f / display().refreshRate) }
     }
 
-    override fun selectPipeline(name: String) {
-        require(name in pipelines) { "unknown pipeline $name" }
-        pipeline = name
-        collector.update { RenderStats(pipeline = name, thermal = it.thermal, vsyncMs = it.vsyncMs) }
+    override fun selectSource(name: String) {
+        require(name in sources) { "unknown source $name" }
+        source = name
+        collector.update { RenderStats(source = name, thermal = it.thermal, vsyncMs = it.vsyncMs, views = it.views) }
     }
 
     /** Dev variant: asks the camera for [fps] frames a second (30 or 60); the camera restarts. */
@@ -74,35 +85,47 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         frameRate = fps
     }
 
-    override fun setLut(lut: Lut3d, bakeMs: Float?) {
-        this.lut = lut
+    override fun setViews(luts: List<Lut3d>, bakeMs: Float?) {
+        this.luts = luts
         collector.update { it.copy(lutBakeMs = bakeMs) }
-        gl?.setLut(lut)
+        gl?.setViews(luts)
     }
 
-    /** The camera view of the current pipeline, bound to [lifecycleOwner]. */
+    /** The image of the current source, bound to [lifecycleOwner]. */
     @Composable
     fun CameraView(lifecycleOwner: LifecycleOwner, modifier: Modifier) {
-        key(pipeline, frameRate) {
-            when (pipeline) {
-                DIRECT -> DirectView(lifecycleOwner, modifier)
+        key(source, frameRate) {
+            when (source) {
+                CAMERA -> DirectView(lifecycleOwner, modifier)
                 RAW -> RawPreview(lifecycleOwner, modifier)
+                else -> FakeView(synthetic.getValue(source), scrolling = source == MOVING, modifier)
             }
         }
     }
 
     @Composable
     private fun DirectView(lifecycleOwner: LifecycleOwner, modifier: Modifier) {
-        val thread = rememberGlThread("nuance-gl-direct")
+        val thread = rememberGlThread("nuance-gl-camera")
         val direct = remember(thread) { DirectPipeline(thread, collector) }
         val preview = remember(thread) { preview().apply { surfaceProvider = direct } }
         AndroidView(factory = { SurfaceView(it).apply { holder.addCallback(direct) } }, modifier)
         // The activity handles rotation itself (configChanges): follow the display's rotation.
         val configuration = LocalConfiguration.current
-        LaunchedEffect(configuration) { preview.targetRotation = displayRotation() }
+        LaunchedEffect(configuration) { preview.targetRotation = display().rotation }
         BindCamera(lifecycleOwner) { provider ->
             val camera = provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview)
             direct.setSensorRotation(camera.cameraInfo.sensorRotationDegrees)
+        }
+    }
+
+    @Composable
+    private fun FakeView(image: () -> SyntheticImage, scrolling: Boolean, modifier: Modifier) {
+        val thread = rememberGlThread("nuance-gl-fake")
+        val fake = remember(thread) { FakePipeline(thread, collector, image(), scrolling) }
+        AndroidView(factory = { SurfaceView(it).apply { holder.addCallback(fake) } }, modifier)
+        DisposableEffect(fake) {
+            fake.start()
+            onDispose { fake.stop() }
         }
     }
 
@@ -129,7 +152,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
 
     @Composable
     private fun rememberGlThread(name: String): GlThread {
-        val thread = remember { GlThread(name, collector).also { t -> lut?.let(t::setLut) } }
+        val thread = remember { GlThread(name, collector).also { t -> if (luts.isNotEmpty()) t.setViews(luts) } }
         DisposableEffect(thread) {
             gl = thread
             onDispose {
@@ -157,8 +180,8 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         }
     }
 
-    private fun displayRotation(): Int =
-        context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY).rotation
+    private fun display(): Display =
+        context.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)
 
     /** 1080p, 16:9, 30 frames a second (the v0 target) unless the dev variant asks for 60. */
     private fun preview(): Preview = Preview.Builder()
@@ -174,8 +197,9 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         .build()
 
     companion object {
-        const val DIRECT = "direct"
+        const val CAMERA = "camera"
         const val RAW = "raw"
+        const val MOVING = "moving"
 
         private fun thermalName(status: Int) = when (status) {
             PowerManager.THERMAL_STATUS_NONE -> "none"
