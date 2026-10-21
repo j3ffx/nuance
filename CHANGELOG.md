@@ -14,3 +14,8 @@
 - Une page de premier lancement, des réglages (langue, thème sombre ou clair, pause automatique,
   photos, mises à jour), l’aide et les avertissements.
 - Un logo : le nuancier.
+- La pipette : touche un point de l’image pour connaître le nom de sa couleur, son code, et la
+  couleur telle que la perçoit ton profil. En mode « Isoler », elle choisit la couleur à garder.
+- « Trouver mon profil » : un test de 3 minutes (planches de points, rangement de pastilles,
+  carrés à comparer) qui propose un type et une sévérité, avec un niveau de confiance. Ce n’est pas
+  un diagnostic.

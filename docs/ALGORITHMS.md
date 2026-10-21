@@ -237,7 +237,119 @@ il n'est pas mesurable directement, la caméra lui donnant des horodatages calé
 ajoute donc environ 17 ms, soit une demi-image à 30 images/s. Méthode : `npm run phone:latency`
 lit, pour chaque image, l'heure souhaitée et l'heure réelle d'affichage tenues par SurfaceFlinger.
 
-## 8. Test intégré
+## 8. Test intégré (« Trouver mon profil »)
 
-À venir (jalon J5) : génération des planches pseudo-isochromatiques à partir des lignes de
-confusion, classement de teintes inspiré du Farnsworth D-15, estimation de la sévérité.
+Trois étapes, dans `core/.../screening/`. Le résultat est un profil proposé (axe et sévérité), avec
+un niveau de confiance, gardé sur le téléphone. Ce n'est pas un diagnostic : l'écran n'est pas
+étalonné, et un test de quelques minutes ne remplace pas un examen.
+
+### Planches de points
+
+Des planches pseudo-isochromatiques **générées par le code**, jamais copiées (celles d'Ishihara sont
+protégées). Un disque de points de tailles aléatoires ; ceux qui tombent sur le chiffre (1 à 9,
+dessiné par des traits épais, sans police) ont une couleur, les autres une autre. Les deux couleurs
+ne diffèrent **que par la réponse d'un cône** : la réponse du cône de l'axe est multipliée par
+1 + δ et 1 − δ autour d'une teinte de base. Elles sont donc sur une même ligne de confusion :
+quelqu'un à qui ce cône manque voit un champ uniforme. La clarté de chaque point est ensuite
+tirée au hasard (×0,75 à ×1,15), de la même façon dedans et dehors, pour que la luminosité ne
+trahisse pas le chiffre.
+
+- Une planche de démonstration (chiffre clair sur fond sombre) que tout le monde voit ;
+- par axe, deux planches **fortes** (différence de ΔE2000 20 pour une vision typique) et deux
+  **subtiles** (ΔE2000 9 ; 7 pour le tritan, dont les formes partielles sont simulées en atténuant
+  la forme totale) : seules les formes marquées ratent les premières, les formes plus légères ratent
+  aussi les secondes ;
+- 13 planches, dans un ordre aléatoire, avec toujours « Je ne vois rien ».
+
+Une planche ratée compte 2 (forte) ou 1 (subtile) ; un axe est « échoué » à partir de 2.
+Vérifié en simulation (`PlatesTest`) : à 100 %, l'écart entre les deux couleurs tombe à 0 pour
+l'axe visé ; une forme à 50 % voit encore les planches fortes (écart ≥ 7) mais plus les subtiles
+(≤ 4,7, sous le bruit de clarté) ; les axes rouge-vert et bleu-jaune ne se masquent pas leurs
+planches. Protan et deutan, eux, se confondent souvent sur ces planches (leurs lignes de
+confusion sont proches) : c'est le classement de teintes qui les sépare.
+
+### Classement de teintes (inspiré du Farnsworth D-15)
+
+Les 15 pastilles et la pastille de départ du D-15 (Farnsworth 1947, valeur Munsell 5, chroma 4).
+Leurs coordonnées CIE 1976 u\*v\* sont celles publiées par **Vingrys et King-Smith (1988)**,
+_A quantitative scoring technique for panel tests of color vision_, Investigative Ophthalmology and
+Visual Science 29(1), reprises par le paquet R CVD (Jose Gama). Elles sont relatives à
+l'illuminant C : on les convertit en XYZ avec L\* = 51,6 (valeur Munsell 5, Y = 19,77), puis en
+sRGB après une adaptation chromatique de Bradford vers le blanc D65. Un test vérifie qu'elles sont
+dans le gamut et de luminance 0,198.
+
+Sur un écran de 360 dp, glisser 15 pastilles est pénible : on applique plutôt la consigne même du
+D-15, « prends la pastille la plus proche de la dernière posée », en touchant les pastilles l'une
+après l'autre (avec « Reprendre la dernière »).
+
+L'analyse est la **méthode du moment d'inertie** de Vingrys et King-Smith : les vecteurs de
+différence entre pastilles successives donnent un grand et un petit rayon et un angle. L'indice
+C (grand rayon / celui d'un rangement parfait) dit si le rangement est anormal (> 1,78), l'indice
+S s'il est sélectif (≥ 2), l'angle donne l'axe : on prend l'axe de référence le plus proche
+(protan +8°, deutan −7°, tritan −82°, d'après l'article). Vérifié :
+
+- un rangement parfait donne C = 1,00 ;
+- les rangements classiques d'un protan, d'un deutan et d'un tritan tombent sur leur axe ;
+- un daltonien simulé qui prend toujours la pastille la plus proche **telle qu'il la voit**
+  obtient : protan +6°, deutan −13°, tritan −86° (C de 3,1 à 4,1).
+
+### Sévérité : un escalier adaptatif
+
+Quatre carrés gris moyen, dont un diffère le long d'une ligne de confusion de l'axe trouvé
+(réponse du cône × (1 ± δ)) : « touche le carré différent », ou « je ne vois pas de différence ».
+Deux bonnes réponses de suite rendent δ plus petit, une erreur le rend plus grand (escalier
+2-bas 1-haut, qui se stabilise là où l'on répond juste 71 % du temps) ; jusqu'au premier
+changement de sens, une seule bonne réponse suffit pour descendre plus vite. δ va de 0,4 % à ce
+que permet le gamut, par pas de ×1,4. On s'arrête après 8 changements de sens ou 40 essais ; le
+seuil est la moyenne géométrique de δ aux 4 derniers changements de sens. Trois erreurs au plus
+grand δ : la personne ne voit jamais la différence, c'est une forme totale.
+
+Le seuil devient une sévérité **par les modèles de simulation** : c'est la sévérité à laquelle la
+simulation prévoit que les deux couleurs, au seuil, diffèrent de ΔE2000 2,5 (une différence juste
+visible entre deux carrés côte à côte sur un téléphone). Si même une vision typique les
+distinguerait à peine, la sévérité est 0.
+
+Si les planches rouge-vert échouent autant en protan qu'en deutan et que le classement ne
+tranche pas, on mesure les deux escaliers et l'on garde l'axe où la sévérité est la plus forte.
+
+### Décision et confiance
+
+- Un axe échoué aux planches et confirmé par le classement : confiance **élevée**.
+- Un axe échoué aux planches, classement normal (une forme légère, que le D-15 laisse passer) :
+  **moyenne**. Le classement indique un autre axe : **faible**.
+- Rien aux planches mais un classement anormal : l'axe du classement, confiance **faible**.
+- Rien nulle part : aucune difficulté repérée.
+- La confiance baisse d'un cran si l'escalier a été irrégulier (rapport > 3 entre les derniers
+  changements de sens) ou si la sévérité mesurée est presque nulle alors que les planches ont
+  échoué ; elle est faible si la planche de démonstration a été ratée.
+
+### Le test du test
+
+- **En simulation** (`ScreeningTest`) : un observateur qui voit à travers un modèle passe tout le
+  test (il lit une planche si l'écart simulé atteint 5, range les pastilles par plus proche voisin,
+  repère le carré si l'écart simulé atteint 2,5). Vision typique : rien de repéré, confiance élevée.
+  Chaque axe à 40, 60, 80 et 100 % : le bon axe, et une sévérité à 6 % près.
+- **Sur le téléphone** : en variante dev, l'intro du test propose « passer le test comme » un
+  protan, un deutan ou un tritan (100 % ou 60 %) ; toutes les couleurs du test sont alors montrées à
+  travers la simulation, pour qu'une personne à la vision typique le passe « comme » ce profil.
+
+Limites : ce test suppose que les modèles de simulation sont justes, y compris pour la sévérité ;
+l'écran, sa luminosité et l'éclairage ambiant déplacent les couleurs ; le seuil de 2,5 est un
+choix raisonnable, pas une mesure. D'où le niveau de confiance et l'avertissement à chaque résultat.
+
+## 9. La pipette et le nom des couleurs
+
+- **Lecture** : le fil de rendu redessine la vue touchée **sans sa LUT** (l'image d'origine) dans
+  une toute petite image de 20 × 20 pixels centrée sur le point, puis la relit. La couleur est la
+  moyenne de ces 400 pixels **en lumière linéaire** (moyenner les valeurs encodées assombrirait un
+  mélange de clair et de foncé). Cela ne se fait qu'à la demande, trois fois par seconde tant que
+  la pipette est ouverte : la boucle de rendu ne copie jamais une image entière vers le processeur.
+- **Nom** : des règles propres à Nuance, sur Oklch (clarté, chroma, teinte), sans liste de noms
+  sous licence : 14 termes de base (noir, blanc, gris, rouge, orange, marron, beige, jaune, olive,
+  vert, turquoise, bleu, violet, rose) et les modificateurs « clair », « foncé », « grisâtre »,
+  « vif ». Oklch plutôt que le LCh de CIELAB : CIELAB tord les bleus vers le violet (le bleu pur y
+  est à 306°, un violet à 312°), alors qu'Oklch les sépare (264° et 294°) ; c'est aussi l'espace du
+  mode « Isoler », si bien que la pipette et « Isoler » s'accordent sur ce qu'est une teinte.
+  « Clair » et « foncé » sont relatifs à la clarté habituelle du terme (un jaune est plus clair
+  qu'un bleu). Les seuils ont été réglés sur des couleurs de référence (`ColorNamingTest`).
+- **Telle que perçue** : la couleur passée par la simulation du profil, et son nom.
