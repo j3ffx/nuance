@@ -1,11 +1,42 @@
 package io.github.j3ffx.nuance
 
 import androidx.compose.ui.window.ComposeUIViewController
+import io.github.j3ffx.nuance.platform.KeyValueStore
+import io.github.j3ffx.nuance.platform.Platform
 import io.github.j3ffx.nuance.render.NoCameraRenderer
+import platform.Foundation.NSBundle
+import platform.Foundation.NSUserDefaults
 import platform.UIKit.UIViewController
 
 /** Entry point called from Swift (iosApp/iosApp/ContentView.swift). No camera yet: J7. */
 @Suppress("ktlint:standard:function-naming", "FunctionName")
 fun MainViewController(): UIViewController = ComposeUIViewController {
-    App(renderer = NoCameraRenderer(), devTools = false, cameraGranted = true, onRequestCamera = {}, camera = {})
+    App(
+        renderer = NoCameraRenderer(),
+        platform = IosPlatform,
+        devTools = false,
+        cameraGranted = true,
+        onRequestCamera = {},
+        camera = {}
+    )
+}
+
+/** iOS's [Platform]: NSUserDefaults for preferences; sharing and language settings come with J7. */
+private object IosPlatform : Platform {
+    override val versionName: String =
+        NSBundle.mainBundle.infoDictionary?.get("CFBundleShortVersionString") as? String ?: "?"
+
+    override val store: KeyValueStore = object : KeyValueStore {
+        private val defaults = NSUserDefaults.standardUserDefaults
+
+        override fun getString(key: String): String? = defaults.stringForKey("nuance.$key")
+
+        override fun putString(key: String, value: String?) {
+            if (value == null) defaults.removeObjectForKey("nuance.$key") else defaults.setObject(value, "nuance.$key")
+        }
+    }
+
+    override fun shareText(text: String, title: String) = Unit
+
+    override fun openLanguageSettings(): Boolean = false
 }
