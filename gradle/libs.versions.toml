@@ -4,6 +4,8 @@ kotlin = "2.4.21"
 compose-multiplatform = "1.12.2"
 # Material 3 for Compose Multiplatform is versioned on its own; 1.9.0 is its latest stable release.
 compose-material3 = "1.9.0"
+# Frozen upstream at 1.7.3: the basic icon set, shown next to text labels.
+compose-material-icons = "1.7.3"
 coroutines = "1.11.0"
 activity-compose = "1.13.0"
 camerax = "1.6.2"
@@ -20,6 +22,8 @@ compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-mu
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
 compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
+compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "compose-material-icons" }
+compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "compose-multiplatform" }
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
