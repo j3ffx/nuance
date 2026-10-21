@@ -19,6 +19,7 @@ import io.github.j3ffx.nuance.camera.AndroidCameraRenderer
 
 class MainActivity : ComponentActivity() {
     private val renderer by lazy { AndroidCameraRenderer(this) }
+    private val platform by lazy { AndroidPlatform(applicationContext) }
     private var devCommand by mutableStateOf<DevCommand?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
             }
             App(
                 renderer = renderer,
+                platform = platform,
                 devTools = BuildConfig.DEBUG,
                 cameraGranted = granted,
                 onRequestCamera = { request.launch(Manifest.permission.CAMERA) },
@@ -50,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Dev variant only: lets scripts drive the app without touching the screen, e.g.
-     * `am start -n <app>/<activity> --es source "stripes D" --es mode compare --ei views 4 --ei fps 30`.
+     * `am start -n <app>/<activity> --es source "stripes D" --es mode compare --ei views 4 --ei fps 30 --es screen settings`.
      */
     private fun applyDevExtras(intent: Intent) {
         if (!BuildConfig.DEBUG) return
@@ -58,7 +60,8 @@ class MainActivity : ComponentActivity() {
         intent.getIntExtra("fps", 0).takeIf { it == 30 || it == 60 }?.let(renderer::selectFrameRate)
         val mode = intent.getStringExtra("mode")
         val views = intent.getIntExtra("views", 0).takeIf { it > 0 }
-        if (mode != null || views != null) devCommand = DevCommand(mode, views)
+        val screen = intent.getStringExtra("screen")
+        if (mode != null || views != null || screen != null) devCommand = DevCommand(mode, views, screen)
     }
 
     private fun hasCamera() =

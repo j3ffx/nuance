@@ -7,48 +7,63 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.HuePreset
 import io.github.j3ffx.nuance.core.modes.Mode
+import io.github.j3ffx.nuance.core.profile.Profile
+import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.render.ViewLayout
 import io.github.j3ffx.nuance.resources.Res
-import io.github.j3ffx.nuance.resources.axis_deutan
-import io.github.j3ffx.nuance.resources.axis_protan
-import io.github.j3ffx.nuance.resources.axis_tritan
-import io.github.j3ffx.nuance.resources.compare_four
-import io.github.j3ffx.nuance.resources.compare_two
+import io.github.j3ffx.nuance.resources.action_advanced
+import io.github.j3ffx.nuance.resources.action_settings
 import io.github.j3ffx.nuance.resources.hold_for_original
-import io.github.j3ffx.nuance.resources.hue_blue
-import io.github.j3ffx.nuance.resources.hue_green
-import io.github.j3ffx.nuance.resources.hue_orange
-import io.github.j3ffx.nuance.resources.hue_pink
-import io.github.j3ffx.nuance.resources.hue_red
-import io.github.j3ffx.nuance.resources.hue_violet
-import io.github.j3ffx.nuance.resources.hue_yellow
 import io.github.j3ffx.nuance.resources.intensity_value
 import io.github.j3ffx.nuance.resources.mode_compare
 import io.github.j3ffx.nuance.resources.mode_correct
 import io.github.j3ffx.nuance.resources.mode_isolate
 import io.github.j3ffx.nuance.resources.mode_simulate
+import io.github.j3ffx.nuance.resources.profile_chip_description
 import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.view_corrected
 import io.github.j3ffx.nuance.resources.view_corrected_seen
@@ -56,31 +71,65 @@ import io.github.j3ffx.nuance.resources.view_isolated
 import io.github.j3ffx.nuance.resources.view_original
 import io.github.j3ffx.nuance.resources.view_real
 import io.github.j3ffx.nuance.resources.view_real_seen
+import io.github.j3ffx.nuance.ui.Choices
+import io.github.j3ffx.nuance.ui.LabeledSlider
+import io.github.j3ffx.nuance.ui.NuanceColors
+import io.github.j3ffx.nuance.ui.axisName
+import io.github.j3ffx.nuance.ui.hueName
+import io.github.j3ffx.nuance.ui.nearestPreset
+import io.github.j3ffx.nuance.ui.profileSummary
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The camera screen: the image in 1, 2 or 4 views with their labels, and the controls (mode,
- * profile, intensity…). A long press on the image shows the original as long as the finger stays.
- * J4 turns the controls into the final two-layer interface; this is the working version.
+ * The camera screen, in two layers: what matters in one gesture (profile, mode, one slider),
+ * everything else folded in the Advanced panel. The views never sit under the controls: in
+ * portrait the controls are below the image, in landscape beside it.
  */
 @Composable
-fun CameraScreen(controller: CameraController, camera: @Composable (Modifier) -> Unit, modifier: Modifier = Modifier) {
-    val state = controller.state
-    val holdDescription = stringResource(Res.string.hold_for_original)
-    // The views fill the space above the controls, so none is hidden behind them.
-    Column(modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxWidth().weight(1f)) {
-            CameraArea(controller, holdDescription, camera)
+fun CameraScreen(
+    controller: CameraController,
+    preferences: Preferences,
+    onOpenSettings: () -> Unit,
+    onManageProfiles: () -> Unit,
+    camera: @Composable (Modifier) -> Unit
+) {
+    var showProfiles by remember { mutableStateOf(false) }
+    var showAdvanced by remember { mutableStateOf(false) }
+    BoxWithConstraints(Modifier.fillMaxSize().background(NuanceColors.scrim)) {
+        val landscape = maxWidth > maxHeight
+        val image: @Composable (Modifier) -> Unit = { m ->
+            Box(m) {
+                CameraArea(controller, camera)
+                TopBar(controller, preferences, { showProfiles = true }, onOpenSettings)
+            }
         }
-        Controls(controller, Modifier)
+        val controls: @Composable (Modifier) -> Unit = { m -> Controls(controller, { showAdvanced = true }, m) }
+        if (landscape) {
+            Row(Modifier.fillMaxSize()) {
+                image(Modifier.weight(1f).fillMaxHeight())
+                controls(Modifier.width(320.dp).fillMaxHeight().verticalScroll(rememberScrollState()))
+            }
+        } else {
+            Column(Modifier.fillMaxSize()) {
+                image(Modifier.weight(1f).fillMaxWidth())
+                controls(Modifier.fillMaxWidth())
+            }
+        }
     }
+    if (showProfiles) {
+        ProfileSheet(controller, preferences, onManage = {
+            showProfiles = false
+            onManageProfiles()
+        }, onDismiss = { showProfiles = false })
+    }
+    if (showAdvanced) AdvancedSheet(controller, preferences, onDismiss = { showAdvanced = false })
 }
 
 @Composable
-private fun CameraArea(controller: CameraController, holdDescription: String, camera: @Composable (Modifier) -> Unit) {
-    val state = controller.state
+private fun CameraArea(controller: CameraController, camera: @Composable (Modifier) -> Unit) {
+    val holdDescription = stringResource(Res.string.hold_for_original)
     Box(Modifier.fillMaxSize()) {
         camera(Modifier.fillMaxSize())
         // A transparent layer over the platform view takes the long press (the view would keep it).
@@ -97,7 +146,47 @@ private fun CameraArea(controller: CameraController, holdDescription: String, ca
                     )
                 }
         )
-        ViewLabels(state)
+        ViewLabels(controller.state)
+    }
+}
+
+@Composable
+private fun TopBar(
+    controller: CameraController,
+    preferences: Preferences,
+    onProfile: () -> Unit,
+    onSettings: () -> Unit
+) {
+    val s = controller.state.settings
+    val name = preferences.profile(controller.state.profileId)?.name?.takeIf { it.isNotEmpty() }
+    val summary = profileSummary(s.profile.axis, (s.profile.severity * 100).roundToInt())
+    val label = if (name != null) "$name · $summary" else summary
+    val description = stringResource(Res.string.profile_chip_description, label)
+    Row(
+        Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AssistChip(
+            onClick = onProfile,
+            label = { Text(label, maxLines = 1) },
+            leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(18.dp)) },
+            colors = AssistChipDefaults.assistChipColors(
+                containerColor = NuanceColors.scrim,
+                labelColor = NuanceColors.onScrim,
+                leadingIconContentColor = NuanceColors.onScrim
+            ),
+            modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = description }
+        )
+        Box(Modifier.weight(1f))
+        IconButton(
+            onClick = onSettings,
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = NuanceColors.scrim,
+                contentColor = NuanceColors.onScrim
+            )
+        ) {
+            Icon(Icons.Filled.Settings, contentDescription = stringResource(Res.string.action_settings))
+        }
     }
 }
 
@@ -113,9 +202,9 @@ private fun ViewLabels(state: ViewState) {
                 state.views.size == 1 && kind == ViewKind.Corrected -> null
 
                 // the main mode needs no label
-                else -> labelFor(kind, axis, state)
+                else -> viewLabel(kind, axis, state)
             } ?: continue
-            // At the bottom left of its view: clear of the status bar and the dev button.
+            // At the bottom left of its view: clear of the top bar.
             Box(
                 Modifier.offset(maxWidth * rect.x, maxHeight * rect.y).size(
                     maxWidth * rect.width,
@@ -124,12 +213,12 @@ private fun ViewLabels(state: ViewState) {
             ) {
                 Text(
                     text,
-                    color = Color.White,
+                    color = NuanceColors.onScrim,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .padding(8.dp)
-                        .background(Color(0xB3000000), RoundedCornerShape(6.dp))
+                        .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
@@ -138,7 +227,7 @@ private fun ViewLabels(state: ViewState) {
 }
 
 @Composable
-private fun labelFor(kind: ViewKind, axis: String, state: ViewState): String = when (kind) {
+internal fun viewLabel(kind: ViewKind, axis: String, state: ViewState): String = when (kind) {
     ViewKind.Real -> stringResource(Res.string.view_real)
     ViewKind.RealSeen -> stringResource(Res.string.view_real_seen, axis)
     ViewKind.Corrected -> stringResource(Res.string.view_corrected)
@@ -147,123 +236,82 @@ private fun labelFor(kind: ViewKind, axis: String, state: ViewState): String = w
 }
 
 @Composable
-private fun Controls(controller: CameraController, modifier: Modifier) {
+private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modifier: Modifier) {
     val state = controller.state
     val s = state.settings
-    Column(
-        modifier
-            .fillMaxWidth()
-            .background(Color(0xCC000000))
-            .navigationBarsPadding()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Choices(
-            options = Mode.entries,
-            selected = state.mode,
-            label = { stringResource(modeName(it)) },
-            onSelect = { m -> controller.update { it.copy(mode = m) } }
-        )
-        if (state.mode != Mode.Isolate) {
-            Choices(
-                options = Axis.entries,
-                selected = s.profile.axis,
-                label = { axisName(it) },
-                onSelect = { a ->
-                    controller.update {
-                        it.copy(settings = it.settings.copy(profile = it.settings.profile.copy(axis = a)))
+    Surface(modifier, color = MaterialTheme.colorScheme.surface) {
+        Column(
+            Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                for (mode in Mode.entries) {
+                    ModeButton(stringResource(modeName(mode)), state.mode == mode) {
+                        controller.update { it.copy(mode = mode) }
                     }
                 }
-            )
-            Text(stringResource(Res.string.severity_value, percent(s.profile.severity)), color = Color.White)
-            Slider(
-                value = s.profile.severity.toFloat(),
-                onValueChange = { v ->
-                    controller.update {
-                        it.copy(
-                            settings = it.settings.copy(profile = it.settings.profile.copy(severity = v.toDouble()))
-                        )
-                    }
-                }
-            )
-        }
-        if (state.mode == Mode.Correct || state.mode == Mode.Compare) {
-            Text(stringResource(Res.string.intensity_value, percent(s.intensity)), color = Color.White)
-            Slider(
-                value = s.intensity.toFloat(),
-                onValueChange = { v ->
-                    controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) }
-                }
-            )
-        }
-        if (state.mode == Mode.Isolate) {
-            Choices(
-                options = HuePreset.entries,
-                selected = nearestPreset(s.isolateHue),
-                label = { hueName(it) },
-                onSelect = { p -> controller.update { it.copy(settings = it.settings.copy(isolateHue = p.hue)) } }
-            )
-        }
-        if (state.mode == Mode.Compare) {
-            Choices(
-                options = listOf(4, 2),
-                selected = state.compareCount,
-                label = { stringResource(if (it == 4) Res.string.compare_four else Res.string.compare_two) },
-                onSelect = { n -> controller.update { it.copy(compareCount = n) } }
-            )
-            if (state.compareCount == 2) {
-                val axis = axisName(s.profile.axis)
-                Choices(
-                    options = listOf(ViewKind.Real, ViewKind.RealSeen, ViewKind.Corrected, ViewKind.CorrectedSeen),
-                    selected = null,
-                    isSelected = { it in state.compareSelection },
-                    label = { labelFor(it, axis, state) },
-                    onSelect = { k ->
-                        // Two views at a time: picking a third drops the oldest.
+            }
+            when (state.mode) {
+                Mode.Correct, Mode.Compare -> LabeledSlider(
+                    stringResource(Res.string.intensity_value, percent(s.intensity)),
+                    s.intensity.toFloat(),
+                    { v -> controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) } }
+                )
+
+                Mode.Simulate -> LabeledSlider(
+                    stringResource(Res.string.severity_value, percent(s.profile.severity)),
+                    s.profile.severity.toFloat(),
+                    { v ->
                         controller.update {
-                            val picked = if (k in
-                                it.compareSelection
-                            ) {
-                                it.compareSelection
-                            } else {
-                                (it.compareSelection + k).takeLast(2)
-                            }
-                            it.copy(compareSelection = picked)
+                            it.copy(
+                                settings = it.settings.copy(profile = it.settings.profile.copy(severity = v.toDouble()))
+                            )
                         }
                     }
                 )
+
+                Mode.Isolate -> Choices(
+                    options = HuePreset.entries,
+                    label = { hueName(it) },
+                    onSelect = { p -> controller.update { it.copy(settings = it.settings.copy(isolateHue = p.hue)) } },
+                    isSelected = { it == nearestPreset(s.isolateHue) }
+                )
+            }
+            OutlinedButton(onClick = onAdvanced, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.action_advanced), modifier = Modifier.padding(start = 8.dp))
             }
         }
     }
 }
 
-/** Chips; the selected one also shows a check mark, so the state isn't told by colour alone. */
+/** One of the four modes: the picked one is filled, in bold, and announced as selected. */
 @Composable
-private fun <T> Choices(
-    options: List<T>,
-    selected: T?,
-    label: @Composable (T) -> String,
-    onSelect: (T) -> Unit,
-    isSelected: (T) -> Boolean = { it == selected }
-) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        for (option in options) {
-            val on = isSelected(option)
-            FilterChip(
-                selected = on,
-                onClick = { onSelect(option) },
-                label = { Text(label(option)) },
-                leadingIcon = if (on) {
-                    { Text("✓", modifier = Modifier.size(18.dp)) }
-                } else {
-                    null
-                }
+private fun ModeButton(text: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = if (selected) colors.primary else colors.surface,
+        contentColor = if (selected) colors.onPrimary else colors.onSurface,
+        border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, colors.outline),
+        modifier = Modifier.heightIn(min = 48.dp).padding(vertical = 4.dp).semantics {
+            role = Role.Tab
+            this.selected = selected
+        }
+    ) {
+        Box(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
+            Text(
+                text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1
             )
         }
     }
 }
 
-private fun percent(v: Double) = (v * 100).roundToInt()
+internal fun percent(v: Double) = (v * 100).roundToInt()
 
 private fun modeName(m: Mode): StringResource = when (m) {
     Mode.Correct -> Res.string.mode_correct
@@ -272,28 +320,5 @@ private fun modeName(m: Mode): StringResource = when (m) {
     Mode.Compare -> Res.string.mode_compare
 }
 
-@Composable
-private fun axisName(a: Axis): String = stringResource(
-    when (a) {
-        Axis.Protan -> Res.string.axis_protan
-        Axis.Deutan -> Res.string.axis_deutan
-        Axis.Tritan -> Res.string.axis_tritan
-    }
-)
-
-@Composable
-private fun hueName(p: HuePreset): String = stringResource(
-    when (p) {
-        HuePreset.Red -> Res.string.hue_red
-        HuePreset.Orange -> Res.string.hue_orange
-        HuePreset.Yellow -> Res.string.hue_yellow
-        HuePreset.Green -> Res.string.hue_green
-        HuePreset.Blue -> Res.string.hue_blue
-        HuePreset.Violet -> Res.string.hue_violet
-        HuePreset.Pink -> Res.string.hue_pink
-    }
-)
-
-private fun nearestPreset(hue: Double): HuePreset = HuePreset.entries.minBy {
-    kotlin.math.abs(it.hue - hue).let { d -> if (d > 180) 360 - d else d }
-}
+/** Unused presets are offered first in pickers; the default lives in [Profile.Default]. */
+internal fun pickerProfiles(preferences: Preferences): List<Profile> = preferences.allProfiles

@@ -19,6 +19,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,7 +61,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     override val sources = if (BuildConfig.DEBUG) listOf(CAMERA, RAW) + synthetic.keys else listOf(CAMERA)
 
     private var source by mutableStateOf(CAMERA)
-    private var frameRate by mutableStateOf(30)
+    private var frameRate by mutableIntStateOf(30)
     private var luts: List<Lut3d> = emptyList()
     private var gl: GlThread? = null
 

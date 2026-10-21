@@ -4,20 +4,15 @@
     <string name="camera_permission_rationale">Nuance needs the camera to show you the scene with its colours corrected. The image never leaves your phone.</string>
     <string name="camera_permission_grant">Allow the camera</string>
 
+    <!-- Camera screen -->
     <string name="mode_correct">Correct</string>
     <string name="mode_isolate">Isolate</string>
     <string name="mode_simulate">Simulate</string>
     <string name="mode_compare">Compare</string>
-
-    <string name="axis_protan">protan</string>
-    <string name="axis_deutan">deutan</string>
-    <string name="axis_tritan">tritan</string>
-
-    <string name="severity_value">Severity: %1$d %</string>
-    <string name="intensity_value">Intensity: %1$d %</string>
+    <string name="severity_value">Severity: %1$d %</string>
+    <string name="intensity_value">Intensity: %1$d %</string>
     <string name="compare_four">4 views</string>
     <string name="compare_two">2 views</string>
-
     <string name="view_original">Original</string>
     <string name="view_real">Real</string>
     <string name="view_real_seen">Real, %1$s view</string>
@@ -25,7 +20,23 @@
     <string name="view_corrected_seen">Corrected, %1$s view</string>
     <string name="view_isolated">Only %1$s</string>
     <string name="hold_for_original">Camera image. Touch and hold to see the original.</string>
+    <string name="action_advanced">Advanced</string>
+    <string name="action_settings">Settings</string>
+    <string name="profile_chip_description">Profile: %1$s. Tap to change.</string>
 
+    <!-- Axes -->
+    <string name="axis_protan">protan</string>
+    <string name="axis_deutan">deutan</string>
+    <string name="axis_tritan">tritan</string>
+    <string name="axis_protan_title">Protan</string>
+    <string name="axis_deutan_title">Deutan</string>
+    <string name="axis_tritan_title">Tritan</string>
+    <string name="axis_protan_help">Red-green, reds look dark</string>
+    <string name="axis_deutan_help">Red-green, the most common</string>
+    <string name="axis_tritan_help">Blue-yellow, rarer</string>
+    <string name="profile_summary">%1$s %2$d %</string>
+
+    <!-- Hues -->
     <string name="hue_red">red</string>
     <string name="hue_orange">orange</string>
     <string name="hue_yellow">yellow</string>
@@ -33,4 +44,91 @@
     <string name="hue_blue">blue</string>
     <string name="hue_violet">violet</string>
     <string name="hue_pink">pink</string>
+
+    <!-- Advanced panel -->
+    <string name="advanced_title">Advanced settings</string>
+    <string name="advanced_profile">Profile</string>
+    <string name="advanced_method">Correction method</string>
+    <string name="strategy_error_redistribution">Recolouring (recommended)</string>
+    <string name="strategy_lab_remap">Light and dark</string>
+    <string name="advanced_enhance">Image</string>
+    <string name="contrast_value">Contrast: +%1$d %</string>
+    <string name="saturation_value">Saturation: +%1$d %</string>
+    <string name="advanced_isolate">Colour to keep</string>
+    <string name="isolate_width_value">Hue range: ±%1$d°</string>
+    <string name="advanced_compare">Views shown</string>
+    <string name="reset_defaults">Reset to defaults</string>
+    <string name="save_to_profile">Save to “%1$s”</string>
+    <string name="save_as_new">Save as a new profile</string>
+    <string name="saved">Saved</string>
+
+    <!-- Profiles -->
+    <string name="profiles_title">Profiles</string>
+    <string name="profiles_mine">My profiles</string>
+    <string name="profiles_presets">Presets</string>
+    <string name="profiles_empty">No profile of your own yet. Create one, or set up the camera and tap “Save” in Advanced.</string>
+    <string name="profile_new">New profile</string>
+    <string name="profile_import">Import</string>
+    <string name="profile_use">Use</string>
+    <string name="profile_edit">Edit</string>
+    <string name="profile_share">Share</string>
+    <string name="profile_delete">Delete</string>
+    <string name="profile_in_use">In use</string>
+    <string name="profile_default">Opens the camera</string>
+    <string name="profile_set_default">Open the camera with it</string>
+    <string name="profile_name">Name</string>
+    <string name="profile_name_default">My profile</string>
+    <string name="profile_delete_confirm">Delete “%1$s”?</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="import_title">Import a profile</string>
+    <string name="import_help">Paste the text you received: it starts with “nuance1”.</string>
+    <string name="import_paste">Paste</string>
+    <string name="import_invalid">This text isn’t a Nuance profile.</string>
+    <string name="imported">Profile imported</string>
+    <string name="share_title">Share the profile</string>
+    <string name="back">Back</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_value">The phone’s. Tap to change it.</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_system">Like the phone</string>
+    <string name="settings_auto_pause">Auto pause</string>
+    <string name="settings_auto_pause_help">Without touching the screen or moving the phone</string>
+    <string name="auto_pause_never">Never</string>
+    <string name="auto_pause_minutes">%1$d min</string>
+    <string name="settings_capture">Photos and videos</string>
+    <string name="capture_filtered">Filtered image</string>
+    <string name="capture_both">Filtered + original</string>
+    <string name="settings_updates">Check for updates</string>
+    <string name="settings_updates_help">Asks GitHub; nothing else leaves the phone.</string>
+    <string name="check_now">Check now</string>
+    <string name="check_soon">Checking comes with the first published version.</string>
+    <string name="settings_help">Help and warnings</string>
+    <string name="settings_about">About and licences</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+
+    <string name="help_text">Nuance changes the camera image to help you tell apart the colours you confuse. It doesn’t give “normal” vision and doesn’t cure anything.\n\nIt isn’t a medical device. For a diagnosis, see an ophthalmologist or an orthoptist.\n\nThe modes\n• Correct: changes the colours for your profile. The slider sets how much.\n• Isolate: keeps one colour, the rest turns grey.\n• Simulate: shows what a person with this profile sees.\n• Compare: four views side by side, to understand the correction.\nTouch and hold the image to see the original.\n\nAchromatopsia (vision without colours): correcting makes no sense, but contrast, in Advanced, can help.\n\nPrivacy: images never leave the phone. No account, no statistics. The only possible connection is the update check on GitHub, off by default.</string>
+    <string name="about_text">Nuance is free software (GPL-3.0 licence). Source code: github.com/j3ffx/nuance\n\nModels and references: Machado, Oliveira and Fernandes (2009); Viénot, Brettel and Mollon (1999); Brettel, Viénot and Mollon (1997); Fidaner, Lin and Ozguven (2005); Sharma, Wu and Dalal (2005); Oklab (Björn Ottosson, 2020). Values checked against DaltonLens (public domain and MIT) and colour-science (BSD-3-Clause).\n\nLibraries: Kotlin and Compose Multiplatform, AndroidX, CameraX and the Material icons (Apache-2.0 licence).</string>
+
+    <!-- First launch -->
+    <string name="onb_title">Welcome to Nuance</string>
+    <string name="onb_intro">Nuance filters the camera image to help you tell colours apart.</string>
+    <string name="onb_correct">Correct colours for your profile</string>
+    <string name="onb_isolate">Isolate one colour</string>
+    <string name="onb_compare">Show the people around you what you see</string>
+    <string name="onb_not_medical">It isn’t a medical device: only an ophthalmologist or an orthoptist can make a diagnosis.</string>
+    <string name="onb_private">Nothing leaves the phone: no account, no statistics.</string>
+    <string name="onb_profile">Your profile</string>
+    <string name="onb_know">I know my type</string>
+    <string name="onb_dont_know">I don’t know</string>
+    <string name="onb_dont_know_help">Nuance starts with the most common type (deutan, 60 %). You can change it at any time; a test to find your profile is coming soon.</string>
+    <string name="onb_updates">Check for updates on GitHub</string>
+    <string name="onb_start">Get started</string>
 </resources>

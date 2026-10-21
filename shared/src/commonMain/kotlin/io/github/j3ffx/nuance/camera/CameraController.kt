@@ -5,12 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import io.github.j3ffx.nuance.core.Lut3d
-import io.github.j3ffx.nuance.core.cvd.Axis
-import io.github.j3ffx.nuance.core.cvd.CvdProfile
 import io.github.j3ffx.nuance.core.modes.ColorFunction
 import io.github.j3ffx.nuance.core.modes.LinearFunction
 import io.github.j3ffx.nuance.core.modes.Mode
 import io.github.j3ffx.nuance.core.modes.Settings
+import io.github.j3ffx.nuance.core.profile.Profile
 import io.github.j3ffx.nuance.render.CameraRenderer
 import kotlin.time.measureTimedValue
 import kotlinx.coroutines.CoroutineScope
@@ -25,8 +24,10 @@ enum class ViewKind { Real, RealSeen, Corrected, CorrectedSeen, Isolated }
 
 /** Everything the camera screen shows, as one immutable value. */
 data class ViewState(
+    /** The profile the settings came from; they may have been changed since (see [Profile.with]). */
+    val profileId: String = Profile.Default.id,
     val mode: Mode = Mode.Correct,
-    val settings: Settings = Settings(CvdProfile(Axis.Deutan, 0.8)),
+    val settings: Settings = Profile.Default.toSettings(),
     /** Comparer: 4 views, or the 2 picked in [compareSelection]. */
     val compareCount: Int = 4,
     val compareSelection: List<ViewKind> = listOf(ViewKind.RealSeen, ViewKind.CorrectedSeen),
@@ -50,9 +51,25 @@ data class ViewState(
  * baked twice: at 17³ at once (a few ms, so sliders follow the finger), then at full size once the
  * state has stayed put for a moment. A newer change cancels an older bake.
  */
-class CameraController(private val renderer: CameraRenderer, scope: CoroutineScope) {
-    var state by mutableStateOf(ViewState())
+class CameraController(
+    private val renderer: CameraRenderer,
+    scope: CoroutineScope,
+    initial: Profile = Profile.Default
+) {
+    var state by mutableStateOf(stateFor(initial))
         private set
+
+    /** Switches to [profile]'s settings and mode. */
+    fun applyProfile(profile: Profile) {
+        state = stateFor(profile).copy(compareCount = state.compareCount, compareSelection = state.compareSelection)
+    }
+
+    /** Back to [profile]'s saved settings, keeping the current mode. */
+    fun resetTo(profile: Profile) {
+        state = state.copy(settings = profile.toSettings())
+    }
+
+    private fun stateFor(p: Profile) = ViewState(profileId = p.id, mode = p.mode, settings = p.toSettings())
 
     init {
         scope.launch {
