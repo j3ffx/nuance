@@ -1,6 +1,7 @@
 package io.github.j3ffx.nuance
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -19,8 +20,12 @@ import io.github.j3ffx.nuance.camera.AndroidCameraRenderer
 
 class MainActivity : ComponentActivity() {
     private val renderer by lazy { AndroidCameraRenderer(this) }
-    private val platform by lazy { AndroidPlatform(applicationContext) }
+    private val platform by lazy { AndroidPlatform(applicationContext) { recreate() } }
     private var devCommand by mutableStateOf<DevCommand?>(null)
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AndroidPlatform.withAppLanguage(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

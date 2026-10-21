@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -140,7 +141,8 @@ private fun Main(
     val controller = remember(renderer) {
         CameraController(renderer, scope, preferences.profile(preferences.defaultProfileId) ?: Profile.Default)
     }
-    var screen by remember { mutableStateOf(Screen.Camera) }
+    // Saveable: a language change recreates the activity, and Settings should stay open.
+    var screen by rememberSaveable { mutableStateOf(Screen.Camera) }
     LaunchedEffect(devCommand) {
         val command = devCommand ?: return@LaunchedEffect
         command.mode?.let { name -> Mode.entries.firstOrNull { it.name.equals(name, true) } }

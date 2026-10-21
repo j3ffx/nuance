@@ -19,3 +19,4 @@
 - « Trouver mon profil » : un test de 3 minutes (planches de points, rangement de pastilles,
   carrés à comparer) qui propose un type et une sévérité, avec un niveau de confiance. Ce n’est pas
   un diagnostic.
+- La langue de l’appli se choisit dans les réglages : comme le téléphone, français ou anglais.

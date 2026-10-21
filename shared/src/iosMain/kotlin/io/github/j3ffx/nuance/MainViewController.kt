@@ -38,5 +38,17 @@ private object IosPlatform : Platform {
 
     override fun shareText(text: String, title: String) = Unit
 
-    override fun openLanguageSettings(): Boolean = false
+    /** iOS reads AppleLanguages at launch: the choice applies the next time the app starts. */
+    override var appLanguage: String?
+        get() = NSUserDefaults.standardUserDefaults.stringForKey("nuance.appLanguage")
+        set(value) {
+            val defaults = NSUserDefaults.standardUserDefaults
+            if (value == null) {
+                defaults.removeObjectForKey("nuance.appLanguage")
+                defaults.removeObjectForKey("AppleLanguages")
+            } else {
+                defaults.setObject(value, "nuance.appLanguage")
+                defaults.setObject(listOf(value), "AppleLanguages")
+            }
+        }
 }

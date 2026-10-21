@@ -117,7 +117,7 @@
     <!-- Settings -->
     <string name="settings_title">Réglages</string>
     <string name="settings_language">Langue</string>
-    <string name="settings_language_value">Celle du téléphone. Touche pour la changer.</string>
+    <string name="language_phone">Comme le téléphone</string>
     <string name="settings_theme">Thème</string>
     <string name="theme_dark">Sombre</string>
     <string name="theme_light">Clair</string>

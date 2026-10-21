@@ -15,6 +15,13 @@ android {
         versionName = "0.0.0"
     }
 
+    // Nuance ships APKs with both languages and switches between them in the app: never split them.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     buildTypes {
         // The dev variant installs next to the real app: own id, own name, marked icon.
         debug {

@@ -10,8 +10,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -30,6 +33,7 @@ import io.github.j3ffx.nuance.resources.capture_filtered
 import io.github.j3ffx.nuance.resources.check_now
 import io.github.j3ffx.nuance.resources.check_soon
 import io.github.j3ffx.nuance.resources.help_text
+import io.github.j3ffx.nuance.resources.language_phone
 import io.github.j3ffx.nuance.resources.off
 import io.github.j3ffx.nuance.resources.on
 import io.github.j3ffx.nuance.resources.settings_about
@@ -38,7 +42,6 @@ import io.github.j3ffx.nuance.resources.settings_auto_pause_help
 import io.github.j3ffx.nuance.resources.settings_capture
 import io.github.j3ffx.nuance.resources.settings_help
 import io.github.j3ffx.nuance.resources.settings_language
-import io.github.j3ffx.nuance.resources.settings_language_value
 import io.github.j3ffx.nuance.resources.settings_theme
 import io.github.j3ffx.nuance.resources.settings_title
 import io.github.j3ffx.nuance.resources.settings_updates
@@ -67,7 +70,25 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     Page(stringResource(Res.string.settings_title), onBack, snackbar) {
         SectionTitle(stringResource(Res.string.settings_language))
-        LinkRow(stringResource(Res.string.settings_language_value)) { platform.openLanguageSettings() }
+        var language by remember { mutableStateOf(platform.appLanguage) }
+        Choices(
+            listOf(null, "fr", "en"),
+            {
+                when (it) {
+                    null -> stringResource(Res.string.language_phone)
+
+                    // Each language in its own words, so that anyone finds theirs.
+                    "fr" -> "Français"
+
+                    else -> "English"
+                }
+            },
+            {
+                language = it
+                platform.appLanguage = it
+            },
+            { it == language }
+        )
 
         SectionTitle(stringResource(Res.string.settings_theme))
         Choices(

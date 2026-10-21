@@ -14,8 +14,11 @@ interface Platform {
     /** Opens the system share sheet with [text] (a profile, to send to someone or save as a file). */
     fun shareText(text: String, title: String)
 
-    /** Opens the system's per-app language setting; false where there is none. */
-    fun openLanguageSettings(): Boolean
+    /**
+     * The app's own language, "fr" or "en"; null follows the phone. On Android the screen is
+     * recreated in the new language; on iOS it applies at the next launch.
+     */
+    var appLanguage: String?
 }
 
 /** A tiny persistent key-value store: SharedPreferences on Android, NSUserDefaults on iOS. */
