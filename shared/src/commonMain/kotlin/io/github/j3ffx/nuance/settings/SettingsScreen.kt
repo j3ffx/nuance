@@ -120,7 +120,6 @@ fun SettingsScreen(
             { it == preferences.captureFormat }
         )
 
-        SectionTitle(stringResource(Res.string.settings_updates))
         SwitchRow(
             stringResource(Res.string.settings_updates),
             stringResource(Res.string.settings_updates_help),
@@ -133,7 +132,6 @@ fun SettingsScreen(
             modifier = Modifier.heightIn(min = 48.dp)
         ) { Text(stringResource(Res.string.check_now)) }
 
-        SectionTitle(stringResource(Res.string.settings_help))
         LinkRow(stringResource(Res.string.settings_help), onHelp)
         LinkRow(stringResource(Res.string.settings_about), onAbout)
         Text(

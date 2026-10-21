@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -143,7 +145,7 @@ fun LabeledSlider(text: String, value: Float, onChange: (Float) -> Unit, modifie
     }
 }
 
-/** A row that reads as a switch: the state is written too. */
+/** A row that reads as a switch: the state is written too, on the line below the title. */
 @Composable
 fun SwitchRow(
     text: String,
@@ -154,30 +156,19 @@ fun SwitchRow(
     onChange: (Boolean) -> Unit
 ) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics(mergeDescendants = true) {
-            role = Role.Switch
-            selected = checked
-        },
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(checked, role = Role.Switch, onValueChange = onChange),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
             Text(text, style = MaterialTheme.typography.bodyLarge)
-            if (help !=
-                null
-            ) {
-                Text(
-                    help,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            val state = if (checked) onText else offText
+            Text(
+                if (help == null) state else "$state · $help",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-        Text(
-            if (checked) onText else offText,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-        androidx.compose.material3.Switch(checked = checked, onCheckedChange = onChange)
+        Switch(checked = checked, onCheckedChange = null, modifier = Modifier.padding(start = 12.dp))
     }
 }
 

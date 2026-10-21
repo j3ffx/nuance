@@ -300,7 +300,7 @@ private fun ModeButton(text: String, selected: Boolean, onClick: () -> Unit) {
             this.selected = selected
         }
     ) {
-        Box(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.padding(horizontal = 10.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
             Text(
                 text,
                 style = MaterialTheme.typography.labelLarge,

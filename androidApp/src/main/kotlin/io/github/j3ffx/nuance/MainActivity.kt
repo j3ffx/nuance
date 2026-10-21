@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Dev variant only: lets scripts drive the app without touching the screen, e.g.
-     * `am start -n <app>/<activity> --es source "stripes D" --es mode compare --ei views 4 --ei fps 30 --es screen settings`.
+     * `am start -n <app>/<activity> --es source "stripes D" --es mode compare --ei views 4 --ei fps 30 --es screen settings --ez narrow true --ez large true`.
      */
     private fun applyDevExtras(intent: Intent) {
         if (!BuildConfig.DEBUG) return
@@ -61,7 +61,11 @@ class MainActivity : ComponentActivity() {
         val mode = intent.getStringExtra("mode")
         val views = intent.getIntExtra("views", 0).takeIf { it > 0 }
         val screen = intent.getStringExtra("screen")
-        if (mode != null || views != null || screen != null) devCommand = DevCommand(mode, views, screen)
+        val narrow = if (intent.hasExtra("narrow")) intent.getBooleanExtra("narrow", false) else null
+        val large = if (intent.hasExtra("large")) intent.getBooleanExtra("large", false) else null
+        if (listOf(mode, views, screen, narrow, large).any { it != null }) {
+            devCommand = DevCommand(mode, views, screen, narrow, large)
+        }
     }
 
     private fun hasCamera() =

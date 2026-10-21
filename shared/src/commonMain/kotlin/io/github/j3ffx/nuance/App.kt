@@ -49,7 +49,13 @@ import io.github.j3ffx.nuance.ui.NuanceTheme
 import org.jetbrains.compose.resources.stringResource
 
 /** A command from a dev script (Android intent extras), applied once. */
-data class DevCommand(val mode: String? = null, val compare: Int? = null, val screen: String? = null)
+data class DevCommand(
+    val mode: String? = null,
+    val compare: Int? = null,
+    val screen: String? = null,
+    val narrow: Boolean? = null,
+    val largeText: Boolean? = null
+)
 
 private enum class Screen { Camera, Profiles, Settings, Help, About }
 
@@ -70,6 +76,10 @@ fun App(
 ) {
     val preferences = remember(platform) { Preferences(platform.store) }
     val dev = remember { DevPreview() }
+    LaunchedEffect(devCommand) {
+        devCommand?.narrow?.let { dev.narrow = it }
+        devCommand?.largeText?.let { dev.largeText = it }
+    }
     NuanceTheme(preferences.theme) {
         DevFrame(dev) {
             Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {

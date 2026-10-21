@@ -3,6 +3,7 @@ package io.github.j3ffx.nuance.profiles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -178,7 +179,7 @@ private fun ProfileCard(
     onShare: () -> Unit,
     onDelete: (() -> Unit)?
 ) {
-    Card {
+    Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 profileName(p),
