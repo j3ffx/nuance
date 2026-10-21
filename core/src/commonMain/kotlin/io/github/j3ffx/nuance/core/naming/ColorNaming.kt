@@ -7,7 +7,22 @@ import io.github.j3ffx.nuance.core.color.Vec3
 import kotlin.math.roundToInt
 
 /** The basic colour terms the pipette uses; the UI translates them (FR and EN). */
-enum class ColorTerm { Black, White, Grey, Red, Orange, Brown, Beige, Yellow, Olive, Green, Turquoise, Blue, Violet, Pink }
+enum class ColorTerm {
+    Black,
+    White,
+    Grey,
+    Red,
+    Orange,
+    Brown,
+    Beige,
+    Yellow,
+    Olive,
+    Green,
+    Turquoise,
+    Blue,
+    Violet,
+    Pink
+}
 
 /** "Light" or "dark", relative to what is typical for the term (a yellow is lighter than a blue). */
 enum class Lightness { Light, Dark }
@@ -63,16 +78,27 @@ object ColorNaming {
     private fun term(l: Double, c: Double, h: Double): ColorTerm = when {
         // Browns and beiges are dark and pale oranges and yellows.
         h in 35.0..100.0 && l < 0.58 && c < 0.16 -> ColorTerm.Brown
+
         h in 15.0..35.0 && l < 0.5 && c < 0.12 -> ColorTerm.Brown
+
         h in 50.0..112.0 && l > 0.75 && c < 0.09 -> ColorTerm.Beige
+
         h < 12 || h >= 345 -> if (l < 0.55) ColorTerm.Red else ColorTerm.Pink
+
         h < 40 -> if (l > 0.72 && c < 0.18) ColorTerm.Pink else ColorTerm.Red
+
         h < 72 -> ColorTerm.Orange
+
         h < 115 -> if (l < 0.65) ColorTerm.Olive else ColorTerm.Yellow
+
         h < 170 -> ColorTerm.Green
+
         h < 215 -> ColorTerm.Turquoise
+
         h < 280 -> ColorTerm.Blue
+
         h < 315 -> ColorTerm.Violet
+
         else -> if (l < 0.6) ColorTerm.Violet else ColorTerm.Pink
     }
 
