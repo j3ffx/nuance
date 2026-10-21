@@ -141,6 +141,44 @@
     <string name="help_text">Nuance modifie l’image de la caméra pour t’aider à distinguer les couleurs que tu confonds. Il ne rend pas une vision « normale » et ne soigne rien.\n\nCe n’est pas un dispositif médical. Pour un diagnostic, consulte un ophtalmologiste ou un orthoptiste.\n\nLes modes\n• Corriger : change les couleurs selon ton profil. Le curseur règle la force.\n• Isoler : garde une seule couleur, le reste passe en gris.\n• Simuler : montre ce que voit une personne avec ce profil.\n• Comparer : quatre vues côte à côte, pour comprendre la correction.\nReste appuyé sur l’image pour voir l’original.\n\nAchromatopsie (vision sans couleurs) : la correction n’a pas de sens, mais le contraste, dans Avancé, peut aider.\n\nConfidentialité : les images ne quittent jamais le téléphone. Pas de compte, pas de statistiques. La seule connexion possible est la vérification des mises à jour sur GitHub, désactivée par défaut.</string>
     <string name="about_text">Nuance est un logiciel libre (licence GPL-3.0). Code source : github.com/j3ffx/nuance\n\nModèles et références : Machado, Oliveira et Fernandes (2009) ; Viénot, Brettel et Mollon (1999) ; Brettel, Viénot et Mollon (1997) ; Fidaner, Lin et Ozguven (2005) ; Sharma, Wu et Dalal (2005) ; Oklab (Björn Ottosson, 2020). Valeurs vérifiées avec DaltonLens (domaine public et MIT) et colour-science (BSD-3-Clause).\n\nBibliothèques : Kotlin et Compose Multiplatform, AndroidX, CameraX et les icônes Material (licence Apache-2.0).</string>
 
+    <!-- Find my profile -->
+    <string name="screening_title">Trouver mon profil</string>
+    <string name="screening_intro">Trois petites étapes, environ 3 minutes : lire des chiffres cachés dans des points, ranger des pastilles par couleur, puis repérer un carré un peu différent des autres.</string>
+    <string name="screening_conditions">Pour un résultat fiable : luminosité au maximum, à l’intérieur, sans filtre de lumière bleue, sans mode nuit et sans la correction des couleurs du téléphone.</string>
+    <string name="screening_private">Tes réponses et ton résultat restent sur ton téléphone.</string>
+    <string name="screening_not_medical">Ce test donne une orientation, pas un diagnostic : seul un ophtalmologiste ou un orthoptiste peut en poser un. L’écran n’est pas étalonné et l’éclairage change les couleurs, ce qui peut fausser le résultat.</string>
+    <string name="screening_dev">Dev : passer le test comme…</string>
+    <string name="screening_start">Commencer</string>
+    <string name="screening_step">Étape %1$d sur 3</string>
+    <string name="screening_plate">Planche %1$d sur %2$d</string>
+    <string name="screening_plate_question">Quel chiffre vois-tu dans les points ? Réponds sans chercher trop longtemps.</string>
+    <string name="screening_plate_description">Planche de points de couleur qui peut cacher un chiffre</string>
+    <string name="screening_nothing">Je ne vois rien</string>
+    <string name="screening_arrange_title">Ranger les couleurs</string>
+    <string name="screening_arrange_help">Touche la pastille dont la couleur est la plus proche de la dernière posée. Continue jusqu’à ce qu’il n’en reste plus.</string>
+    <string name="screening_arrange_last">Dernière posée</string>
+    <string name="screening_arrange_left">À ranger</string>
+    <string name="screening_arrange_undo">Reprendre la dernière</string>
+    <string name="screening_cap">Pastille %1$d</string>
+    <string name="screening_patches_title">Repérer la différence</string>
+    <string name="screening_patches_help">Un des quatre carrés est un peu différent des autres. Touche-le.</string>
+    <string name="screening_patches_none">Je ne vois pas de différence</string>
+    <string name="screening_trial">Essai %1$d</string>
+    <string name="screening_patch">Carré %1$d</string>
+    <string name="screening_result_title">Ton résultat</string>
+    <string name="screening_proposed">Profil proposé : %1$s</string>
+    <string name="screening_none">Aucune difficulté repérée</string>
+    <string name="screening_none_help">Tu as lu les planches et rangé les pastilles comme une vision des couleurs typique. Si tu as un doute, refais le test dans de bonnes conditions ou consulte.</string>
+    <string name="screening_confidence_high">Confiance élevée : les planches et le rangement disent la même chose.</string>
+    <string name="screening_confidence_medium">Confiance moyenne : le résultat est probable, sans être sûr. Tu peux l’ajuster ci-dessous.</string>
+    <string name="screening_confidence_low">Confiance faible : tes réponses ne concordent pas bien. Refais le test dans de bonnes conditions.</string>
+    <string name="screening_use">Utiliser « %1$s »</string>
+    <string name="screening_redo">Refaire le test</string>
+    <string name="screening_save_name">Mon test</string>
+    <string name="screening_last">Dernier test : %1$s</string>
+    <string name="screening_last_none">Dernier test : aucune difficulté repérée</string>
+    <string name="onb_take_test">Faire le test (3 min)</string>
+
     <!-- First launch -->
     <string name="onb_title">Bienvenue dans Nuance</string>
     <string name="onb_intro">Nuance filtre l’image de la caméra pour t’aider à distinguer les couleurs.</string>
@@ -152,7 +190,7 @@
     <string name="onb_profile">Ton profil</string>
     <string name="onb_know">Je connais mon type</string>
     <string name="onb_dont_know">Je ne sais pas</string>
-    <string name="onb_dont_know_help">Nuance part du type le plus fréquent (deutan, 60 %). Tu pourras le changer à tout moment ; un test pour trouver ton profil arrive bientôt.</string>
+    <string name="onb_dont_know_help">Nuance part du type le plus fréquent (deutan, 60 %). Tu pourras le changer à tout moment, ou le trouver avec un petit test.</string>
     <string name="onb_updates">Vérifier les mises à jour sur GitHub</string>
     <string name="onb_start">Commencer</string>
 </resources>

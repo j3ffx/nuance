@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.camera.CameraController
 import io.github.j3ffx.nuance.camera.CameraScreen
 import io.github.j3ffx.nuance.camera.newProfileId
+import io.github.j3ffx.nuance.core.cvd.Axis
+import io.github.j3ffx.nuance.core.cvd.CvdProfile
 import io.github.j3ffx.nuance.core.modes.Mode
 import io.github.j3ffx.nuance.core.profile.Profile
 import io.github.j3ffx.nuance.dev.DevPreview
@@ -42,6 +44,8 @@ import io.github.j3ffx.nuance.render.CameraRenderer
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.camera_permission_grant
 import io.github.j3ffx.nuance.resources.camera_permission_rationale
+import io.github.j3ffx.nuance.screening.ScreeningScreen
+import io.github.j3ffx.nuance.screening.ScreeningSummary
 import io.github.j3ffx.nuance.settings.AboutScreen
 import io.github.j3ffx.nuance.settings.HelpScreen
 import io.github.j3ffx.nuance.settings.SettingsScreen
@@ -54,10 +58,12 @@ data class DevCommand(
     val compare: Int? = null,
     val screen: String? = null,
     val narrow: Boolean? = null,
-    val largeText: Boolean? = null
+    val largeText: Boolean? = null,
+    /** "deutan 60", "protan", "off": take "Find my profile" through that simulation. */
+    val testAs: String? = null
 )
 
-private enum class Screen { Camera, Profiles, Settings, Help, About }
+private enum class Screen { Camera, Profiles, Settings, Help, About, Test }
 
 /**
  * The whole app, shared by Android and iOS. [camera] draws the platform's camera view, once the
@@ -79,12 +85,14 @@ fun App(
     LaunchedEffect(devCommand) {
         devCommand?.narrow?.let { dev.narrow = it }
         devCommand?.largeText?.let { dev.largeText = it }
+        devCommand?.testAs?.let { dev.testAs = parseTestAs(it) }
     }
+    var testFirst by remember { mutableStateOf(false) }
     NuanceTheme(preferences.theme) {
         DevFrame(dev) {
             Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                 if (!preferences.onboardingDone) {
-                    OnboardingScreen { profile, updates ->
+                    OnboardingScreen { profile, updates, takeTest ->
                         if (profile != Profile.Default) {
                             val mine = profile.copy(id = newProfileId())
                             preferences.saveProfile(mine)
@@ -92,7 +100,16 @@ fun App(
                         }
                         preferences.updateChecks = updates
                         preferences.onboardingDone = true
+                        testFirst = takeTest
                     }
+                    return@Surface
+                }
+                // Straight from the first launch: the test needs no camera, so it comes before the permission.
+                if (testFirst) {
+                    ScreeningRoute(preferences, devTools, dev, onKeep = { mine ->
+                        preferences.defaultProfileId = mine.id
+                        testFirst = false
+                    }, onBack = { testFirst = false })
                     return@Surface
                 }
                 if (!cameraGranted) {
@@ -129,7 +146,11 @@ private fun Main(
         command.screen?.let { name -> Screen.entries.firstOrNull { it.name.equals(name, true) } }?.let { screen = it }
     }
     BackHandler(enabled = screen != Screen.Camera) {
-        screen = if (screen == Screen.Help || screen == Screen.About) Screen.Settings else Screen.Camera
+        screen = when (screen) {
+            Screen.Help, Screen.About -> Screen.Settings
+            Screen.Test -> Screen.Profiles
+            else -> Screen.Camera
+        }
     }
     when (screen) {
         Screen.Camera -> Box(Modifier.fillMaxSize()) {
@@ -151,8 +172,14 @@ private fun Main(
                 controller.applyProfile(it)
                 screen = Screen.Camera
             },
+            onFindProfile = { screen = Screen.Test },
             onBack = { screen = Screen.Camera }
         )
+
+        Screen.Test -> ScreeningRoute(preferences, devTools, dev, onKeep = { mine ->
+            controller.applyProfile(mine)
+            screen = Screen.Camera
+        }, onBack = { screen = Screen.Profiles })
 
         Screen.Settings -> SettingsScreen(
             preferences,
@@ -166,6 +193,41 @@ private fun Main(
 
         Screen.About -> AboutScreen(onBack = { screen = Screen.Settings })
     }
+}
+
+/**
+ * "Find my profile", with what follows it: the result is remembered, and the kept profile saved
+ * as one of the person's own and opened with the camera from then on.
+ */
+@Composable
+private fun ScreeningRoute(
+    preferences: Preferences,
+    devTools: Boolean,
+    dev: DevPreview,
+    onKeep: (Profile) -> Unit,
+    onBack: () -> Unit
+) {
+    ScreeningScreen(
+        devTools = devTools,
+        testAs = dev.testAs.takeIf { devTools },
+        onTestAs = { dev.testAs = it },
+        onResult = { preferences.lastScreening = ScreeningSummary.encode(it) },
+        onKeep = { p ->
+            val mine = p.copy(id = newProfileId())
+            preferences.saveProfile(mine)
+            preferences.defaultProfileId = mine.id
+            onKeep(mine)
+        },
+        onBack = onBack
+    )
+}
+
+/** "deutan 60" → deutan at 60 %; an axis alone means 100 %; anything else, none. */
+internal fun parseTestAs(text: String): CvdProfile? {
+    val parts = text.trim().lowercase().split(Regex("\\s+"))
+    val axis = Axis.entries.firstOrNull { it.name.lowercase() == parts.firstOrNull() } ?: return null
+    val severity = parts.getOrNull(1)?.toIntOrNull()?.coerceIn(0, 100) ?: 100
+    return CvdProfile(axis, severity / 100.0)
 }
 
 /** Dev variant: shows the app 360 dp wide and with larger text, to check that nothing overflows. */

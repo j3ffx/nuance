@@ -34,6 +34,9 @@ class Preferences(private val store: KeyValueStore) {
     /** The profile the camera opens with. */
     var defaultProfileId by storedString("defaultProfileId", Profile.Default.id)
 
+    /** The last "Find my profile" result ([ScreeningSummary]), empty if never taken. */
+    var lastScreening by storedString("lastScreening", "")
+
     val allProfiles: List<Profile> get() = profiles + Profile.presets
 
     fun profile(id: String): Profile? =

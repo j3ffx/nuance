@@ -63,8 +63,12 @@ import io.github.j3ffx.nuance.resources.profiles_mine
 import io.github.j3ffx.nuance.resources.profiles_presets
 import io.github.j3ffx.nuance.resources.profiles_title
 import io.github.j3ffx.nuance.resources.save
+import io.github.j3ffx.nuance.resources.screening_last
+import io.github.j3ffx.nuance.resources.screening_last_none
+import io.github.j3ffx.nuance.resources.screening_title
 import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.share_title
+import io.github.j3ffx.nuance.screening.ScreeningSummary
 import io.github.j3ffx.nuance.ui.Choices
 import io.github.j3ffx.nuance.ui.LabeledSlider
 import io.github.j3ffx.nuance.ui.Page
@@ -84,6 +88,7 @@ fun ProfilesScreen(
     platform: Platform,
     activeProfileId: String,
     onUse: (Profile) -> Unit,
+    onFindProfile: () -> Unit,
     onBack: () -> Unit
 ) {
     var editing by remember { mutableStateOf<Profile?>(null) }
@@ -105,7 +110,11 @@ fun ProfilesScreen(
             OutlinedButton(onClick = { importing = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(Res.string.profile_import))
             }
+            OutlinedButton(onClick = onFindProfile, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(Res.string.screening_title))
+            }
         }
+        LastScreening(preferences.lastScreening)
 
         SectionTitle(stringResource(Res.string.profiles_mine))
         if (preferences.profiles.isEmpty()) {
@@ -302,4 +311,16 @@ private fun ImportDialog(onImport: (Profile) -> Unit, onCancel: () -> Unit) {
         },
         dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(Res.string.cancel)) } }
     )
+}
+
+/** The last "Find my profile" result, under the button that takes it again. */
+@Composable
+private fun LastScreening(stored: String) {
+    val last = ScreeningSummary.decode(stored) ?: return
+    val text = if (last.axis == null) {
+        stringResource(Res.string.screening_last_none)
+    } else {
+        stringResource(Res.string.screening_last, profileSummary(last.axis, last.severity))
+    }
+    Text(text, style = MaterialTheme.typography.bodyMedium)
 }

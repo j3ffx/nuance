@@ -141,6 +141,44 @@
     <string name="help_text">Nuance changes the camera image to help you tell apart the colours you confuse. It doesn’t give “normal” vision and doesn’t cure anything.\n\nIt isn’t a medical device. For a diagnosis, see an ophthalmologist or an orthoptist.\n\nThe modes\n• Correct: changes the colours for your profile. The slider sets how much.\n• Isolate: keeps one colour, the rest turns grey.\n• Simulate: shows what a person with this profile sees.\n• Compare: four views side by side, to understand the correction.\nTouch and hold the image to see the original.\n\nAchromatopsia (vision without colours): correcting makes no sense, but contrast, in Advanced, can help.\n\nPrivacy: images never leave the phone. No account, no statistics. The only possible connection is the update check on GitHub, off by default.</string>
     <string name="about_text">Nuance is free software (GPL-3.0 licence). Source code: github.com/j3ffx/nuance\n\nModels and references: Machado, Oliveira and Fernandes (2009); Viénot, Brettel and Mollon (1999); Brettel, Viénot and Mollon (1997); Fidaner, Lin and Ozguven (2005); Sharma, Wu and Dalal (2005); Oklab (Björn Ottosson, 2020). Values checked against DaltonLens (public domain and MIT) and colour-science (BSD-3-Clause).\n\nLibraries: Kotlin and Compose Multiplatform, AndroidX, CameraX and the Material icons (Apache-2.0 licence).</string>
 
+    <!-- Find my profile -->
+    <string name="screening_title">Find my profile</string>
+    <string name="screening_intro">Three short steps, about 3 minutes: read digits hidden in dots, sort caps by colour, then spot a square slightly different from the others.</string>
+    <string name="screening_conditions">For a reliable result: full brightness, indoors, no blue light filter, no night mode and no colour correction on the phone.</string>
+    <string name="screening_private">Your answers and your result stay on your phone.</string>
+    <string name="screening_not_medical">This test gives an indication, not a diagnosis: only an eye doctor or an orthoptist can make one. The screen isn’t calibrated and lighting changes colours, which can skew the result.</string>
+    <string name="screening_dev">Dev: take the test as…</string>
+    <string name="screening_start">Start</string>
+    <string name="screening_step">Step %1$d of 3</string>
+    <string name="screening_plate">Plate %1$d of %2$d</string>
+    <string name="screening_plate_question">Which digit do you see in the dots? Answer without looking too long.</string>
+    <string name="screening_plate_description">Plate of coloured dots that may hide a digit</string>
+    <string name="screening_nothing">I see nothing</string>
+    <string name="screening_arrange_title">Sort the colours</string>
+    <string name="screening_arrange_help">Tap the cap whose colour is closest to the last one placed. Keep going until none are left.</string>
+    <string name="screening_arrange_last">Last placed</string>
+    <string name="screening_arrange_left">To sort</string>
+    <string name="screening_arrange_undo">Take back the last one</string>
+    <string name="screening_cap">Cap %1$d</string>
+    <string name="screening_patches_title">Spot the difference</string>
+    <string name="screening_patches_help">One of the four squares is slightly different from the others. Tap it.</string>
+    <string name="screening_patches_none">I see no difference</string>
+    <string name="screening_trial">Trial %1$d</string>
+    <string name="screening_patch">Square %1$d</string>
+    <string name="screening_result_title">Your result</string>
+    <string name="screening_proposed">Proposed profile: %1$s</string>
+    <string name="screening_none">No difficulty found</string>
+    <string name="screening_none_help">You read the plates and sorted the caps like typical colour vision. If in doubt, take the test again in good conditions or see a professional.</string>
+    <string name="screening_confidence_high">High confidence: the plates and the sorting agree.</string>
+    <string name="screening_confidence_medium">Medium confidence: the result is likely but not certain. You can adjust it below.</string>
+    <string name="screening_confidence_low">Low confidence: your answers don’t agree well. Take the test again in good conditions.</string>
+    <string name="screening_use">Use “%1$s”</string>
+    <string name="screening_redo">Take the test again</string>
+    <string name="screening_save_name">My test</string>
+    <string name="screening_last">Last test: %1$s</string>
+    <string name="screening_last_none">Last test: no difficulty found</string>
+    <string name="onb_take_test">Take the test (3 min)</string>
+
     <!-- First launch -->
     <string name="onb_title">Welcome to Nuance</string>
     <string name="onb_intro">Nuance filters the camera image to help you tell colours apart.</string>
@@ -152,7 +190,7 @@
     <string name="onb_profile">Your profile</string>
     <string name="onb_know">I know my type</string>
     <string name="onb_dont_know">I don’t know</string>
-    <string name="onb_dont_know_help">Nuance starts with the most common type (deutan, 60 %). You can change it at any time; a test to find your profile is coming soon.</string>
+    <string name="onb_dont_know_help">Nuance starts with the most common type (deutan, 60 %). You can change it at any time, or find it with a short test.</string>
     <string name="onb_updates">Check for updates on GitHub</string>
     <string name="onb_start">Get started</string>
 </resources>

@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import io.github.j3ffx.nuance.resources.onb_not_medical
 import io.github.j3ffx.nuance.resources.onb_private
 import io.github.j3ffx.nuance.resources.onb_profile
 import io.github.j3ffx.nuance.resources.onb_start
+import io.github.j3ffx.nuance.resources.onb_take_test
 import io.github.j3ffx.nuance.resources.onb_title
 import io.github.j3ffx.nuance.resources.onb_updates
 import io.github.j3ffx.nuance.resources.settings_updates_help
@@ -55,10 +57,11 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * One short page: what Nuance does and doesn't, the person's type (or "I don't know"), and the
- * update check, offered unticked. [onDone] gets the chosen profile and the update choice.
+ * update check, offered unticked. [onDone] gets the chosen profile, the update choice, and
+ * whether to take "Find my profile" right away.
  */
 @Composable
-fun OnboardingScreen(onDone: (Profile, Boolean) -> Unit) {
+fun OnboardingScreen(onDone: (Profile, Boolean, Boolean) -> Unit) {
     var knows by remember { mutableStateOf<Boolean?>(null) }
     var axis by remember { mutableStateOf(Axis.Deutan) }
     var severity by remember { mutableStateOf(60) }
@@ -129,11 +132,17 @@ fun OnboardingScreen(onDone: (Profile, Boolean) -> Unit) {
                     } else {
                         Profile.Default
                     }
-                    onDone(profile, updates)
+                    onDone(profile, updates, false)
                 },
                 enabled = knows != null,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
             ) { Text(stringResource(Res.string.onb_start)) }
+            if (knows == false) {
+                OutlinedButton(
+                    onClick = { onDone(Profile.Default, updates, true) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                ) { Text(stringResource(Res.string.onb_take_test)) }
+            }
         }
     }
 }

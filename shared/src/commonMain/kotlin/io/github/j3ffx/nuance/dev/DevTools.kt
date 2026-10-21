@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import io.github.j3ffx.nuance.core.cvd.CvdProfile
 import io.github.j3ffx.nuance.render.CameraRenderer
 import io.github.j3ffx.nuance.render.RenderStats
 
@@ -25,6 +26,9 @@ import io.github.j3ffx.nuance.render.RenderStats
 class DevPreview {
     var narrow by mutableStateOf(false)
     var largeText by mutableStateOf(false)
+
+    /** "Find my profile" seen through this simulation, to take it "as" a protan, deutan or tritan. */
+    var testAs by mutableStateOf<CvdProfile?>(null)
 }
 
 /** Dev variant only: performance figures, image source, layout checks. Technical, so English. */
