@@ -172,6 +172,23 @@ remappage reste dans le panneau Avancé.
 Ce jugement reste celui d'un œil typique regardant une simulation : le test avec une personne
 daltonienne tranchera.
 
+### La correction de l'autre axe rouge-vert
+
+Protan et deutan ont des lignes de confusion proches, et le test intégré a parfois du mal à les
+séparer. Une correction faite pour l'un aide-t-elle l'autre ? Part des paires confondues rendues
+distinctes (redistribution d'erreur, intensité 100 %) :
+
+| Personne     | Correction protan | Correction deutan |
+| ------------ | ----------------: | ----------------: |
+| Protan 100 % |              98 % |              82 % |
+| Deutan 100 % |              96 % |              79 % |
+| Deutan 60 %  |              67 % |              43 % |
+
+Se tromper d'axe coûte donc peu. La correction protan sépare même plus de paires pour un deutan,
+mais parce qu'elle est plus forte (l'erreur simulée d'un protan est plus grande) : elle modifie
+davantage l'image. Comparées à l'œil sur le téléphone, vues par un deutan (variante dev, « P vs D
+corr »), la **correction deutan** a été préférée : chaque profil garde la correction de son axe.
+
 ### À intensité 100 % (extrait)
 
 | Profil       | Stratégie      | Distinctes | Avant → après | Coût | Teinte des tons chair |
