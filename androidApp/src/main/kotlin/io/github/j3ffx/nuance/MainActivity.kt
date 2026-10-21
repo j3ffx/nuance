@@ -64,8 +64,9 @@ class MainActivity : ComponentActivity() {
         val narrow = if (intent.hasExtra("narrow")) intent.getBooleanExtra("narrow", false) else null
         val large = if (intent.hasExtra("large")) intent.getBooleanExtra("large", false) else null
         val testAs = intent.getStringExtra("testAs")
-        if (listOf(mode, views, screen, narrow, large, testAs).any { it != null }) {
-            devCommand = DevCommand(mode, views, screen, narrow, large, testAs)
+        val cross = if (intent.hasExtra("cross")) intent.getBooleanExtra("cross", false) else null
+        if (listOf(mode, views, screen, narrow, large, testAs, cross).any { it != null }) {
+            devCommand = DevCommand(mode, views, screen, narrow, large, testAs, cross)
         }
     }
 

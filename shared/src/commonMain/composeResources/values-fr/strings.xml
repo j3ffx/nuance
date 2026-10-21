@@ -18,6 +18,7 @@
     <string name="view_real_seen">Réel, vu %1$s</string>
     <string name="view_corrected">Corrigé</string>
     <string name="view_corrected_seen">Corrigé, vu %1$s</string>
+    <string name="view_corrected_as_seen">Corr. %1$s, vu %2$s</string>
     <string name="view_isolated">Seulement le %1$s</string>
     <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur ; reste appuyé pour voir l’original.</string>
     <string name="action_advanced">Avancé</string>

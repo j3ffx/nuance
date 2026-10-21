@@ -50,6 +50,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.HuePreset
 import io.github.j3ffx.nuance.core.modes.Mode
 import io.github.j3ffx.nuance.core.profile.Profile
@@ -67,6 +68,7 @@ import io.github.j3ffx.nuance.resources.mode_simulate
 import io.github.j3ffx.nuance.resources.profile_chip_description
 import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.view_corrected
+import io.github.j3ffx.nuance.resources.view_corrected_as_seen
 import io.github.j3ffx.nuance.resources.view_corrected_seen
 import io.github.j3ffx.nuance.resources.view_isolated
 import io.github.j3ffx.nuance.resources.view_original
@@ -249,6 +251,8 @@ internal fun viewLabel(kind: ViewKind, axis: String, state: ViewState): String =
     ViewKind.Corrected -> stringResource(Res.string.view_corrected)
     ViewKind.CorrectedSeen -> stringResource(Res.string.view_corrected_seen, axis)
     ViewKind.Isolated -> stringResource(Res.string.view_isolated, hueName(nearestPreset(state.settings.isolateHue)))
+    ViewKind.ProtanCorrectedSeen -> stringResource(Res.string.view_corrected_as_seen, axisName(Axis.Protan), axis)
+    ViewKind.DeutanCorrectedSeen -> stringResource(Res.string.view_corrected_as_seen, axisName(Axis.Deutan), axis)
 }
 
 @Composable

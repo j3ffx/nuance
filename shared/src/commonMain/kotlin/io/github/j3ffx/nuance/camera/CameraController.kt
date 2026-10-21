@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import io.github.j3ffx.nuance.core.Lut3d
 import io.github.j3ffx.nuance.core.Rgb
+import io.github.j3ffx.nuance.core.correction.CorrectionMetrics
+import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.ColorFunction
 import io.github.j3ffx.nuance.core.modes.LinearFunction
 import io.github.j3ffx.nuance.core.modes.Mode
@@ -21,7 +23,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** What a view shows; the UI turns it into a text label (never a colour alone). */
-enum class ViewKind { Real, RealSeen, Corrected, CorrectedSeen, Isolated }
+enum class ViewKind {
+    Real,
+    RealSeen,
+    Corrected,
+    CorrectedSeen,
+    Isolated,
+
+    /** Dev variant: the protan or deutan correction (whatever the profile's axis), seen with the profile. */
+    ProtanCorrectedSeen,
+    DeutanCorrectedSeen
+}
 
 /**
  * The pipette's target, as fractions of the image area from its top left, and the colour read
@@ -39,16 +51,30 @@ data class ViewState(
     val compareCount: Int = 4,
     val compareSelection: List<ViewKind> = listOf(ViewKind.RealSeen, ViewKind.CorrectedSeen),
     /** While a finger rests on the image: the original, full screen. */
-    val showingOriginal: Boolean = false
+    val showingOriginal: Boolean = false,
+    /** Dev variant: Compare shows the protan and the deutan corrections, both seen with the profile. */
+    val crossAxis: Boolean = false
 ) {
     /** The views on screen, in [io.github.j3ffx.nuance.render.ViewLayout] order. */
     val views: List<ViewKind>
         get() = when {
             showingOriginal -> listOf(ViewKind.Real)
+
             mode == Mode.Correct -> listOf(ViewKind.Corrected)
+
             mode == Mode.Isolate -> listOf(ViewKind.Isolated)
+
             mode == Mode.Simulate -> listOf(ViewKind.RealSeen)
+
+            crossAxis -> listOf(
+                ViewKind.Real,
+                ViewKind.RealSeen,
+                ViewKind.ProtanCorrectedSeen,
+                ViewKind.DeutanCorrectedSeen
+            )
+
             compareCount == 2 -> compareSelection
+
             else -> listOf(ViewKind.Real, ViewKind.RealSeen, ViewKind.Corrected, ViewKind.CorrectedSeen)
         }
 }
@@ -149,7 +175,16 @@ class CameraController(
                 ViewKind.Corrected -> views[2]
                 ViewKind.CorrectedSeen -> views[3]
                 ViewKind.Isolated -> ColorFunction.isolation(s)
+                ViewKind.ProtanCorrectedSeen -> correctedAs(Axis.Protan, s)
+                ViewKind.DeutanCorrectedSeen -> correctedAs(Axis.Deutan, s)
             }
+        }
+
+        /** The correction made for [axis] at the profile's severity, seen with the profile itself. */
+        private fun correctedAs(axis: Axis, s: Settings): LinearFunction {
+            val simulate = ColorFunction.simulation(s.profile)
+            val correct = ColorFunction.correction(s.copy(profile = s.profile.copy(axis = axis)))
+            return { simulate(CorrectionMetrics.clampLinear(correct(it))) }
         }
     }
 }

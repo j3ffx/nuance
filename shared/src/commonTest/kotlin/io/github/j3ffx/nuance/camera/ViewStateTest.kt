@@ -26,6 +26,14 @@ class ViewStateTest {
     }
 
     @Test
+    fun devCrossAxisComparesTheProtanAndDeutanCorrections() {
+        assertEquals(
+            listOf(ViewKind.Real, ViewKind.RealSeen, ViewKind.ProtanCorrectedSeen, ViewKind.DeutanCorrectedSeen),
+            ViewState(mode = Mode.Compare, crossAxis = true).views
+        )
+    }
+
+    @Test
     fun holdingShowsTheOriginalAloneWhateverTheMode() {
         for (mode in Mode.entries) {
             assertEquals(

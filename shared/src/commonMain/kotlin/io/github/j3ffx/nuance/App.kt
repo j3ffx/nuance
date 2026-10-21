@@ -60,7 +60,9 @@ data class DevCommand(
     val narrow: Boolean? = null,
     val largeText: Boolean? = null,
     /** "deutan 60", "protan", "off": take "Find my profile" through that simulation. */
-    val testAs: String? = null
+    val testAs: String? = null,
+    /** Compare the protan and deutan corrections, both seen with the profile. */
+    val crossAxis: Boolean? = null
 )
 
 private enum class Screen { Camera, Profiles, Settings, Help, About, Test }
@@ -86,6 +88,7 @@ fun App(
         devCommand?.narrow?.let { dev.narrow = it }
         devCommand?.largeText?.let { dev.largeText = it }
         devCommand?.testAs?.let { dev.testAs = parseTestAs(it) }
+        devCommand?.crossAxis?.let { dev.crossAxis = it }
     }
     var testFirst by remember { mutableStateOf(false) }
     NuanceTheme(preferences.theme) {
@@ -144,6 +147,11 @@ private fun Main(
             ?.let { m -> controller.update { it.copy(mode = m) } }
         command.compare?.takeIf { it == 2 || it == 4 }?.let { n -> controller.update { it.copy(compareCount = n) } }
         command.screen?.let { name -> Screen.entries.firstOrNull { it.name.equals(name, true) } }?.let { screen = it }
+    }
+    LaunchedEffect(dev.crossAxis) {
+        controller.update {
+            it.copy(crossAxis = dev.crossAxis, mode = if (dev.crossAxis) Mode.Compare else it.mode)
+        }
     }
     BackHandler(enabled = screen != Screen.Camera) {
         screen = when (screen) {

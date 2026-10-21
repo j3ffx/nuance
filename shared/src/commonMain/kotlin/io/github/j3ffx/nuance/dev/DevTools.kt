@@ -29,6 +29,9 @@ class DevPreview {
 
     /** "Find my profile" seen through this simulation, to take it "as" a protan, deutan or tritan. */
     var testAs by mutableStateOf<CvdProfile?>(null)
+
+    /** Compare shows the protan and the deutan corrections, both seen with the profile. */
+    var crossAxis by mutableStateOf(false)
 }
 
 /** Dev variant only: performance figures, image source, layout checks. Technical, so English. */
@@ -51,6 +54,7 @@ fun DevTools(renderer: CameraRenderer, preview: DevPreview, modifier: Modifier) 
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(preview.narrow, { preview.narrow = !preview.narrow }, { Text("360 dp") })
                 FilterChip(preview.largeText, { preview.largeText = !preview.largeText }, { Text("text ×1.3") })
+                FilterChip(preview.crossAxis, { preview.crossAxis = !preview.crossAxis }, { Text("P vs D corr") })
             }
         }
     }
