@@ -92,7 +92,9 @@ class DirectPipeline(gl: GlThread, stats: StatsCollector) :
     }
 
     private fun onFrame(texture: SurfaceTexture) {
-        if (texture !== cameraTexture) return
+        // A frame can still arrive after the render thread was torn down (the activity recreated by
+        // a language change, a source switch): its context is gone, so drop the frame.
+        if (texture !== cameraTexture || !gl.alive) return
         val arrivalNs = System.nanoTime()
         texture.updateTexImage()
         stats.onCameraFrame()

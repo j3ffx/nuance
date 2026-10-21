@@ -45,6 +45,15 @@ class GlThread(name: String, private val stats: StatsCollector) {
     private lateinit var timer: GpuTimer
     var cameraTexture = 0
         private set
+
+    /**
+     * False once [quit] has torn the context down. Messages already queued on the thread (a
+     * SurfaceTexture's frame-available callback, say) still run afterwards: they must check this
+     * before any GL call.
+     */
+    @Volatile
+    var alive = true
+        private set
     private var views: List<LutTexture> = emptyList()
     private val pendingViews = AtomicReference<List<Lut3d>?>()
     private val mvp = FloatArray(16)
@@ -147,6 +156,7 @@ class GlThread(name: String, private val stats: StatsCollector) {
 
     fun quit() {
         run {
+            alive = false
             views.forEach { it.release() }
             timer.release()
             cameraProgram.release()

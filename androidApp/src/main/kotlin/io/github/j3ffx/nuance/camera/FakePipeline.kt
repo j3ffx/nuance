@@ -43,7 +43,7 @@ class FakePipeline(
     }
 
     private fun tick() {
-        if (!running) return
+        if (!running || !gl.alive) return
         val arrivalNs = System.nanoTime()
         stats.onCameraFrame()
         // Rows were uploaded top first, so v runs downwards: flip it; then slide u when scrolling.
