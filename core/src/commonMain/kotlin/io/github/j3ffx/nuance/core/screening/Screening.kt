@@ -82,6 +82,9 @@ class Screening(seed: Long) {
 
     val staircase: Staircase? get() = staircases.firstOrNull()
 
+    /** 1 for the first patch trial, counting on across staircases. */
+    val trialNumber: Int get() = finished.sumOf { it.trials } + (staircase?.trials ?: 0) + 1
+
     /** [choice]: the patch touched (0 to 3), or null for "I see no difference". */
     fun answerTrial(choice: Int?) {
         val current = checkNotNull(staircase)
@@ -108,9 +111,15 @@ class Screening(seed: Long) {
         check(step == Step.Done)
         val (planned, base) = checkNotNull(plan)
         val severities = finished.associate { it.axis to it.severity() }
-        // Red-green but ambiguous: the axis whose staircase measured the stronger deficiency.
-        val axis = planned ?: severities.maxByOrNull { it.value }?.key
+        // Red-green but ambiguous: the axis whose staircase measured the stronger deficiency; on a
+        // tie, deutan, the more common one.
+        val axis = planned ?: severities.entries
+            .maxWithOrNull(compareBy<Map.Entry<Axis, Int>> { it.value }.thenBy { it.key == Axis.Deutan })?.key
         var confidence = base
+        // The two measures barely differ: the choice between protan and deutan is a guess.
+        if (planned == null && severities.size == 2 && severities.values.let { it.max() - it.min() } < 10) {
+            confidence = lower(confidence)
+        }
         val severity = axis?.let { severities[it] } ?: 0
         val measured = finished.firstOrNull { it.axis == axis }
         if (axis != null && severity < 10) confidence = lower(confidence) // the plates and the patches disagree

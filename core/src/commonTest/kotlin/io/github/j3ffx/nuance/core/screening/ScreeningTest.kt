@@ -38,6 +38,38 @@ class ScreeningTest {
         }
     }
 
+    /** Someone who misses every plate, sorts the caps in the order offered and never sees a patch. */
+    private fun seesNothing(seed: Long): Screening {
+        val s = Screening(seed)
+        while (s.step == Screening.Step.Plates) s.answerPlate(null)
+        for (cap in s.offeredCaps) s.place(cap)
+        while (s.step == Screening.Step.Severity) s.answerTrial(null)
+        return s
+    }
+
+    @Test
+    fun aRedGreenTieGoesToDeutanWithLowConfidence() {
+        // Bug seen on the phone: equal protan and deutan severities gave protan, at medium confidence.
+        for (seed in 1L..20L) {
+            val r = seesNothing(seed).result()
+            if (r.severities.keys != setOf(Axis.Protan, Axis.Deutan)) continue
+            assertEquals(Axis.Deutan, r.axis, "seed $seed: $r")
+            assertEquals(Confidence.Low, r.confidence, "seed $seed: $r")
+        }
+    }
+
+    @Test
+    fun trialsAreCountedAcrossStaircases() {
+        val s = Screening(4)
+        while (s.step == Screening.Step.Plates) s.answerPlate(null)
+        for (cap in s.offeredCaps) s.place(cap)
+        var expected = 1
+        while (s.step == Screening.Step.Severity) {
+            assertEquals(expected++, s.trialNumber)
+            s.answerTrial(null)
+        }
+    }
+
     @Test
     fun typicalVisionFindsNothing() {
         val r = Observer(null).take(1)

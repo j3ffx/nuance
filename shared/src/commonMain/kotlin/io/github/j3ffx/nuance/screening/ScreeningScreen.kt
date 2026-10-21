@@ -287,7 +287,7 @@ private fun PatchStep(session: Screening, see: (Rgb) -> Rgb, onAnswer: (Int?) ->
         stringResource(Res.string.screening_patches_title),
         stringResource(Res.string.screening_patches_help)
     )
-    Text(stringResource(Res.string.screening_trial, staircase.trials + 1), style = MaterialTheme.typography.labelLarge)
+    Text(stringResource(Res.string.screening_trial, session.trialNumber), style = MaterialTheme.typography.labelLarge)
     BoxWithConstraints(
         Modifier.fillMaxWidth().background(TestBackground, RoundedCornerShape(12.dp)).padding(16.dp),
         contentAlignment = Alignment.Center
