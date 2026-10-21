@@ -54,6 +54,7 @@ jobs:
             | tar -xz gitleaks
           ./gitleaks git --redact --no-banner .
 
+      - run: npm run check:strings
       - run: npm run format:check
 
       - name: Format, JVM tests, Android lint, debug APK
