@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import io.github.j3ffx.nuance.core.Lut3d
+import io.github.j3ffx.nuance.core.Rgb
 import io.github.j3ffx.nuance.core.modes.ColorFunction
 import io.github.j3ffx.nuance.core.modes.LinearFunction
 import io.github.j3ffx.nuance.core.modes.Mode
@@ -21,6 +22,12 @@ import kotlinx.coroutines.withContext
 
 /** What a view shows; the UI turns it into a text label (never a colour alone). */
 enum class ViewKind { Real, RealSeen, Corrected, CorrectedSeen, Isolated }
+
+/**
+ * The pipette's target, as fractions of the image area from its top left, and the colour read
+ * there (null until the first reading).
+ */
+data class PipetteState(val x: Float, val y: Float, val color: Rgb? = null)
 
 /** Everything the camera screen shows, as one immutable value. */
 data class ViewState(
@@ -59,6 +66,19 @@ class CameraController(
     var state by mutableStateOf(stateFor(initial))
         private set
 
+    /** Shown while the person points at something; the colour follows the image as it moves. */
+    var pipette by mutableStateOf<PipetteState?>(null)
+        private set
+
+    /** Points the pipette at ([x], [y]); the colour is read right away, then every [PIPETTE_MS]. */
+    fun pick(x: Float, y: Float) {
+        pipette = PipetteState(x.coerceIn(0f, 1f), y.coerceIn(0f, 1f), pipette?.color)
+    }
+
+    fun closePipette() {
+        pipette = null
+    }
+
     /** Switches to [profile]'s settings and mode. */
     fun applyProfile(profile: Profile) {
         state = stateFor(profile).copy(compareCount = state.compareCount, compareSelection = state.compareSelection)
@@ -72,6 +92,7 @@ class CameraController(
     private fun stateFor(p: Profile) = ViewState(profileId = p.id, mode = p.mode, settings = p.toSettings())
 
     init {
+        scope.launch { followPipette() }
         scope.launch {
             snapshotFlow { state }.collectLatest { s ->
                 if (s.showingOriginal) {
@@ -82,6 +103,17 @@ class CameraController(
                 bake(functions, QUICK_SIZE)
                 delay(SETTLE_MS)
                 bake(functions, if (s.views == listOf(ViewKind.Isolated)) ISOLATION_SIZE else Lut3d.DEFAULT_SIZE)
+            }
+        }
+    }
+
+    private suspend fun followPipette() {
+        snapshotFlow { pipette?.let { it.x to it.y } }.collectLatest { point ->
+            point ?: return@collectLatest
+            while (true) {
+                val color = renderer.sampleColor(point.first, point.second)
+                pipette = pipette?.copy(color = color ?: pipette?.color)
+                delay(PIPETTE_MS)
             }
         }
     }
@@ -105,6 +137,9 @@ class CameraController(
         /** Hue isolation has sharp edges: 49³ keeps them right (docs/ALGORITHMS.md, "LUT size"). */
         const val ISOLATION_SIZE = 49
         const val SETTLE_MS = 150L
+
+        /** How often the pipette reads its point again: the scene moves under it. */
+        const val PIPETTE_MS = 300L
 
         fun functionFor(kind: ViewKind, s: Settings): LinearFunction {
             val views = ColorFunction.comparer(s)

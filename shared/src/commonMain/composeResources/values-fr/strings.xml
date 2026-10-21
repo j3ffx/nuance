@@ -19,10 +19,34 @@
     <string name="view_corrected">Corrigé</string>
     <string name="view_corrected_seen">Corrigé, vu %1$s</string>
     <string name="view_isolated">Seulement le %1$s</string>
-    <string name="hold_for_original">Image de la caméra. Reste appuyé pour voir l’original.</string>
+    <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur ; reste appuyé pour voir l’original.</string>
     <string name="action_advanced">Avancé</string>
     <string name="action_settings">Réglages</string>
     <string name="profile_chip_description">Profil : %1$s. Touche pour changer.</string>
+
+    <!-- Pipette -->
+    <string name="pipette_reading">Lecture de la couleur…</string>
+    <string name="pipette_seen">Pour un %1$s : %2$s</string>
+    <string name="pipette_isolate">Isoler cette couleur</string>
+    <string name="pipette_close">Fermer la pipette</string>
+    <string name="color_black">noir</string>
+    <string name="color_white">blanc</string>
+    <string name="color_grey">gris</string>
+    <string name="color_red">rouge</string>
+    <string name="color_orange">orange</string>
+    <string name="color_brown">marron</string>
+    <string name="color_beige">beige</string>
+    <string name="color_yellow">jaune</string>
+    <string name="color_olive">olive</string>
+    <string name="color_green">vert</string>
+    <string name="color_turquoise">turquoise</string>
+    <string name="color_blue">bleu</string>
+    <string name="color_violet">violet</string>
+    <string name="color_pink">rose</string>
+    <string name="color_mod_light">%1$s clair</string>
+    <string name="color_mod_dark">%1$s foncé</string>
+    <string name="color_mod_greyish">%1$s grisâtre</string>
+    <string name="color_mod_vivid">%1$s vif</string>
 
     <!-- Axes -->
     <string name="axis_protan">protan</string>

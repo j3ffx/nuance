@@ -1,6 +1,7 @@
 package io.github.j3ffx.nuance.camera
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -132,12 +133,14 @@ private fun CameraArea(controller: CameraController, camera: @Composable (Modifi
     val holdDescription = stringResource(Res.string.hold_for_original)
     Box(Modifier.fillMaxSize()) {
         camera(Modifier.fillMaxSize())
-        // A transparent layer over the platform view takes the long press (the view would keep it).
+        // A transparent layer over the platform view takes the gestures (the view would keep them):
+        // a tap points the pipette, a drag moves it, a long press shows the original.
         Box(
             Modifier.fillMaxSize()
                 .semantics { contentDescription = holdDescription }
                 .pointerInput(Unit) {
                     detectTapGestures(
+                        onTap = { controller.pick(it.x / size.width, it.y / size.height) },
                         onLongPress = { controller.update { it.copy(showingOriginal = true) } },
                         onPress = {
                             tryAwaitRelease()
@@ -145,8 +148,21 @@ private fun CameraArea(controller: CameraController, camera: @Composable (Modifi
                         }
                     )
                 }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        if (controller.pipette != null) {
+                            change.consume()
+                            controller.pick(change.position.x / size.width, change.position.y / size.height)
+                        }
+                    }
+                }
         )
         ViewLabels(controller.state)
+        controller.pipette?.let { PipetteMarker(it) }
+        PipetteCard(
+            controller,
+            Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = 8.dp, end = 8.dp)
+        )
     }
 }
 

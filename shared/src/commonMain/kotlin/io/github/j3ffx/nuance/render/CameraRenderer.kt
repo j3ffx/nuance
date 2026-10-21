@@ -1,6 +1,7 @@
 package io.github.j3ffx.nuance.render
 
 import io.github.j3ffx.nuance.core.Lut3d
+import io.github.j3ffx.nuance.core.Rgb
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -26,6 +27,13 @@ interface CameraRenderer {
      * tables are uploaded once, on the render thread. [bakeMs] is how long baking them took.
      */
     fun setViews(luts: List<Lut3d>, bakeMs: Float? = null)
+
+    /**
+     * The pipette: the colour of the *original* image (before any LUT) around the point ([x], [y]),
+     * as fractions of the image area from its top left, averaged over a small area. In a
+     * multi-view mode, the point is read in the view it falls in. Null when there is no image.
+     */
+    suspend fun sampleColor(x: Float, y: Float): Rgb?
 }
 
 /** What the dev overlay shows. Null when not measured (yet, or not supported by the GPU). */

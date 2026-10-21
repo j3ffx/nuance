@@ -6,6 +6,9 @@ import android.opengl.Matrix
 import android.os.Handler
 import android.os.HandlerThread
 import io.github.j3ffx.nuance.core.Lut3d
+import io.github.j3ffx.nuance.core.modes.ColorFunction
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
@@ -43,6 +46,7 @@ class GlThread(name: String, private val stats: StatsCollector) {
     private lateinit var cameraProgram: LutProgram
     private lateinit var imageProgram: LutProgram
     private lateinit var timer: GpuTimer
+    private lateinit var sampler: Sampler
     var cameraTexture = 0
         private set
 
@@ -56,6 +60,7 @@ class GlThread(name: String, private val stats: StatsCollector) {
         private set
     private var views: List<LutTexture> = emptyList()
     private val pendingViews = AtomicReference<List<Lut3d>?>()
+    private val pendingSample = AtomicReference<SampleRequest?>()
     private val mvp = FloatArray(16)
     private val rotation = FloatArray(16)
     private val scale = FloatArray(16)
@@ -68,6 +73,7 @@ class GlThread(name: String, private val stats: StatsCollector) {
             cameraProgram = LutProgram(external = true)
             imageProgram = LutProgram(external = false)
             timer = GpuTimer()
+            sampler = Sampler()
             cameraTexture = LutProgram.createCameraTexture()
         }
     }
@@ -96,6 +102,16 @@ class GlThread(name: String, private val stats: StatsCollector) {
     /** Takes [luts] (one per view) from the next frame on; the upload happens on the render thread. */
     fun setViews(luts: List<Lut3d>) {
         pendingViews.set(luts)
+    }
+
+    /**
+     * The pipette: on the next frame, reads the original image (identity LUT) in a small square
+     * around ([x], [y]), fractions of the surface from its top left, and gives [onResult] its
+     * pixels as 0xAARRGGBB, on the render thread. A newer request replaces an unanswered one, which
+     * gets null.
+     */
+    fun requestSample(x: Float, y: Float, onResult: (IntArray?) -> Unit) {
+        pendingSample.getAndSet(SampleRequest(x, y, onResult))?.onResult?.invoke(null)
     }
 
     fun createWindowSurface(surface: android.view.Surface): EGLSurface = run { egl.createWindowSurface(surface) }
@@ -137,9 +153,41 @@ class GlThread(name: String, private val stats: StatsCollector) {
             program.draw(source.texture, source.texMatrix, mvp, lut)
         }
         timer.end()
+        pendingSample.getAndSet(null)?.let { request ->
+            request.onResult(sample(request, source, rects, width, height, program))
+            egl.makeCurrent(target)
+        }
         // Present as soon as possible: the frame's capture time, on the display's (monotonic) clock.
         egl.swap(target, source.captureNs?.let { stats.toMonotonic(it) })
         stats.onDraw(source.captureNs, arrivalNs, timer.lastMs)
+    }
+
+    /**
+     * Draws the view under the point once more, without its LUT, into a tiny framebuffer placed
+     * so that it holds the [Sampler.SIZE]² pixels around the point, and reads them back. Only on
+     * request: the render loop itself never copies a frame to the CPU.
+     */
+    private fun sample(
+        request: SampleRequest,
+        source: FrameSource,
+        rects: List<ViewRect>,
+        width: Int,
+        height: Int,
+        program: LutProgram
+    ): IntArray {
+        val rect = rects.firstOrNull { request.x in it.x..it.x + it.width && request.y in it.y..it.y + it.height }
+            ?: rects.first()
+        val w = (rect.width * width).toInt()
+        val h = (rect.height * height).toInt()
+        val px = ((request.x - rect.x) / rect.width * w).toInt()
+        val py = h - ((request.y - rect.y) / rect.height * h).toInt()
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, sampler.framebuffer)
+        GLES30.glViewport(Sampler.SIZE / 2 - px, Sampler.SIZE / 2 - py, w, h)
+        fillMatrix(source, w.toFloat() / h)
+        program.draw(source.texture, source.texMatrix, mvp, sampler.identity)
+        val pixels = sampler.read()
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        return pixels
     }
 
     /** Rotates the image upright, then scales it to fill the view, cropping the overflow (centred). */
@@ -157,7 +205,9 @@ class GlThread(name: String, private val stats: StatsCollector) {
     fun quit() {
         run {
             alive = false
+            pendingSample.getAndSet(null)?.onResult?.invoke(null)
             views.forEach { it.release() }
+            sampler.release()
             timer.release()
             cameraProgram.release()
             imageProgram.release()
@@ -166,5 +216,67 @@ class GlThread(name: String, private val stats: StatsCollector) {
             egl.release()
         }
         thread.quitSafely()
+    }
+}
+
+private class SampleRequest(val x: Float, val y: Float, val onResult: (IntArray?) -> Unit)
+
+/** The pipette's tiny framebuffer, and the identity LUT that shows the original image. */
+private class Sampler {
+    val identity = LutTexture(Lut3d.bakeLinear(2, ColorFunction.identity))
+    private val texture: Int
+    val framebuffer: Int
+    private val buffer = ByteBuffer.allocateDirect(SIZE * SIZE * 4).order(ByteOrder.nativeOrder())
+
+    init {
+        val ids = IntArray(1)
+        GLES30.glGenTextures(1, ids, 0)
+        texture = ids[0]
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture)
+        GLES30.glTexImage2D(
+            GLES30.GL_TEXTURE_2D,
+            0,
+            GLES30.GL_RGBA8,
+            SIZE,
+            SIZE,
+            0,
+            GLES30.GL_RGBA,
+            GLES30.GL_UNSIGNED_BYTE,
+            null
+        )
+        GLES30.glGenFramebuffers(1, ids, 0)
+        framebuffer = ids[0]
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer)
+        GLES30.glFramebufferTexture2D(
+            GLES30.GL_FRAMEBUFFER,
+            GLES30.GL_COLOR_ATTACHMENT0,
+            GLES30.GL_TEXTURE_2D,
+            texture,
+            0
+        )
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+    }
+
+    /** The framebuffer's pixels as 0xAARRGGBB. */
+    fun read(): IntArray {
+        buffer.position(0)
+        GLES30.glReadPixels(0, 0, SIZE, SIZE, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, buffer)
+        return IntArray(SIZE * SIZE) { i ->
+            val r = buffer.get(i * 4).toInt() and 0xFF
+            val g = buffer.get(i * 4 + 1).toInt() and 0xFF
+            val b = buffer.get(i * 4 + 2).toInt() and 0xFF
+            (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+        }
+    }
+
+    fun release() {
+        identity.release()
+        GLES30.glDeleteFramebuffers(1, intArrayOf(framebuffer), 0)
+        GLES30.glDeleteTextures(1, intArrayOf(texture), 0)
+    }
+
+    companion object {
+        /** Side of the averaged square, in screen pixels: about 2 mm on the test phone. */
+        const val SIZE = 20
     }
 }

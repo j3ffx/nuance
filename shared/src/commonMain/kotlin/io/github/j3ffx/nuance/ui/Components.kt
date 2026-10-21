@@ -40,6 +40,10 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.HuePreset
+import io.github.j3ffx.nuance.core.naming.Chroma
+import io.github.j3ffx.nuance.core.naming.ColorName
+import io.github.j3ffx.nuance.core.naming.ColorTerm
+import io.github.j3ffx.nuance.core.naming.Lightness
 import io.github.j3ffx.nuance.core.profile.Profile
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.axis_deutan
@@ -52,6 +56,24 @@ import io.github.j3ffx.nuance.resources.axis_tritan
 import io.github.j3ffx.nuance.resources.axis_tritan_help
 import io.github.j3ffx.nuance.resources.axis_tritan_title
 import io.github.j3ffx.nuance.resources.back
+import io.github.j3ffx.nuance.resources.color_beige
+import io.github.j3ffx.nuance.resources.color_black
+import io.github.j3ffx.nuance.resources.color_blue
+import io.github.j3ffx.nuance.resources.color_brown
+import io.github.j3ffx.nuance.resources.color_green
+import io.github.j3ffx.nuance.resources.color_grey
+import io.github.j3ffx.nuance.resources.color_mod_dark
+import io.github.j3ffx.nuance.resources.color_mod_greyish
+import io.github.j3ffx.nuance.resources.color_mod_light
+import io.github.j3ffx.nuance.resources.color_mod_vivid
+import io.github.j3ffx.nuance.resources.color_olive
+import io.github.j3ffx.nuance.resources.color_orange
+import io.github.j3ffx.nuance.resources.color_pink
+import io.github.j3ffx.nuance.resources.color_red
+import io.github.j3ffx.nuance.resources.color_turquoise
+import io.github.j3ffx.nuance.resources.color_violet
+import io.github.j3ffx.nuance.resources.color_white
+import io.github.j3ffx.nuance.resources.color_yellow
 import io.github.j3ffx.nuance.resources.hue_blue
 import io.github.j3ffx.nuance.resources.hue_green
 import io.github.j3ffx.nuance.resources.hue_orange
@@ -222,4 +244,38 @@ fun hueName(p: HuePreset): String = stringResource(
 
 fun nearestPreset(hue: Double): HuePreset = HuePreset.entries.minBy {
     abs(it.hue - hue).let { d -> if (d > 180) 360 - d else d }
+}
+
+/** "Bleu grisâtre clair", "Light greyish blue": the term, then each modifier wraps it. */
+@Composable
+fun colorName(n: ColorName): String {
+    var text = stringResource(
+        when (n.term) {
+            ColorTerm.Black -> Res.string.color_black
+            ColorTerm.White -> Res.string.color_white
+            ColorTerm.Grey -> Res.string.color_grey
+            ColorTerm.Red -> Res.string.color_red
+            ColorTerm.Orange -> Res.string.color_orange
+            ColorTerm.Brown -> Res.string.color_brown
+            ColorTerm.Beige -> Res.string.color_beige
+            ColorTerm.Yellow -> Res.string.color_yellow
+            ColorTerm.Olive -> Res.string.color_olive
+            ColorTerm.Green -> Res.string.color_green
+            ColorTerm.Turquoise -> Res.string.color_turquoise
+            ColorTerm.Blue -> Res.string.color_blue
+            ColorTerm.Violet -> Res.string.color_violet
+            ColorTerm.Pink -> Res.string.color_pink
+        }
+    )
+    when (n.chroma) {
+        Chroma.Greyish -> text = stringResource(Res.string.color_mod_greyish, text)
+        Chroma.Vivid -> text = stringResource(Res.string.color_mod_vivid, text)
+        null -> Unit
+    }
+    when (n.lightness) {
+        Lightness.Light -> text = stringResource(Res.string.color_mod_light, text)
+        Lightness.Dark -> text = stringResource(Res.string.color_mod_dark, text)
+        null -> Unit
+    }
+    return text.replaceFirstChar { it.uppercaseChar() }
 }

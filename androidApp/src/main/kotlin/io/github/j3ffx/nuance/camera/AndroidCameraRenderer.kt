@@ -30,14 +30,19 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import io.github.j3ffx.nuance.BuildConfig
 import io.github.j3ffx.nuance.core.Lut3d
+import io.github.j3ffx.nuance.core.Rgb
 import io.github.j3ffx.nuance.core.charts.SyntheticCharts
 import io.github.j3ffx.nuance.core.charts.SyntheticImage
 import io.github.j3ffx.nuance.core.cvd.Axis
+import io.github.j3ffx.nuance.core.naming.ColorNaming
 import io.github.j3ffx.nuance.render.CameraRenderer
 import io.github.j3ffx.nuance.render.GlThread
 import io.github.j3ffx.nuance.render.RenderStats
 import io.github.j3ffx.nuance.render.StatsCollector
+import kotlin.coroutines.resume
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Android's [CameraRenderer]: CameraX for the camera, OpenGL ES 3 for the LUTs.
@@ -90,6 +95,14 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         this.luts = luts
         collector.update { it.copy(lutBakeMs = bakeMs) }
         gl?.setViews(luts)
+    }
+
+    override suspend fun sampleColor(x: Float, y: Float): Rgb? {
+        val thread = gl ?: return null // the raw preview has no GL side
+        val pixels = withTimeoutOrNull(SAMPLE_TIMEOUT_MS) {
+            suspendCancellableCoroutine { cont -> thread.requestSample(x, y) { cont.resume(it) } }
+        }
+        return pixels?.let { ColorNaming.average(it) }
     }
 
     /** The image of the current source, bound to [lifecycleOwner]. */
@@ -201,6 +214,9 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         const val CAMERA = "camera"
         const val RAW = "raw"
         const val MOVING = "moving"
+
+        /** A frame comes every 33 ms; past this, the image has stopped (activity paused…). */
+        private const val SAMPLE_TIMEOUT_MS = 1000L
 
         private fun thermalName(status: Int) = when (status) {
             PowerManager.THERMAL_STATUS_NONE -> "none"
