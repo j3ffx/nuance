@@ -21,6 +21,7 @@ import io.github.j3ffx.nuance.core.naming.Lightness.Dark
 import io.github.j3ffx.nuance.core.naming.Lightness.Light
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ColorNamingTest {
     private fun rgb(hex: String) = Rgb(
@@ -83,7 +84,7 @@ class ColorNamingTest {
         for (i in 0..255) {
             val v = i / 255f
             val term = ColorNaming.name(Rgb(v, v, v)).term
-            assert(term == Black || term == Grey || term == White) { "grey $i named $term" }
+            assertTrue(term == Black || term == Grey || term == White, "grey $i named $term")
         }
     }
 
