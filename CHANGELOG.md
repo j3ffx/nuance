@@ -1,5 +1,12 @@
 # Nouveautés de Nuance
 
+## Depuis la dernière version
+
+### Corrections
+
+- « Installer » une mise à jour ouvre bien la confirmation d’Android (elle restait bloquée sans rien
+  dire sur Android 14 et plus).
+
 ## 0.1.0 — 2026-10-22
 
 ### Nouveautés

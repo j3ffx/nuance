@@ -1,9 +1,12 @@
 package io.github.j3ffx.nuance
 
+import android.app.ActivityOptions
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import androidx.core.net.toUri
 import io.github.j3ffx.nuance.platform.ReleaseInfo
@@ -73,10 +76,36 @@ class Updater(private val context: Context) {
                 context,
                 id,
                 status,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                statusOptions()
             )
             session.commit(pending.intentSender)
         }
+    }
+
+    /**
+     * Since Android 14, the system sending our PendingIntent may only open our activity if we, its
+     * creator, allow it: without this, the installer's answer was blocked ("Background activity
+     * launch blocked") and the confirmation screen never showed. Allowed only while Nuance is on
+     * screen, which it is when the person taps "Install".
+     */
+    private fun statusOptions(): Bundle? {
+        val options = ActivityOptions.makeBasic()
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA ->
+                options.setPendingIntentCreatorBackgroundActivityStartMode(
+                    ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE
+                )
+
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
+                @Suppress("DEPRECATION")
+                options.setPendingIntentCreatorBackgroundActivityStartMode(
+                    ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                )
+
+            else -> return null
+        }
+        return options.toBundle()
     }
 
     private fun get(url: String): String = connect(url).run {
