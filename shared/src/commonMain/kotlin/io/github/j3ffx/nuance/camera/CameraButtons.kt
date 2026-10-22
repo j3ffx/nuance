@@ -17,16 +17,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -37,14 +43,23 @@ import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.camera_flip
 import io.github.j3ffx.nuance.resources.camera_freeze
 import io.github.j3ffx.nuance.resources.camera_frozen
+import io.github.j3ffx.nuance.resources.camera_photo
+import io.github.j3ffx.nuance.resources.camera_photo_failed
+import io.github.j3ffx.nuance.resources.camera_photo_saved
+import io.github.j3ffx.nuance.resources.camera_recording
 import io.github.j3ffx.nuance.resources.camera_resume
 import io.github.j3ffx.nuance.resources.camera_torch_off
 import io.github.j3ffx.nuance.resources.camera_torch_on
+import io.github.j3ffx.nuance.resources.camera_video
+import io.github.j3ffx.nuance.resources.camera_video_failed
+import io.github.j3ffx.nuance.resources.camera_video_saved
+import io.github.j3ffx.nuance.resources.camera_video_stop
 import io.github.j3ffx.nuance.resources.camera_zoom
 import io.github.j3ffx.nuance.ui.CameraIcons
 import io.github.j3ffx.nuance.ui.NuanceColors
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -52,9 +67,16 @@ import org.jetbrains.compose.resources.stringResource
  * and the zoom, which steps through the lenses (pinching zooms finely).
  */
 @Composable
-internal fun CameraButtons(controller: CameraController, modifier: Modifier) {
+internal fun CameraButtons(controller: CameraController, withOriginal: Boolean, modifier: Modifier) {
     val status by controller.renderer.camera.collectAsState()
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.End) {
+        RoundButton(CameraIcons.Photo, stringResource(Res.string.camera_photo)) {
+            controller.takePhoto(withOriginal)
+        }
+        RoundButton(
+            if (status.recording) CameraIcons.Stop else CameraIcons.Video,
+            stringResource(if (status.recording) Res.string.camera_video_stop else Res.string.camera_video)
+        ) { controller.toggleVideo() }
         RoundButton(
             if (status.frozen) CameraIcons.Play else CameraIcons.Pause,
             stringResource(if (status.frozen) Res.string.camera_resume else Res.string.camera_freeze)
@@ -91,16 +113,47 @@ internal fun CameraButtons(controller: CameraController, modifier: Modifier) {
     }
 }
 
-/** While frozen, a written reminder: the play icon alone could be missed. */
+/**
+ * What the camera is doing, in words: frozen, filming (with the time), or what the last capture
+ * did. The icons alone could be missed.
+ */
 @Composable
-internal fun FrozenLabel(controller: CameraController, modifier: Modifier) {
+internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
     val status by controller.renderer.camera.collectAsState()
-    if (!status.frozen) return
+    var seconds by remember { mutableIntStateOf(0) }
+    LaunchedEffect(status.recording) {
+        seconds = 0
+        while (status.recording) {
+            delay(1000)
+            seconds++
+        }
+    }
+    val message = controller.captureMessage
+    val text = when {
+        status.recording -> stringResource(
+            Res.string.camera_recording,
+            "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
+        )
+
+        message != null -> stringResource(
+            when (message) {
+                CaptureMessage.PhotoSaved -> Res.string.camera_photo_saved
+                CaptureMessage.PhotoFailed -> Res.string.camera_photo_failed
+                CaptureMessage.VideoSaved -> Res.string.camera_video_saved
+                CaptureMessage.VideoFailed -> Res.string.camera_video_failed
+            }
+        )
+
+        status.frozen -> stringResource(Res.string.camera_frozen)
+
+        else -> return
+    }
     Text(
-        stringResource(Res.string.camera_frozen),
+        text,
         color = NuanceColors.onScrim,
         style = MaterialTheme.typography.labelLarge,
-        modifier = modifier.background(NuanceColors.scrim, RoundedCornerShape(6.dp))
+        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
             .padding(horizontal = 10.dp, vertical = 6.dp)
     )
 }

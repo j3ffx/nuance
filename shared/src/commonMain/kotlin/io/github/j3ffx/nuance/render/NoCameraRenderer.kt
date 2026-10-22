@@ -27,4 +27,10 @@ class NoCameraRenderer : CameraRenderer {
     override fun setFrozen(frozen: Boolean) = Unit
 
     override fun setImageZoom(scale: Float, cx: Float, cy: Float) = Unit
+
+    override suspend fun takePhoto(name: String, withOriginal: Boolean) = false
+
+    override suspend fun startVideo(name: String) = false
+
+    override suspend fun stopVideo() = false
 }

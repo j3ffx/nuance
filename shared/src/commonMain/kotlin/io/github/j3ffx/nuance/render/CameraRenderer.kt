@@ -57,6 +57,18 @@ interface CameraRenderer {
      * its top left. The renderer keeps the image filling the view.
      */
     fun setImageZoom(scale: Float, cx: Float, cy: Float)
+
+    /**
+     * Saves what the views show, without the controls (and, if [withOriginal], the original
+     * alone), as photos in the gallery's "Nuance" album; [name] goes into the file names.
+     */
+    suspend fun takePhoto(name: String, withOriginal: Boolean): Boolean
+
+    /** Films what the views show into the gallery, until [stopVideo]; false if it could not start. */
+    suspend fun startVideo(name: String): Boolean
+
+    /** Stops filming and keeps the video; false if nothing usable was recorded. */
+    suspend fun stopVideo(): Boolean
 }
 
 /** The camera's state. Zoom ratios below 1 are the ultra wide lens, where the phone exposes it. */
@@ -68,7 +80,8 @@ data class CameraStatus(
     val torch: Boolean = false,
     val front: Boolean = false,
     val canSwitchFacing: Boolean = false,
-    val frozen: Boolean = false
+    val frozen: Boolean = false,
+    val recording: Boolean = false
 )
 
 /** What the dev overlay shows. Null when not measured (yet, or not supported by the GPU). */

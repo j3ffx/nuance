@@ -14,6 +14,7 @@ import io.github.j3ffx.nuance.core.modes.Mode
 import io.github.j3ffx.nuance.core.modes.Settings
 import io.github.j3ffx.nuance.core.profile.Profile
 import io.github.j3ffx.nuance.render.CameraRenderer
+import kotlin.math.roundToInt
 import kotlin.time.measureTimedValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,9 @@ enum class ViewKind {
  * there (null until the first reading).
  */
 data class PipetteState(val x: Float, val y: Float, val color: Rgb? = null)
+
+/** What a capture ended in, told in words (never by a colour or a sound alone). */
+enum class CaptureMessage { PhotoSaved, PhotoFailed, VideoSaved, VideoFailed }
 
 /** A zoom into the frozen image: [scale] ≥ 1 around ([cx], [cy]), fractions from its top left. */
 data class ImageZoomState(val scale: Float = 1f, val cx: Float = 0.5f, val cy: Float = 0.5f) {
@@ -93,7 +97,11 @@ data class ViewState(
  * baked twice: at 17³ at once (a few ms, so sliders follow the finger), then at full size once the
  * state has stayed put for a moment. A newer change cancels an older bake.
  */
-class CameraController(val renderer: CameraRenderer, scope: CoroutineScope, initial: Profile = Profile.Default) {
+class CameraController(
+    val renderer: CameraRenderer,
+    private val scope: CoroutineScope,
+    initial: Profile = Profile.Default
+) {
     var state by mutableStateOf(stateFor(initial))
         private set
 
@@ -108,6 +116,41 @@ class CameraController(val renderer: CameraRenderer, scope: CoroutineScope, init
 
     fun closePipette() {
         pipette = null
+    }
+
+    /** The last capture's outcome, shown for a moment; null when there is nothing to say. */
+    var captureMessage by mutableStateOf<CaptureMessage?>(null)
+        private set
+
+    /** Saves what the screen shows (and the original if [withOriginal]) to the gallery. */
+    fun takePhoto(withOriginal: Boolean) {
+        scope.launch {
+            val ok = renderer.takePhoto(captureName(), withOriginal)
+            say(if (ok) CaptureMessage.PhotoSaved else CaptureMessage.PhotoFailed)
+        }
+    }
+
+    /** Starts filming, or stops and keeps the video. */
+    fun toggleVideo() {
+        scope.launch {
+            if (renderer.camera.value.recording) {
+                say(if (renderer.stopVideo()) CaptureMessage.VideoSaved else CaptureMessage.VideoFailed)
+            } else if (!renderer.startVideo(captureName())) {
+                say(CaptureMessage.VideoFailed)
+            }
+        }
+    }
+
+    private suspend fun say(message: CaptureMessage) {
+        captureMessage = message
+        delay(MESSAGE_MS)
+        if (captureMessage == message) captureMessage = null
+    }
+
+    /** "deutan60_correct": the profile and the mode, in the file names. */
+    private fun captureName(): String {
+        val p = state.settings.profile
+        return "${p.axis.name.lowercase()}${(p.severity * 100).roundToInt()}_${state.mode.name.lowercase()}"
     }
 
     /** The zoom into the frozen image (1 = the whole image). */
@@ -227,6 +270,8 @@ class CameraController(val renderer: CameraRenderer, scope: CoroutineScope, init
 
         /** How often the pipette reads its point again: the scene moves under it. */
         const val PIPETTE_MS = 300L
+
+        const val MESSAGE_MS = 2500L
 
         /** The frozen image is a preview frame (1080p): beyond this, it is only blur. */
         const val MAX_IMAGE_ZOOM = 6f

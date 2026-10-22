@@ -50,6 +50,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        // Leaving the screen (home, a call, the screen off) ends a video: the camera stops too.
+        renderer.finishVideo()
+        super.onStop()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         applyDevExtras(intent)

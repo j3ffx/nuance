@@ -53,6 +53,7 @@ import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.HuePreset
 import io.github.j3ffx.nuance.core.modes.Mode
 import io.github.j3ffx.nuance.core.profile.Profile
+import io.github.j3ffx.nuance.platform.CaptureFormat
 import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.render.ViewLayout
 import io.github.j3ffx.nuance.resources.Res
@@ -103,7 +104,7 @@ fun CameraScreen(
         val landscape = maxWidth > maxHeight
         val image: @Composable (Modifier) -> Unit = { m ->
             Box(m) {
-                CameraArea(controller, camera)
+                CameraArea(controller, preferences.captureFormat == CaptureFormat.FilteredAndOriginal, camera)
                 TopBar(controller, preferences, { showProfiles = true }, onOpenSettings)
             }
         }
@@ -130,7 +131,7 @@ fun CameraScreen(
 }
 
 @Composable
-private fun CameraArea(controller: CameraController, camera: @Composable (Modifier) -> Unit) {
+private fun CameraArea(controller: CameraController, withOriginal: Boolean, camera: @Composable (Modifier) -> Unit) {
     val holdDescription = stringResource(Res.string.hold_for_original)
     Box(Modifier.fillMaxSize()) {
         camera(Modifier.fillMaxSize())
@@ -153,8 +154,12 @@ private fun CameraArea(controller: CameraController, camera: @Composable (Modifi
         )
         ViewLabels(controller.state)
         controller.pipette?.let { PipetteMarker(it) }
-        CameraButtons(controller, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
-        FrozenLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
+        CameraButtons(
+            controller,
+            withOriginal = withOriginal,
+            Modifier.align(Alignment.CenterEnd).padding(end = 12.dp)
+        )
+        CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
         PipetteCard(
             controller,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = 8.dp, end = 8.dp)

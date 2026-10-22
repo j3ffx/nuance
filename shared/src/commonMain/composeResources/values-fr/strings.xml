@@ -28,6 +28,14 @@
     <string name="camera_torch_off">Éteindre la lampe</string>
     <string name="camera_flip">Changer de caméra (avant ou arrière)</string>
     <string name="camera_zoom">Zoom %1$s. Touche pour changer d’objectif.</string>
+    <string name="camera_photo">Prendre une photo</string>
+    <string name="camera_video">Filmer</string>
+    <string name="camera_video_stop">Arrêter de filmer</string>
+    <string name="camera_recording">● Enregistrement %1$s</string>
+    <string name="camera_photo_saved">Photo enregistrée dans l’album Nuance</string>
+    <string name="camera_photo_failed">La photo n’a pas pu être enregistrée</string>
+    <string name="camera_video_saved">Vidéo enregistrée dans l’album Nuance</string>
+    <string name="camera_video_failed">La vidéo n’a pas pu être enregistrée</string>
     <string name="action_advanced">Avancé</string>
     <string name="action_settings">Réglages</string>
     <string name="profile_chip_description">Profil : %1$s. Touche pour changer.</string>

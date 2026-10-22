@@ -2,6 +2,10 @@ package io.github.j3ffx.nuance.camera
 
 import android.content.Context
 import android.hardware.display.DisplayManager
+import android.media.MediaRecorder
+import android.net.Uri
+import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.os.PowerManager
 import android.util.Range
 import android.util.Size
@@ -42,11 +46,16 @@ import io.github.j3ffx.nuance.render.GlThread
 import io.github.j3ffx.nuance.render.ImageZoom
 import io.github.j3ffx.nuance.render.RenderStats
 import io.github.j3ffx.nuance.render.StatsCollector
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -81,6 +90,17 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
 
     private val status = MutableStateFlow(CameraStatus())
     override val camera: StateFlow<CameraStatus> = status
+
+    private val gallery = Gallery(context)
+    private var video: Recording? = null
+
+    /** A video being filmed: its encoder, its pending gallery entry, the render thread feeding it. */
+    private class Recording(
+        val recorder: MediaRecorder,
+        val uri: Uri,
+        val fd: ParcelFileDescriptor,
+        val thread: GlThread
+    )
 
     init {
         collector.update { it.copy(source = source) }
@@ -135,6 +155,77 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         imageZoom = ImageZoom(scale, cx, cy)
         gl?.setImageZoom(imageZoom)
     }
+
+    override suspend fun takePhoto(name: String, withOriginal: Boolean): Boolean {
+        val thread = gl ?: return false
+        val images = withTimeoutOrNull(SAMPLE_TIMEOUT_MS * 2) {
+            suspendCancellableCoroutine<List<android.graphics.Bitmap>?> { cont ->
+                thread.requestPhoto(withOriginal) { cont.resume(it) }
+            }
+        } ?: return false
+        val file = fileName(name)
+        return withContext(Dispatchers.IO) {
+            images.mapIndexed { i, bitmap ->
+                gallery.savePhoto(bitmap, if (i == 0) file else "$file-original").also { bitmap.recycle() } != null
+            }.all { it }
+        }
+    }
+
+    override suspend fun startVideo(name: String): Boolean {
+        if (video != null) return true
+        val thread = gl ?: return false
+        val (screenWidth, screenHeight) = thread.screenSize ?: return false
+        // Encoders want sizes in multiples of 16.
+        val w = screenWidth / 16 * 16
+        val h = screenHeight / 16 * 16
+        val (uri, fd) = withContext(Dispatchers.IO) { gallery.newVideo(fileName(name)) } ?: return false
+        @Suppress("DEPRECATION")
+        val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
+        return try {
+            recorder.apply {
+                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setOutputFile(fd.fileDescriptor)
+                setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                setVideoSize(w, h)
+                setVideoFrameRate(30)
+                setVideoEncodingBitRate(VIDEO_BITRATE)
+                prepare()
+                start()
+            }
+            thread.startRecording(recorder.surface, w, h)
+            video = Recording(recorder, uri, fd, thread)
+            status.update { it.copy(recording = true) }
+            true
+        } catch (e: Exception) {
+            android.util.Log.w("Nuance", "video start failed", e)
+            recorder.release()
+            fd.close()
+            gallery.discard(uri)
+            false
+        }
+    }
+
+    override suspend fun stopVideo(): Boolean = withContext(Dispatchers.IO) { finishVideo() }
+
+    /**
+     * Stops the video and keeps it if it holds frames. Also called when the image goes away
+     * (the app leaves the screen, the camera or source changes): a video is never left open.
+     */
+    fun finishVideo(): Boolean {
+        val v = video ?: return false
+        video = null
+        status.update { it.copy(recording = false) }
+        if (v.thread.alive) v.thread.stopRecording()
+        val ok = runCatching { v.recorder.stop() }.isSuccess // throws when no frame was recorded
+        v.recorder.release()
+        v.fd.close()
+        if (ok) gallery.publish(v.uri) else gallery.discard(v.uri)
+        return ok
+    }
+
+    private fun fileName(name: String) =
+        "Nuance_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ROOT).format(Date()) + "_" + name
 
     override suspend fun sampleColor(x: Float, y: Float): Rgb? {
         val thread = gl ?: return null // the raw preview has no GL side
@@ -236,6 +327,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         DisposableEffect(thread) {
             gl = thread
             onDispose {
+                if (video?.thread === thread) finishVideo()
                 if (gl === thread) gl = null
                 thread.quit()
             }
@@ -288,6 +380,9 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
 
         /** A frame comes every 33 ms; past this, the image has stopped (activity paused…). */
         private const val SAMPLE_TIMEOUT_MS = 1000L
+
+        /** 10 Mb/s: a sharp 1080p-ish H.264 video at 30 frames a second. */
+        private const val VIDEO_BITRATE = 10_000_000
 
         private fun thermalName(status: Int) = when (status) {
             PowerManager.THERMAL_STATUS_NONE -> "none"

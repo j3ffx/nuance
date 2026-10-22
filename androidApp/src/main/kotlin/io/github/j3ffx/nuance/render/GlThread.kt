@@ -1,5 +1,6 @@
 package io.github.j3ffx.nuance.render
 
+import android.graphics.Bitmap
 import android.opengl.EGLSurface
 import android.opengl.GLES30
 import android.opengl.Matrix
@@ -76,6 +77,18 @@ class GlThread(name: String, private val stats: StatsCollector) {
 
     /** The frozen frame, copied upright into a 2D texture; null while live. */
     private var frozen: Frozen? = null
+
+    private val pendingPhoto = AtomicReference<PhotoRequest?>()
+
+    /** The video encoder's input, drawn into after the screen while recording. */
+    private var recording: EGLSurface? = null
+    private var recordingWidth = 0
+    private var recordingHeight = 0
+
+    /** The size of the last frame drawn on screen, in pixels; null before the first. */
+    @Volatile
+    var screenSize: Pair<Int, Int>? = null
+        private set
     private val mvp = FloatArray(16)
     private val rotation = FloatArray(16)
     private val scale = FloatArray(16)
@@ -139,6 +152,30 @@ class GlThread(name: String, private val stats: StatsCollector) {
         imageZoom = zoom
     }
 
+    /**
+     * On the next frame, draws the views once more into an offscreen image the size of the screen
+     * (what the person sees, without the controls) and, if [withOriginal], the original alone;
+     * [onResult] gets them on the render thread, null on failure.
+     */
+    fun requestPhoto(withOriginal: Boolean, onResult: (List<Bitmap>?) -> Unit) {
+        pendingPhoto.getAndSet(PhotoRequest(withOriginal, onResult))?.onResult?.invoke(null)
+    }
+
+    /** From the next frame on, also draws the views into [surface] (a video encoder's), [width]×[height]. */
+    fun startRecording(surface: android.view.Surface, width: Int, height: Int) = run {
+        recording = egl.createWindowSurface(surface)
+        recordingWidth = width
+        recordingHeight = height
+    }
+
+    fun stopRecording() = run {
+        recording?.let {
+            egl.makeCurrent(idleSurface)
+            egl.releaseSurface(it)
+        }
+        recording = null
+    }
+
     fun createWindowSurface(surface: android.view.Surface): EGLSurface = run { egl.createWindowSurface(surface) }
 
     fun releaseWindowSurface(surface: EGLSurface) = run {
@@ -161,6 +198,7 @@ class GlThread(name: String, private val stats: StatsCollector) {
         }
         if (views.isEmpty()) return // nothing to draw with until the first LUTs are baked
         egl.makeCurrent(target)
+        screenSize = width to height
         val shown = when {
             !freezeRequested -> {
                 frozen?.release()
@@ -177,7 +215,41 @@ class GlThread(name: String, private val stats: StatsCollector) {
         val program = if (shown.external) cameraProgram else imageProgram
         val rects = ViewLayout.rects(views.size, landscape = width > height)
         timer.begin()
-        for ((lut, rect) in views.zip(rects)) {
+        drawAll(width, height, shown, zoom, program, views)
+        timer.end()
+        recording?.let { encoder ->
+            egl.makeCurrent(encoder)
+            drawAll(recordingWidth, recordingHeight, shown, zoom, program, views)
+            egl.swap(encoder, shown.captureNs?.let { stats.toMonotonic(it) } ?: System.nanoTime())
+            egl.makeCurrent(target)
+        }
+        pendingPhoto.getAndSet(null)?.let { request ->
+            request.onResult(runCatching { photo(request, width, height, shown, zoom, program) }.getOrNull())
+            egl.makeCurrent(target)
+        }
+        pendingSample.getAndSet(null)?.let { request ->
+            request.onResult(sample(request, shown, zoom, rects, width, height, program))
+            egl.makeCurrent(target)
+        }
+        // Present as soon as possible: the frame's capture time, on the display's (monotonic) clock.
+        egl.swap(target, shown.captureNs?.let { stats.toMonotonic(it) })
+        stats.onDraw(shown.captureNs, arrivalNs, timer.lastMs)
+    }
+
+    /** Each view in its area of a [width]×[height] target, through its LUT. */
+    private fun drawAll(
+        width: Int,
+        height: Int,
+        shown: FrameSource,
+        zoom: ImageZoom?,
+        program: LutProgram,
+        luts: List<LutTexture>
+    ) {
+        GLES30.glViewport(0, 0, width, height)
+        GLES30.glClearColor(0f, 0f, 0f, 1f)
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+        val rects = ViewLayout.rects(luts.size, landscape = width > height)
+        for ((lut, rect) in luts.zip(rects)) {
             val x = (rect.x * width).toInt()
             val w = (rect.width * width).toInt()
             val h = (rect.height * height).toInt()
@@ -187,14 +259,43 @@ class GlThread(name: String, private val stats: StatsCollector) {
             fillMatrix(shown, w.toFloat() / h, zoom)
             program.draw(shown.texture, shown.texMatrix, mvp, lut)
         }
-        timer.end()
-        pendingSample.getAndSet(null)?.let { request ->
-            request.onResult(sample(request, shown, zoom, rects, width, height, program))
-            egl.makeCurrent(target)
+    }
+
+    /** The views (and the original) drawn offscreen and read back: only when a photo is taken. */
+    private fun photo(
+        request: PhotoRequest,
+        width: Int,
+        height: Int,
+        shown: FrameSource,
+        zoom: ImageZoom?,
+        program: LutProgram
+    ): List<Bitmap> {
+        val target = Frozen.create(width, height)
+        try {
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, target.framebuffer)
+            val images = ArrayList<Bitmap>()
+            drawAll(width, height, shown, zoom, program, views)
+            images += readBitmap(width, height)
+            if (request.withOriginal) {
+                drawAll(width, height, shown, zoom, program, listOf(sampler.identity))
+                images += readBitmap(width, height)
+            }
+            return images
+        } finally {
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+            target.release()
         }
-        // Present as soon as possible: the frame's capture time, on the display's (monotonic) clock.
-        egl.swap(target, shown.captureNs?.let { stats.toMonotonic(it) })
-        stats.onDraw(shown.captureNs, arrivalNs, timer.lastMs)
+    }
+
+    /** The bound framebuffer as a Bitmap, top row first (GL reads bottom row first). */
+    private fun readBitmap(width: Int, height: Int): Bitmap {
+        val buffer = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder())
+        GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, buffer)
+        // ARGB_8888 is stored as R, G, B, A bytes: the same layout GL wrote.
+        val upsideDown = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        upsideDown.copyPixelsFromBuffer(buffer.position(0))
+        val flip = android.graphics.Matrix().apply { preScale(1f, -1f) }
+        return Bitmap.createBitmap(upsideDown, 0, 0, width, height, flip, false).also { upsideDown.recycle() }
     }
 
     /**
@@ -273,6 +374,9 @@ class GlThread(name: String, private val stats: StatsCollector) {
         run {
             alive = false
             pendingSample.getAndSet(null)?.onResult?.invoke(null)
+            pendingPhoto.getAndSet(null)?.onResult?.invoke(null)
+            recording?.let { egl.releaseSurface(it) }
+            recording = null
             frozen?.release()
             views.forEach { it.release() }
             sampler.release()
@@ -339,6 +443,8 @@ private class Frozen(private val texture: Int, val framebuffer: Int, width: Int,
         }
     }
 }
+
+private class PhotoRequest(val withOriginal: Boolean, val onResult: (List<Bitmap>?) -> Unit)
 
 private class SampleRequest(val x: Float, val y: Float, val onResult: (IntArray?) -> Unit)
 
