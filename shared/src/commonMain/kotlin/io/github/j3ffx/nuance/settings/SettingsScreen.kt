@@ -4,10 +4,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
@@ -30,6 +35,7 @@ import io.github.j3ffx.nuance.platform.Platform
 import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.platform.ThemeChoice
 import io.github.j3ffx.nuance.platform.UpdateOutcome
+import io.github.j3ffx.nuance.platform.UpdateProgress
 import io.github.j3ffx.nuance.platform.Versions
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.about_text
@@ -57,16 +63,22 @@ import io.github.j3ffx.nuance.resources.theme_dark
 import io.github.j3ffx.nuance.resources.theme_light
 import io.github.j3ffx.nuance.resources.theme_system
 import io.github.j3ffx.nuance.resources.update_available
+import io.github.j3ffx.nuance.resources.update_cancelled
+import io.github.j3ffx.nuance.resources.update_closes
+import io.github.j3ffx.nuance.resources.update_downloading
 import io.github.j3ffx.nuance.resources.update_failed
 import io.github.j3ffx.nuance.resources.update_install
-import io.github.j3ffx.nuance.resources.update_installing
+import io.github.j3ffx.nuance.resources.update_installed
 import io.github.j3ffx.nuance.resources.update_permission
 import io.github.j3ffx.nuance.resources.update_up_to_date
+import io.github.j3ffx.nuance.resources.update_verifying
+import io.github.j3ffx.nuance.resources.update_waiting
 import io.github.j3ffx.nuance.resources.update_working
 import io.github.j3ffx.nuance.ui.Choices
 import io.github.j3ffx.nuance.ui.Page
 import io.github.j3ffx.nuance.ui.SectionTitle
 import io.github.j3ffx.nuance.ui.SwitchRow
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -174,18 +186,23 @@ fun SettingsScreen(
     }
 }
 
-/** "Check now" (always available), what it found, and "Install" when there is something newer. */
+/**
+ * "Check now" (always available), what it found, and "Install" when there is something newer.
+ * While installing: the download's progress, then what Android is doing, then how it ended.
+ */
 @Composable
 private fun UpdateRow(preferences: Preferences, platform: Platform) {
     val scope = rememberCoroutineScope()
-    var busy by remember { mutableStateOf(false) }
+    var checking by remember { mutableStateOf(false) }
+    var progress by remember { mutableStateOf<UpdateProgress?>(null) }
     var outcome by remember {
         mutableStateOf(if (preferences.availableUpdate != null) UpdateOutcome.Available else null)
     }
+    val busy = checking || progress != null
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
             onClick = {
-                busy = true
+                checking = true
                 scope.launch {
                     val latest = platform.latestRelease()
                     val newer = latest?.takeIf { Versions.isNewer(it.version, platform.versionName) }
@@ -195,7 +212,7 @@ private fun UpdateRow(preferences: Preferences, platform: Platform) {
                         newer != null -> UpdateOutcome.Available
                         else -> UpdateOutcome.UpToDate
                     }
-                    busy = false
+                    checking = false
                 }
             },
             enabled = !busy,
@@ -205,27 +222,57 @@ private fun UpdateRow(preferences: Preferences, platform: Platform) {
         if (update != null) {
             Button(
                 onClick = {
-                    busy = true
+                    progress = UpdateProgress.Downloading(null)
                     scope.launch {
-                        outcome = platform.installRelease(update)
-                        busy = false
+                        // Read at the next launch: Android closes Nuance to update it.
+                        preferences.updatingTo = update.version
+                        outcome = platform.installRelease(update) { progress = it }
+                        if (outcome != UpdateOutcome.Installed) preferences.updatingTo = ""
+                        progress = null
                     }
                 },
                 enabled = !busy,
                 modifier = Modifier.heightIn(min = 48.dp)
-            ) { Text(stringResource(Res.string.update_install)) }
+            ) {
+                if (progress != null) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(stringResource(Res.string.update_install))
+            }
+        }
+    }
+    val step = progress
+    if (step is UpdateProgress.Downloading) {
+        val fraction = step.fraction
+        if (fraction == null) {
+            LinearProgressIndicator(Modifier.fillMaxWidth())
+        } else {
+            LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
         }
     }
     val text = when {
-        busy -> stringResource(Res.string.update_working)
+        step is UpdateProgress.Downloading -> stringResource(
+            Res.string.update_downloading,
+            ((step.fraction ?: 0f) * 100).roundToInt()
+        )
+
+        step == UpdateProgress.Verifying -> stringResource(Res.string.update_verifying)
+
+        step == UpdateProgress.WaitingForAndroid -> stringResource(Res.string.update_waiting)
+
+        checking -> stringResource(Res.string.update_working)
 
         outcome == UpdateOutcome.UpToDate -> stringResource(Res.string.update_up_to_date, platform.versionName)
 
-        outcome == UpdateOutcome.Available -> preferences.availableUpdate?.let {
-            stringResource(Res.string.update_available, it.version)
+        // Found here, or by the check at launch, which may land after this screen opened.
+        outcome == UpdateOutcome.Available || outcome == null -> preferences.availableUpdate?.let {
+            stringResource(Res.string.update_available, it.version) + " " + stringResource(Res.string.update_closes)
         }
 
-        outcome == UpdateOutcome.Installing -> stringResource(Res.string.update_installing)
+        outcome == UpdateOutcome.Installed -> stringResource(Res.string.update_installed)
+
+        outcome == UpdateOutcome.Cancelled -> stringResource(Res.string.update_cancelled)
 
         outcome == UpdateOutcome.NeedsPermission -> stringResource(Res.string.update_permission)
 

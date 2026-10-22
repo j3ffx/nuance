@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -68,6 +69,7 @@ import io.github.j3ffx.nuance.resources.mode_simulate
 import io.github.j3ffx.nuance.resources.profile_chip_description
 import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.update_chip
+import io.github.j3ffx.nuance.resources.update_done_chip
 import io.github.j3ffx.nuance.resources.view_corrected
 import io.github.j3ffx.nuance.resources.view_corrected_as_seen
 import io.github.j3ffx.nuance.resources.view_corrected_seen
@@ -220,6 +222,19 @@ private fun TopBar(
             modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = description }
         )
         Box(Modifier.weight(1f))
+        preferences.justUpdated?.let { version ->
+            AssistChip(
+                onClick = { preferences.justUpdated = null },
+                label = { Text(stringResource(Res.string.update_done_chip, version), maxLines = 1) },
+                leadingIcon = { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = NuanceColors.scrim,
+                    labelColor = NuanceColors.onScrim,
+                    leadingIconContentColor = NuanceColors.onScrim
+                ),
+                modifier = Modifier.heightIn(min = 48.dp).padding(end = 8.dp)
+            )
+        }
         preferences.availableUpdate?.let { update ->
             AssistChip(
                 onClick = onSettings,

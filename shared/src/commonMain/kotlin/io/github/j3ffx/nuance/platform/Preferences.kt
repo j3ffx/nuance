@@ -26,6 +26,15 @@ class Preferences(private val store: KeyValueStore) {
     /** A newer version found by a check, until it is installed; not stored. */
     var availableUpdate by mutableStateOf<ReleaseInfo?>(null)
 
+    /**
+     * The version being installed: Android closes Nuance to update it, so the next launch reads
+     * this to say "up to date" ([justUpdated]).
+     */
+    var updatingTo by storedString("updatingTo", "")
+
+    /** Set at launch when the previous run installed this very version; not stored. */
+    var justUpdated by mutableStateOf<String?>(null)
+
     /** Minutes without touch nor movement before the camera pauses; 0 = never. */
     var autoPauseMinutes by storedInt("autoPauseMinutes", 2)
     var captureFormat by storedEnum("captureFormat", CaptureFormat.Filtered)

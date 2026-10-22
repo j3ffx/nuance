@@ -11,6 +11,7 @@ import io.github.j3ffx.nuance.platform.KeyValueStore
 import io.github.j3ffx.nuance.platform.Platform
 import io.github.j3ffx.nuance.platform.ReleaseInfo
 import io.github.j3ffx.nuance.platform.UpdateOutcome
+import io.github.j3ffx.nuance.platform.UpdateProgress
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -63,8 +64,8 @@ class AndroidPlatform(private val context: Context, private val recreate: () -> 
 
     override suspend fun latestRelease(): ReleaseInfo? = withContext(Dispatchers.IO) { updater.latest() }
 
-    override suspend fun installRelease(release: ReleaseInfo): UpdateOutcome =
-        withContext(Dispatchers.IO) { updater.install(release) }
+    override suspend fun installRelease(release: ReleaseInfo, onProgress: (UpdateProgress) -> Unit): UpdateOutcome =
+        updater.install(release, onProgress)
 
     companion object {
         private const val KEY = "appLanguage"

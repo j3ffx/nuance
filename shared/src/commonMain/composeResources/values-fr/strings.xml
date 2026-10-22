@@ -156,10 +156,16 @@
     <string name="update_working">Un instant…</string>
     <string name="update_up_to_date">Tu as la dernière version (%1$s).</string>
     <string name="update_available">La version %1$s est disponible.</string>
-    <string name="update_installing">Android va te demander de confirmer l’installation.</string>
     <string name="update_permission">Autorise Nuance à installer des applis dans la page qui vient de s’ouvrir, puis touche Installer de nouveau.</string>
     <string name="update_failed">Échec : vérifie ta connexion et réessaie.</string>
     <string name="update_chip">Mise à jour %1$s</string>
+    <string name="update_downloading">Téléchargement… %1$d %</string>
+    <string name="update_verifying">Vérification de la mise à jour…</string>
+    <string name="update_waiting">Android vérifie la mise à jour, puis te demandera de confirmer. Ça peut prendre quelques secondes.</string>
+    <string name="update_installed">Mise à jour installée.</string>
+    <string name="update_cancelled">Installation annulée.</string>
+    <string name="update_closes">Nuance va se fermer pendant l’installation : rouvre-la ensuite.</string>
+    <string name="update_done_chip">À jour : %1$s</string>
     <string name="settings_help">Aide et avertissements</string>
     <string name="settings_about">À propos et licences</string>
     <string name="settings_version">Version %1$s</string>

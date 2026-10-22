@@ -23,8 +23,11 @@ interface Platform {
     /** The latest version on GitHub Releases; null when it can't be reached (or no updates here). */
     suspend fun latestRelease(): ReleaseInfo?
 
-    /** Downloads [release], checks its SHA-256 and hands it to the system's installer. */
-    suspend fun installRelease(release: ReleaseInfo): UpdateOutcome
+    /**
+     * Downloads [release], checks its SHA-256 and hands it to the system's installer, telling
+     * [onProgress] where it stands; returns once the install is done or declined.
+     */
+    suspend fun installRelease(release: ReleaseInfo, onProgress: (UpdateProgress) -> Unit): UpdateOutcome
 }
 
 /** A tiny persistent key-value store: SharedPreferences on Android, NSUserDefaults on iOS. */

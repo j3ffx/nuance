@@ -5,6 +5,7 @@ import io.github.j3ffx.nuance.platform.KeyValueStore
 import io.github.j3ffx.nuance.platform.Platform
 import io.github.j3ffx.nuance.platform.ReleaseInfo
 import io.github.j3ffx.nuance.platform.UpdateOutcome
+import io.github.j3ffx.nuance.platform.UpdateProgress
 import io.github.j3ffx.nuance.render.NoCameraRenderer
 import platform.Foundation.NSBundle
 import platform.Foundation.NSUserDefaults
@@ -43,7 +44,8 @@ private object IosPlatform : Platform {
     /** No update from inside the app on iOS: the App Store or TestFlight will do it (J7). */
     override suspend fun latestRelease(): ReleaseInfo? = null
 
-    override suspend fun installRelease(release: ReleaseInfo) = UpdateOutcome.Failed
+    override suspend fun installRelease(release: ReleaseInfo, onProgress: (UpdateProgress) -> Unit) =
+        UpdateOutcome.Failed
 
     /** iOS reads AppleLanguages at launch: the choice applies the next time the app starts. */
     override var appLanguage: String?

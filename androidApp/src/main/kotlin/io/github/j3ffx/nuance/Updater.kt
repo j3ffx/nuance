@@ -7,14 +7,21 @@ import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import androidx.core.net.toUri
 import io.github.j3ffx.nuance.platform.ReleaseInfo
 import io.github.j3ffx.nuance.platform.UpdateOutcome
+import io.github.j3ffx.nuance.platform.UpdateProgress
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
+import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 /**
@@ -34,8 +41,12 @@ class Updater(private val context: Context) {
         ReleaseInfo(json.getString("tag_name").removePrefix("v"), apk.value, sha)
     }.getOrNull()
 
-    /** Downloads [release], checks it, and hands it to Android's installer. */
-    fun install(release: ReleaseInfo): UpdateOutcome {
+    /**
+     * Downloads [release], checks it, hands it to Android's installer, and waits for the end of
+     * the install (the person confirms on Android's screen). [onProgress] is called on the main
+     * thread. When Nuance updates itself, Android closes it before that end: nothing returns.
+     */
+    suspend fun install(release: ReleaseInfo, onProgress: (UpdateProgress) -> Unit): UpdateOutcome {
         val packages = context.packageManager
         if (!packages.canRequestPackageInstalls()) {
             val settings = Intent(
@@ -46,12 +57,21 @@ class Updater(private val context: Context) {
             return UpdateOutcome.NeedsPermission
         }
         val file = File(context.cacheDir, "update.apk")
+        val main = Handler(Looper.getMainLooper())
+        fun report(p: UpdateProgress) = main.post { onProgress(p) }
         return try {
-            download(release.apkUrl, file)
-            val expected = get(release.sha256Url).trim().substringBefore(' ').lowercase()
-            if (sha256(file) != expected) return UpdateOutcome.Failed
-            installer(file)
-            UpdateOutcome.Installing
+            val id = withContext(Dispatchers.IO) {
+                report(UpdateProgress.Downloading(null))
+                download(release.apkUrl, file) { fraction -> report(UpdateProgress.Downloading(fraction)) }
+                report(UpdateProgress.Verifying)
+                val expected = get(release.sha256Url).trim().substringBefore(' ').lowercase()
+                if (sha256(file) != expected) return@withContext null
+                report(UpdateProgress.WaitingForAndroid)
+                installer(file)
+            } ?: return UpdateOutcome.Failed
+            awaitEnd(id)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (_: Exception) {
             UpdateOutcome.Failed
         } finally {
@@ -59,7 +79,32 @@ class Updater(private val context: Context) {
         }
     }
 
-    private fun installer(apk: File) {
+    /** Until the session ends: installed, or declined (the person cancelled Android's screen). */
+    private suspend fun awaitEnd(id: Int): UpdateOutcome {
+        val installer = context.packageManager.packageInstaller
+        return suspendCancellableCoroutine { cont ->
+            val callback = object : PackageInstaller.SessionCallback() {
+                override fun onCreated(sessionId: Int) = Unit
+
+                override fun onBadgingChanged(sessionId: Int) = Unit
+
+                override fun onActiveChanged(sessionId: Int, active: Boolean) = Unit
+
+                override fun onProgressChanged(sessionId: Int, progress: Float) = Unit
+
+                override fun onFinished(sessionId: Int, success: Boolean) {
+                    if (sessionId != id) return
+                    installer.unregisterSessionCallback(this)
+                    if (cont.isActive) cont.resume(if (success) UpdateOutcome.Installed else UpdateOutcome.Cancelled)
+                }
+            }
+            installer.registerSessionCallback(callback, Handler(Looper.getMainLooper()))
+            cont.invokeOnCancellation { installer.unregisterSessionCallback(callback) }
+        }
+    }
+
+    /** Writes [apk] into a new install session and commits it; returns the session's id. */
+    private fun installer(apk: File): Int {
         val installer = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
         val id = installer.createSession(params)
@@ -81,6 +126,7 @@ class Updater(private val context: Context) {
             )
             session.commit(pending.intentSender)
         }
+        return id
     }
 
     /**
@@ -116,9 +162,28 @@ class Updater(private val context: Context) {
         }
     }
 
-    private fun download(url: String, to: File) = connect(url).run {
+    /** Downloads [url] into [to], telling [onFraction] how much is done (when the size is known). */
+    private fun download(url: String, to: File, onFraction: (Float) -> Unit) = connect(url).run {
         try {
-            inputStream.use { input -> to.outputStream().use { input.copyTo(it) } }
+            val total = contentLengthLong
+            var done = 0L
+            var reported = -1
+            inputStream.use { input ->
+                to.outputStream().use { out ->
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val n = input.read(buffer)
+                        if (n < 0) break
+                        out.write(buffer, 0, n)
+                        done += n
+                        val percent = if (total > 0) (done * 100 / total).toInt() else -1
+                        if (percent >= 0 && percent != reported) {
+                            reported = percent
+                            onFraction(percent / 100f)
+                        }
+                    }
+                }
+            }
         } finally {
             disconnect()
         }

@@ -85,7 +85,15 @@ fun App(
     devCommand: DevCommand? = null,
     camera: @Composable (Modifier) -> Unit
 ) {
-    val preferences = remember(platform) { Preferences(platform.store) }
+    val preferences = remember(platform) {
+        Preferences(platform.store).apply {
+            // The previous run was closed by Android to install this very version: say it worked.
+            if (updatingTo.isNotEmpty()) {
+                if (updatingTo == platform.versionName) justUpdated = updatingTo
+                updatingTo = ""
+            }
+        }
+    }
     val dev = remember { DevPreview() }
     LaunchedEffect(devCommand) {
         devCommand?.narrow?.let { dev.narrow = it }

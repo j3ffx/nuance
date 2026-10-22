@@ -1,5 +1,13 @@
 # Nouveautés de Nuance
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Pendant une mise à jour, l’appli montre où elle en est : téléchargement (en pourcentage),
+  vérification, puis l’attente de la confirmation d’Android ; et à la fin, installée ou annulée.
+- Nuance prévient qu’elle va se fermer pendant l’installation, et dit « À jour » quand on la rouvre.
+
 ## 0.1.1 — 2026-10-22
 
 ### Corrections

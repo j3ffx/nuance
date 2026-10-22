@@ -11,14 +11,29 @@ enum class UpdateOutcome {
     /** A newer version exists ([ReleaseInfo]). */
     Available,
 
-    /** Android's installer took over: the person confirms there. */
-    Installing,
+    /** Installed (another app was updated; Nuance updating itself is closed by Android first). */
+    Installed,
+
+    /** The person declined Android's confirmation, or the installer gave up. */
+    Cancelled,
 
     /** Android needs the person to allow Nuance to install apps (a settings page was opened). */
     NeedsPermission,
 
     /** GitHub could not be reached, or the download was damaged (its SHA-256 did not match). */
     Failed
+}
+
+/** Where an install stands, for the progress shown meanwhile. */
+sealed interface UpdateProgress {
+    /** [fraction] of the APK downloaded, null while its size is unknown. */
+    data class Downloading(val fraction: Float?) : UpdateProgress
+
+    /** Checking the download against its SHA-256. */
+    data object Verifying : UpdateProgress
+
+    /** Handed to Android, which checks the APK, then asks the person to confirm. */
+    data object WaitingForAndroid : UpdateProgress
 }
 
 object Versions {
