@@ -1,8 +1,10 @@
 # Nouveautés de Nuance
 
-## Depuis la dernière version
+## 0.1.0 — 2026-10-22
 
 ### Nouveautés
+
+La première version : de quoi la faire essayer à une première personne daltonienne.
 
 - La caméra filtrée en temps réel, à 30 images par seconde.
 - Quatre modes : corriger les couleurs selon ton profil, isoler une couleur, simuler ce que voit une

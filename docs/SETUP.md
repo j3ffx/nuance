@@ -84,8 +84,8 @@ par une autre clé par-dessus l'appli. Sauvegarde-la (gestionnaire de mots de pa
 
 ## Publier une version
 
-1. Dans `CHANGELOG.md`, renomme `## Depuis la dernière version` en `## x.y.z — AAAA-MM-JJ` (et
-   remets une section vide au-dessus) ; commit.
+1. Dans `CHANGELOG.md`, renomme `## Depuis la dernière version` en `## x.y.z — AAAA-MM-JJ` (la
+   section revient au-dessus à la prochaine retouche) ; commit.
 2. Tag léger, poussé : `git tag vx.y.z && git push origin vx.y.z` (un tag annoté enregistrerait
    l'heure).
 3. `release.yml` construit l'APK signé (`-Pnuance.version=x.y.z`, `versionCode` déduit), son
