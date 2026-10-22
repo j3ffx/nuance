@@ -40,9 +40,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.render.CameraStatus
 import io.github.j3ffx.nuance.resources.Res
+import io.github.j3ffx.nuance.resources.camera_back
 import io.github.j3ffx.nuance.resources.camera_flip
 import io.github.j3ffx.nuance.resources.camera_freeze
 import io.github.j3ffx.nuance.resources.camera_frozen
+import io.github.j3ffx.nuance.resources.camera_image_shown
+import io.github.j3ffx.nuance.resources.camera_open_image
 import io.github.j3ffx.nuance.resources.camera_photo
 import io.github.j3ffx.nuance.resources.camera_photo_failed
 import io.github.j3ffx.nuance.resources.camera_photo_saved
@@ -67,16 +70,31 @@ import org.jetbrains.compose.resources.stringResource
  * and the zoom, which steps through the lenses (pinching zooms finely).
  */
 @Composable
-internal fun CameraButtons(controller: CameraController, withOriginal: Boolean, modifier: Modifier) {
+internal fun CameraButtons(
+    controller: CameraController,
+    withOriginal: Boolean,
+    onOpenImage: () -> Unit,
+    modifier: Modifier
+) {
     val status by controller.renderer.camera.collectAsState()
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.End) {
-        RoundButton(CameraIcons.Photo, stringResource(Res.string.camera_photo)) {
+        if (status.image) {
+            // A gallery photo is shown: the way back is the first button.
+            RoundButton(CameraIcons.Photo, stringResource(Res.string.camera_back)) {
+                controller.renderer.backToCamera()
+            }
+        } else {
+            RoundButton(CameraIcons.Gallery, stringResource(Res.string.camera_open_image), onOpenImage)
+        }
+        RoundButton(CameraIcons.Shutter, stringResource(Res.string.camera_photo)) {
             controller.takePhoto(withOriginal)
         }
-        RoundButton(
-            if (status.recording) CameraIcons.Stop else CameraIcons.Video,
-            stringResource(if (status.recording) Res.string.camera_video_stop else Res.string.camera_video)
-        ) { controller.toggleVideo() }
+        if (!status.image) {
+            RoundButton(
+                if (status.recording) CameraIcons.Stop else CameraIcons.Video,
+                stringResource(if (status.recording) Res.string.camera_video_stop else Res.string.camera_video)
+            ) { controller.toggleVideo() }
+        }
         RoundButton(
             if (status.frozen) CameraIcons.Play else CameraIcons.Pause,
             stringResource(if (status.frozen) Res.string.camera_resume else Res.string.camera_freeze)
@@ -87,7 +105,7 @@ internal fun CameraButtons(controller: CameraController, withOriginal: Boolean, 
                 stringResource(if (status.torch) Res.string.camera_torch_off else Res.string.camera_torch_on)
             ) { controller.renderer.setTorch(!status.torch) }
         }
-        if (status.canSwitchFacing) {
+        if (status.canSwitchFacing && !status.image) {
             RoundButton(CameraIcons.FlipCamera, stringResource(Res.string.camera_flip)) {
                 controller.renderer.switchFacing()
             }
@@ -145,6 +163,8 @@ internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
         )
 
         status.frozen -> stringResource(Res.string.camera_frozen)
+
+        status.image -> stringResource(Res.string.camera_image_shown)
 
         else -> return
     }

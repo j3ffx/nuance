@@ -96,6 +96,7 @@ fun CameraScreen(
     preferences: Preferences,
     onOpenSettings: () -> Unit,
     onManageProfiles: () -> Unit,
+    onOpenImage: () -> Unit,
     camera: @Composable (Modifier) -> Unit
 ) {
     var showProfiles by remember { mutableStateOf(false) }
@@ -104,7 +105,12 @@ fun CameraScreen(
         val landscape = maxWidth > maxHeight
         val image: @Composable (Modifier) -> Unit = { m ->
             Box(m) {
-                CameraArea(controller, preferences.captureFormat == CaptureFormat.FilteredAndOriginal, camera)
+                CameraArea(
+                    controller,
+                    preferences.captureFormat == CaptureFormat.FilteredAndOriginal,
+                    onOpenImage,
+                    camera
+                )
                 TopBar(controller, preferences, { showProfiles = true }, onOpenSettings)
             }
         }
@@ -131,7 +137,12 @@ fun CameraScreen(
 }
 
 @Composable
-private fun CameraArea(controller: CameraController, withOriginal: Boolean, camera: @Composable (Modifier) -> Unit) {
+private fun CameraArea(
+    controller: CameraController,
+    withOriginal: Boolean,
+    onOpenImage: () -> Unit,
+    camera: @Composable (Modifier) -> Unit
+) {
     val holdDescription = stringResource(Res.string.hold_for_original)
     Box(Modifier.fillMaxSize()) {
         camera(Modifier.fillMaxSize())
@@ -157,6 +168,7 @@ private fun CameraArea(controller: CameraController, withOriginal: Boolean, came
         CameraButtons(
             controller,
             withOriginal = withOriginal,
+            onOpenImage = onOpenImage,
             Modifier.align(Alignment.CenterEnd).padding(end = 12.dp)
         )
         CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))

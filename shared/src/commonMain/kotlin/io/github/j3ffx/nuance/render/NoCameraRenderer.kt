@@ -33,4 +33,6 @@ class NoCameraRenderer : CameraRenderer {
     override suspend fun startVideo(name: String) = false
 
     override suspend fun stopVideo() = false
+
+    override fun backToCamera() = Unit
 }

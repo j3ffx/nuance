@@ -69,6 +69,9 @@ interface CameraRenderer {
 
     /** Stops filming and keeps the video; false if nothing usable was recorded. */
     suspend fun stopVideo(): Boolean
+
+    /** Leaves a photo opened from the gallery ([CameraStatus.image]) and shows the camera again. */
+    fun backToCamera()
 }
 
 /** The camera's state. Zoom ratios below 1 are the ultra wide lens, where the phone exposes it. */
@@ -81,7 +84,9 @@ data class CameraStatus(
     val front: Boolean = false,
     val canSwitchFacing: Boolean = false,
     val frozen: Boolean = false,
-    val recording: Boolean = false
+    val recording: Boolean = false,
+    /** A photo from the gallery is shown instead of the camera: same modes, pipette, zoom, export. */
+    val image: Boolean = false
 )
 
 /** What the dev overlay shows. Null when not measured (yet, or not supported by the GPU). */

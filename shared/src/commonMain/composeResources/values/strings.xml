@@ -36,6 +36,9 @@
     <string name="camera_photo_failed">The photo could not be saved</string>
     <string name="camera_video_saved">Video saved in the Nuance album</string>
     <string name="camera_video_failed">The video could not be saved</string>
+    <string name="camera_open_image">Open a photo from the gallery</string>
+    <string name="camera_back">Back to the camera</string>
+    <string name="camera_image_shown">Gallery photo: tap the camera to go back</string>
     <string name="action_advanced">Advanced</string>
     <string name="action_settings">Settings</string>
     <string name="profile_chip_description">Profile: %1$s. Tap to change.</string>

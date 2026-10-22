@@ -80,6 +80,7 @@ fun App(
     devTools: Boolean,
     cameraGranted: Boolean,
     onRequestCamera: () -> Unit,
+    onOpenImage: () -> Unit = {},
     devCommand: DevCommand? = null,
     camera: @Composable (Modifier) -> Unit
 ) {
@@ -120,7 +121,7 @@ fun App(
                     CameraPermissionPrompt(onRequestCamera)
                     return@Surface
                 }
-                Main(renderer, platform, preferences, devTools, dev, devCommand, camera)
+                Main(renderer, platform, preferences, devTools, dev, devCommand, onOpenImage, camera)
             }
         }
     }
@@ -135,6 +136,7 @@ private fun Main(
     devTools: Boolean,
     dev: DevPreview,
     devCommand: DevCommand?,
+    onOpenImage: () -> Unit,
     camera: @Composable (Modifier) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -169,6 +171,7 @@ private fun Main(
                 preferences,
                 onOpenSettings = { screen = Screen.Settings },
                 onManageProfiles = { screen = Screen.Profiles },
+                onOpenImage = onOpenImage,
                 camera = camera
             )
             if (devTools) DevTools(renderer, dev, Modifier.align(Alignment.TopCenter).padding(top = 64.dp))

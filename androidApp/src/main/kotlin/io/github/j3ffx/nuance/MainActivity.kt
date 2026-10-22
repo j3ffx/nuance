@@ -10,13 +10,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import io.github.j3ffx.nuance.camera.AndroidCameraRenderer
+import io.github.j3ffx.nuance.camera.GalleryImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     private val renderer by lazy { AndroidCameraRenderer(this) }
@@ -38,12 +44,24 @@ class MainActivity : ComponentActivity() {
             val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
                 granted = it
             }
+            val scope = rememberCoroutineScope()
+            val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                if (uri != null) {
+                    scope.launch {
+                        val image = withContext(Dispatchers.IO) { GalleryImage.decode(this@MainActivity, uri) }
+                        if (image != null) renderer.showImage(image)
+                    }
+                }
+            }
             App(
                 renderer = renderer,
                 platform = platform,
                 devTools = BuildConfig.DEBUG,
                 cameraGranted = granted,
                 onRequestCamera = { request.launch(Manifest.permission.CAMERA) },
+                onOpenImage = {
+                    pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
                 devCommand = devCommand,
                 camera = { modifier -> renderer.CameraView(this, modifier) }
             )

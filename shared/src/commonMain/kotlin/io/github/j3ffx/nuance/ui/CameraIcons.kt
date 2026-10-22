@@ -36,6 +36,13 @@ object CameraIcons {
         "M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"
     )
     val Stop = icon("Stop", "M6 6h12v12H6z")
+
+    /** A shutter: a ring around a disc (drawn here, not from Material Icons). */
+    val Shutter = icon(
+        "Shutter",
+        "M12 2a10 10 0 1 0 0.001 0zm0 2a8 8 0 1 1 -0.001 0z",
+        "M12 6a6 6 0 1 0 0.001 0z"
+    )
     val Gallery = icon(
         "Gallery",
         "M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2z" +

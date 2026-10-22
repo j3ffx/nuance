@@ -88,6 +88,9 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     private var frozen = false
     private var imageZoom = ImageZoom()
 
+    /** A photo opened from the gallery, shown like a synthetic source. */
+    private var opened by mutableStateOf<SyntheticImage?>(null)
+
     private val status = MutableStateFlow(CameraStatus())
     override val camera: StateFlow<CameraStatus> = status
 
@@ -128,6 +131,22 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         this.luts = luts
         collector.update { it.copy(lutBakeMs = bakeMs) }
         gl?.setViews(luts)
+    }
+
+    /** Shows [image] (a decoded gallery photo) in place of the camera. */
+    fun showImage(image: SyntheticImage) {
+        finishVideo()
+        setFrozen(false)
+        opened = image
+        source = IMAGE
+        status.update { it.copy(image = true) }
+    }
+
+    override fun backToCamera() {
+        setFrozen(false)
+        opened = null
+        source = CAMERA
+        status.update { it.copy(image = false) }
     }
 
     override fun setZoom(ratio: Float) {
@@ -238,10 +257,11 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     /** The image of the current source, bound to [lifecycleOwner]. */
     @Composable
     fun CameraView(lifecycleOwner: LifecycleOwner, modifier: Modifier) {
-        key(source, frameRate, front) {
+        key(source, frameRate, front, opened) {
             when (source) {
                 CAMERA -> DirectView(lifecycleOwner, modifier)
                 RAW -> RawPreview(lifecycleOwner, modifier)
+                IMAGE -> opened?.let { image -> FakeView({ image }, scrolling = false, modifier) }
                 else -> FakeView(synthetic.getValue(source), scrolling = source == MOVING, modifier)
             }
         }
@@ -377,6 +397,9 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         const val CAMERA = "camera"
         const val RAW = "raw"
         const val MOVING = "moving"
+
+        /** A photo from the gallery; not in [sources], it is opened through [showImage]. */
+        const val IMAGE = "image"
 
         /** A frame comes every 33 ms; past this, the image has stopped (activity paused…). */
         private const val SAMPLE_TIMEOUT_MS = 1000L

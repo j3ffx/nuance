@@ -36,6 +36,9 @@
     <string name="camera_photo_failed">La photo n’a pas pu être enregistrée</string>
     <string name="camera_video_saved">Vidéo enregistrée dans l’album Nuance</string>
     <string name="camera_video_failed">La vidéo n’a pas pu être enregistrée</string>
+    <string name="camera_open_image">Ouvrir une photo de la galerie</string>
+    <string name="camera_back">Revenir à la caméra</string>
+    <string name="camera_image_shown">Photo de la galerie : touche l’appareil pour revenir à la caméra</string>
     <string name="action_advanced">Avancé</string>
     <string name="action_settings">Réglages</string>
     <string name="profile_chip_description">Profil : %1$s. Touche pour changer.</string>
