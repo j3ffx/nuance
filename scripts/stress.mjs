@@ -7,7 +7,7 @@
 //   npm run phone:stress            20 rounds
 //   npm run phone:stress -- 50      more rounds
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const APP = 'io.github.j3ffx.nuance.dev';
@@ -22,6 +22,25 @@ const adbPath = sdk
   ? join(sdk, 'platform-tools', process.platform === 'win32' ? 'adb.exe' : 'adb')
   : 'adb';
 const adb = (...args) => execFileSync(adbPath, args, { encoding: 'utf8' }).trim();
+
+// The same phone as `npm run phone` (local.properties → nuance.phone), else the first one: adb
+// refuses to choose when a phone shows up twice (by ip:port and by its mDNS name).
+if (!process.env.ANDROID_SERIAL) {
+  const line = existsSync('local.properties')
+    ? readFileSync('local.properties', 'utf8')
+        .split(/\r?\n/)
+        .find((l) => l.startsWith('nuance.phone='))
+    : undefined;
+  const preferred = line?.slice('nuance.phone='.length).trim();
+  const devices = adb('devices')
+    .split('\n')
+    .slice(1)
+    .map((l) => l.trim().split(/\s+/))
+    .filter(([, state]) => state === 'device')
+    .map(([serial]) => serial);
+  const phone = devices.find((s) => preferred && s.includes(preferred)) ?? devices[0];
+  if (phone) process.env.ANDROID_SERIAL = phone;
+}
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const start = (...extras) => adb('shell', 'am', 'start', '-n', ACTIVITY, ...extras);
 
