@@ -39,6 +39,8 @@
     <string name="camera_open_image">Ouvrir une photo de la galerie</string>
     <string name="camera_back">Revenir à la caméra</string>
     <string name="camera_image_shown">Photo de la galerie : touche l’appareil pour revenir à la caméra</string>
+    <string name="camera_paused">Caméra en pause pour économiser la batterie. Touche l’écran pour reprendre.</string>
+    <string name="camera_hot">Téléphone chaud : image ralentie pour le laisser refroidir</string>
     <string name="action_advanced">Avancé</string>
     <string name="action_settings">Réglages</string>
     <string name="profile_chip_description">Profil : %1$s. Touche pour changer.</string>

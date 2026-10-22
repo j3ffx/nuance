@@ -1,6 +1,7 @@
 package io.github.j3ffx.nuance.camera
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
@@ -8,6 +9,7 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -44,8 +46,10 @@ import io.github.j3ffx.nuance.resources.camera_back
 import io.github.j3ffx.nuance.resources.camera_flip
 import io.github.j3ffx.nuance.resources.camera_freeze
 import io.github.j3ffx.nuance.resources.camera_frozen
+import io.github.j3ffx.nuance.resources.camera_hot
 import io.github.j3ffx.nuance.resources.camera_image_shown
 import io.github.j3ffx.nuance.resources.camera_open_image
+import io.github.j3ffx.nuance.resources.camera_paused
 import io.github.j3ffx.nuance.resources.camera_photo
 import io.github.j3ffx.nuance.resources.camera_photo_failed
 import io.github.j3ffx.nuance.resources.camera_photo_saved
@@ -162,6 +166,8 @@ internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
             }
         )
 
+        status.hot -> stringResource(Res.string.camera_hot)
+
         status.frozen -> stringResource(Res.string.camera_frozen)
 
         status.image -> stringResource(Res.string.camera_image_shown)
@@ -176,6 +182,24 @@ internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
             .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
             .padding(horizontal = 10.dp, vertical = 6.dp)
     )
+}
+
+/** Over the whole image while the camera is paused: why, and how to resume (any touch does). */
+@Composable
+internal fun PausedCover(controller: CameraController) {
+    val status by controller.renderer.camera.collectAsState()
+    if (!status.paused) return
+    Box(
+        Modifier.fillMaxSize().background(NuanceColors.scrim).clickable { controller.noteTouch() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            stringResource(Res.string.camera_paused),
+            color = NuanceColors.onScrim,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(32.dp).semantics { liveRegion = LiveRegionMode.Polite }
+        )
+    }
 }
 
 @Composable

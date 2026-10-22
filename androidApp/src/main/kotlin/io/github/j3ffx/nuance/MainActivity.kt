@@ -68,9 +68,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        renderer.startSensors()
+    }
+
     override fun onStop() {
         // Leaving the screen (home, a call, the screen off) ends a video: the camera stops too.
         renderer.finishVideo()
+        renderer.stopSensors()
         super.onStop()
     }
 

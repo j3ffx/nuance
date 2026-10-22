@@ -105,12 +105,23 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         val thread: GlThread
     )
 
+    private var cameraPaused by mutableStateOf(false)
+
+    /** Severe heat: the camera drops to [HOT_FPS] until the phone cools down. */
+    private var hot by mutableStateOf(false)
+
+    private val motion = MotionWatcher(context) { faceDown, moved ->
+        status.update { it.copy(faceDown = faceDown, moves = if (moved) it.moves + 1 else it.moves) }
+    }
+
     init {
         collector.update { it.copy(source = source) }
         val power = context.getSystemService(PowerManager::class.java)
         collector.update { it.copy(thermal = thermalName(power.currentThermalStatus)) }
-        power.addThermalStatusListener(ContextCompat.getMainExecutor(context)) { status ->
-            collector.update { it.copy(thermal = thermalName(status)) }
+        onThermal(power.currentThermalStatus)
+        power.addThermalStatusListener(ContextCompat.getMainExecutor(context)) { s ->
+            collector.update { it.copy(thermal = thermalName(s)) }
+            onThermal(s)
         }
         collector.update { it.copy(vsyncMs = 1000f / display().refreshRate) }
     }
@@ -140,6 +151,28 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         opened = image
         source = IMAGE
         status.update { it.copy(image = true) }
+    }
+
+    override fun setPaused(paused: Boolean) {
+        if (paused) finishVideo()
+        cameraPaused = paused
+        status.update { it.copy(paused = paused) }
+    }
+
+    /** Sensors run while the camera screen is shown (started and stopped by the activity). */
+    fun startSensors() = motion.start()
+
+    fun stopSensors() = motion.stop()
+
+    /**
+     * From "severe" on, the system may soon cut the camera: slow it to [HOT_FPS] first (back to
+     * normal once it is "moderate" or cooler).
+     */
+    private fun onThermal(s: Int) {
+        val nowHot = s >= PowerManager.THERMAL_STATUS_SEVERE
+        if (nowHot == hot) return
+        hot = nowHot
+        status.update { it.copy(hot = nowHot) }
     }
 
     override fun backToCamera() {
@@ -257,12 +290,16 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     /** The image of the current source, bound to [lifecycleOwner]. */
     @Composable
     fun CameraView(lifecycleOwner: LifecycleOwner, modifier: Modifier) {
-        key(source, frameRate, front, opened) {
-            when (source) {
-                CAMERA -> DirectView(lifecycleOwner, modifier)
-                RAW -> RawPreview(lifecycleOwner, modifier)
-                IMAGE -> opened?.let { image -> FakeView({ image }, scrolling = false, modifier) }
-                else -> FakeView(synthetic.getValue(source), scrolling = source == MOVING, modifier)
+        val fps = if (hot) HOT_FPS else frameRate
+        key(source, fps, front, opened, cameraPaused) {
+            // Paused: nothing is composed, so the camera is unbound and spends no battery.
+            if (!cameraPaused) {
+                when (source) {
+                    CAMERA -> DirectView(lifecycleOwner, modifier)
+                    RAW -> RawPreview(lifecycleOwner, modifier)
+                    IMAGE -> opened?.let { image -> FakeView({ image }, scrolling = false, modifier) }
+                    else -> FakeView(synthetic.getValue(source), scrolling = source == MOVING, modifier)
+                }
             }
         }
     }
@@ -390,7 +427,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
                 )
                 .build()
         )
-        .setTargetFrameRate(Range(frameRate, frameRate))
+        .setTargetFrameRate(if (hot) Range(HOT_FPS, HOT_FPS) else Range(frameRate, frameRate))
         .build()
 
     companion object {
@@ -403,6 +440,9 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
 
         /** A frame comes every 33 ms; past this, the image has stopped (activity paused…). */
         private const val SAMPLE_TIMEOUT_MS = 1000L
+
+        /** Frames a second while the phone is hot. */
+        const val HOT_FPS = 15
 
         /** 10 Mb/s: a sharp 1080p-ish H.264 video at 30 frames a second. */
         private const val VIDEO_BITRATE = 10_000_000

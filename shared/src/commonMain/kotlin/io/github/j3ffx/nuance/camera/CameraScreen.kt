@@ -101,7 +101,18 @@ fun CameraScreen(
 ) {
     var showProfiles by remember { mutableStateOf(false) }
     var showAdvanced by remember { mutableStateOf(false) }
-    BoxWithConstraints(Modifier.fillMaxSize().background(NuanceColors.scrim)) {
+    controller.autoPauseMinutes = preferences.autoPauseMinutes
+    BoxWithConstraints(
+        Modifier.fillMaxSize().background(NuanceColors.scrim).pointerInput(Unit) {
+            // Every touch, wherever it lands, counts as activity; nothing is consumed here.
+            awaitPointerEventScope {
+                while (true) {
+                    awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                    controller.noteTouch()
+                }
+            }
+        }
+    ) {
         val landscape = maxWidth > maxHeight
         val image: @Composable (Modifier) -> Unit = { m ->
             Box(m) {
@@ -172,6 +183,7 @@ private fun CameraArea(
             Modifier.align(Alignment.CenterEnd).padding(end = 12.dp)
         )
         CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
+        PausedCover(controller)
         PipetteCard(
             controller,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = 8.dp, end = 8.dp)

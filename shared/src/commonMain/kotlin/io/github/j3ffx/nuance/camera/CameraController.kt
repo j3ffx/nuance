@@ -15,6 +15,7 @@ import io.github.j3ffx.nuance.core.modes.Settings
 import io.github.j3ffx.nuance.core.profile.Profile
 import io.github.j3ffx.nuance.render.CameraRenderer
 import kotlin.math.roundToInt
+import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -116,6 +117,31 @@ class CameraController(
 
     fun closePipette() {
         pipette = null
+    }
+
+    /** Minutes without touch nor movement before the camera pauses; 0 = never (Preferences). */
+    var autoPauseMinutes = 2
+
+    private var lastActivity = TimeSource.Monotonic.markNow()
+
+    /** A touch anywhere on the screen: resets the idle time and resumes a paused camera. */
+    fun noteTouch() {
+        lastActivity = TimeSource.Monotonic.markNow()
+        if (renderer.camera.value.paused) renderer.setPaused(false)
+    }
+
+    private suspend fun watchIdleness() {
+        var moves = renderer.camera.value.moves
+        while (true) {
+            val s = renderer.camera.value
+            if (s.moves != moves) {
+                moves = s.moves
+                lastActivity = TimeSource.Monotonic.markNow()
+            }
+            val pause = AutoPause.shouldPause(s.faceDown, lastActivity.elapsedNow(), autoPauseMinutes, s.recording)
+            if (pause && !s.paused && !s.image) renderer.setPaused(true)
+            delay(IDLE_CHECK_MS)
+        }
     }
 
     /** The last capture's outcome, shown for a moment; null when there is nothing to say. */
@@ -223,6 +249,7 @@ class CameraController(
 
     init {
         scope.launch { followPipette() }
+        scope.launch { watchIdleness() }
         scope.launch {
             snapshotFlow { state }.collectLatest { s ->
                 if (s.showingOriginal) {
@@ -272,6 +299,7 @@ class CameraController(
         const val PIPETTE_MS = 300L
 
         const val MESSAGE_MS = 2500L
+        const val IDLE_CHECK_MS = 1000L
 
         /** The frozen image is a preview frame (1080p): beyond this, it is only blur. */
         const val MAX_IMAGE_ZOOM = 6f

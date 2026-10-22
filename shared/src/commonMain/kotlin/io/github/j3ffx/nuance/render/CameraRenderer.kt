@@ -72,6 +72,9 @@ interface CameraRenderer {
 
     /** Leaves a photo opened from the gallery ([CameraStatus.image]) and shows the camera again. */
     fun backToCamera()
+
+    /** Stops the camera to save battery ([CameraStatus.paused]), or starts it again. */
+    fun setPaused(paused: Boolean)
 }
 
 /** The camera's state. Zoom ratios below 1 are the ultra wide lens, where the phone exposes it. */
@@ -86,7 +89,15 @@ data class CameraStatus(
     val frozen: Boolean = false,
     val recording: Boolean = false,
     /** A photo from the gallery is shown instead of the camera: same modes, pipette, zoom, export. */
-    val image: Boolean = false
+    val image: Boolean = false,
+    /** The camera is stopped to save battery (see AutoPause). */
+    val paused: Boolean = false,
+    /** The phone runs hot: the camera slowed down to let it cool, before the system cuts it. */
+    val hot: Boolean = false,
+    /** Lying face down, from the sensors. */
+    val faceDown: Boolean = false,
+    /** Counts notable movements of the phone: each change means it just moved. */
+    val moves: Int = 0
 )
 
 /** What the dev overlay shows. Null when not measured (yet, or not supported by the GPU). */

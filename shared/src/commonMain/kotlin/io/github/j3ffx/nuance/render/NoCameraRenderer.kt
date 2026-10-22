@@ -35,4 +35,6 @@ class NoCameraRenderer : CameraRenderer {
     override suspend fun stopVideo() = false
 
     override fun backToCamera() = Unit
+
+    override fun setPaused(paused: Boolean) = Unit
 }
