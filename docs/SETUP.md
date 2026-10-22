@@ -65,7 +65,35 @@ réactiver, sans nouvel appairage.
 
 ## Clé de signature des versions publiées
 
-À venir (jalon J6) : création de la clé, sauvegarde, secrets GitHub.
+Les versions publiées sont signées avec une clé qui ne quitte que le PC et les secrets GitHub.
+**Sans elle, plus aucune mise à jour possible** : Android refuse d'installer une version signée
+par une autre clé par-dessus l'appli. Sauvegarde-la (gestionnaire de mots de passe, clé USB).
+
+- `nuance-release.jks` et `keystore.properties` (mots de passe), à la racine du dépôt, ignorés par
+  git. Créés une fois avec :
+
+  ```bash
+  keytool -genkeypair -keystore nuance-release.jks -storetype PKCS12 -alias nuance -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Nuance"
+  ```
+
+  puis `keystore.properties` : `storeFile=nuance-release.jks`, `storePassword=…`,
+  `keyAlias=nuance`, `keyPassword=…` (le même mot de passe, en PKCS12).
+
+- Secrets du dépôt GitHub, pour `release.yml` : `NUANCE_KEYSTORE_BASE64` (le fichier `.jks` en
+  base64), `NUANCE_STORE_PASSWORD`, `NUANCE_KEY_ALIAS`, `NUANCE_KEY_PASSWORD`.
+
+## Publier une version
+
+1. Dans `CHANGELOG.md`, renomme `## Depuis la dernière version` en `## x.y.z — AAAA-MM-JJ` (et
+   remets une section vide au-dessus) ; commit.
+2. Tag léger, poussé : `git tag vx.y.z && git push origin vx.y.z` (un tag annoté enregistrerait
+   l'heure).
+3. `release.yml` construit l'APK signé (`-Pnuance.version=x.y.z`, `versionCode` déduit), son
+   SHA-256, les notes de la version, et publie la release. Les téléphones qui ont activé la
+   vérification la verront au prochain lancement ; « Vérifier maintenant » marche toujours.
+
+Un APK de release se construit aussi en local, signé par `keystore.properties` :
+`node scripts/gradle.mjs :androidApp:assembleRelease -Pnuance.version=0.1.0`.
 
 ## iOS (plus tard, avec un Mac)
 

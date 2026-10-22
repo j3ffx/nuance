@@ -20,3 +20,13 @@
   carrés à comparer) qui propose un type et une sévérité, avec un niveau de confiance. Ce n’est pas
   un diagnostic.
 - La langue de l’appli se choisit dans les réglages : comme le téléphone, français ou anglais.
+- Figer l’image, puis zoomer et se déplacer dedans ; la pipette et les modes marchent sur l’image figée.
+- Le zoom de la caméra (en pinçant, ou un bouton qui passe d’un objectif à l’autre), la lampe et la
+  caméra avant.
+- Photos et vidéos filtrées, enregistrées dans l’album « Nuance » de la galerie, sans position ; au
+  choix, l’original en plus.
+- Ouvrir une photo de la galerie et lui appliquer les mêmes filtres.
+- Pause automatique de la caméra (téléphone posé écran contre la table, ou sans toucher ni bouger) ;
+  un toucher la relance.
+- Quand le téléphone chauffe, l’image ralentit pour le laisser refroidir, et c’est écrit à l’écran.
+- La mise à jour depuis l’appli, à partir des versions publiées sur GitHub (désactivée par défaut).
