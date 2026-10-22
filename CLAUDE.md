@@ -15,6 +15,7 @@ npm install          # also points git at .githooks/
 npm run phone        # build the dev variant, install it on the paired phone, launch it (< 30 s)
 npm run phone:find   # only (re)connect to the phone over wireless ADB
 npm run phone:logs   # install, launch, then follow the app's log
+npm run phone:stress # switch sources, modes, views and language quickly; fails if the app crashed
 npm test             # every Kotlin test, on the JVM (the CI also runs core on the iOS simulator)
 npm run lint         # ktlint (Spotless) + Android Lint, warnings are errors
 npm run format       # ktlint and Prettier, in place
@@ -91,7 +92,8 @@ commit metadata.
   only through interfaces (`CameraRenderer`…). The CI's macOS job compiles the iOS targets.
 - **FR and EN from the start**, French with "tu", short and simple.
 - **The dev variant only** (`.dev`, "Nuance dev") has the performance overlay, the fake camera
-  source and the "take the test as a protan/deutan/tritan" switch. Never in a release.
+  sources, the protan-vs-deutan correction comparison and the "take the test as a
+  protan/deutan/tritan" switch. Never in a release.
 
 ## Layout
 

@@ -36,7 +36,7 @@ entre la fonction exacte et ce que le GPU calcule :
   peine perceptible (ΔE ≈ 1). Le passage en 8 bits n'ajoute presque rien (0,05 en moyenne) : une
   texture en flottants 16 bits n'apporterait rien de visible.
 - **Isoler une teinte** a des bords francs, que la table arrondit : la LUT de ce mode fera 49³
-  (25 ms de cuisson sur le PC, contre 7 ms en 33³ ; à mesurer sur le téléphone en J3).
+  (25 ms de cuisson sur le PC, contre 7 ms en 33³ ; mesures sur le téléphone ci-dessous).
 - **Pendant le glissement d'un curseur**, la table sera cuite en 17³ (1,4 ms sur le PC), puis en
   33³ au relâchement : c'est imperceptible en mouvement.
 - **Sur le téléphone de test** (variante debug, sans compilation anticipée, en ms : premier essai puis
@@ -370,3 +370,19 @@ choix raisonnable, pas une mesure. D'où le niveau de confiance et l'avertisseme
   « Clair » et « foncé » sont relatifs à la clarté habituelle du terme (un jaune est plus clair
   qu'un bleu). Les seuils ont été réglés sur des couleurs de référence (`ColorNamingTest`).
 - **Telle que perçue** : la couleur passée par la simulation du profil, et son nom.
+
+## 10. Image figée, photo et vidéo
+
+La règle reste la même : la boucle de rendu ne copie jamais une image vers le processeur.
+
+- **Figer** copie la dernière image de la caméra, redressée et à sa taille, dans une texture de la
+  carte graphique ; c'est elle qui est ensuite dessinée, à travers les mêmes tables de couleurs. Les
+  modes, la pipette et le zoom dans l'image (jusqu'à 6×, c'est une image d'aperçu en 1080p) marchent
+  donc dessus.
+- **Photo** : les vues sont redessinées une fois hors de l'écran, à la taille de l'écran, puis lues ;
+  l'original aussi si on l'a demandé. Seulement au moment de la photo. Le JPEG est encodé depuis les
+  pixels : aucune métadonnée, donc aucune position.
+- **Vidéo** : les vues sont dessinées une seconde fois, à chaque image, dans la surface d'un encodeur
+  H.264 (30 images/s, 10 Mb/s, sans son) ; rien ne passe par le processeur.
+- **Photo de la galerie** : décodée une fois (2048 pixels au plus sur le grand côté), puis montrée
+  comme une source d'images ordinaire.

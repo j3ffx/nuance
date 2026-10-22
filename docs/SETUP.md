@@ -54,13 +54,25 @@ et la lance. Si plusieurs téléphones sont associés, ajoute dans `local.proper
 celui des tests. Si le téléphone a changé de réseau et n'est pas trouvé, passe l'adresse affichée
 sous **Débogage sans fil** : `npm run phone -- --connect <ip>:<port>`.
 
-Le débogage sans fil se coupe parfois tout seul (redémarrage, changement de Wi-Fi) : il suffit de le
-réactiver, sans nouvel appairage.
+Le débogage sans fil se coupe parfois tout seul (veille, redémarrage, changement de Wi-Fi) : il
+suffit de le réactiver, sans nouvel appairage. Son port change à chaque fois : si `npm run phone` ne
+trouve rien, passe l'adresse affichée avec `--connect`. Pour limiter les coupures pendant une séance :
+**Options de développement → Rester activé**, téléphone branché.
+
+`npm run phone` n'installe l'appli que pour l'utilisateur courant du téléphone : une installation
+ADB ordinaire (`adb install`, `installDebug`) la met dans **tous** les profils, et un Samsung avec les
+applis clonées (Dual Messenger) en montrerait un clone. Pour une installation à la main :
+`adb install -r --user current <apk>`.
+
+`npm run phone:stress` enchaîne des bascules de source, de mode, de vues et de langue, puis échoue si
+l'appli a planté : à lancer après toute modification du rendu ou du cycle de vie.
 
 ## Variantes
 
 - **Nuance dev** (`io.github.j3ffx.nuance.dev`) : celle que `npm run phone` installe, avec les outils
-  de développement. Icône sur fond clair.
+  de développement (panneau « dev » : images/s et latence, sources d'images de test, cadre 360 dp et
+  texte ×1,3, comparaison des corrections protan et deutan ; « passer le test comme… »). Icône sur
+  fond clair.
 - **Nuance** (`io.github.j3ffx.nuance`) : la version publiée, installée à côté. Icône sur fond sombre.
 
 ## Clé de signature des versions publiées
