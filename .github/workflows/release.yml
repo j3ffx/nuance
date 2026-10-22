@@ -47,8 +47,10 @@ jobs:
           mkdir dist
           cp androidApp/build/outputs/apk/release/androidApp-release.apk "dist/nuance-$version.apk"
           (cd dist && sha256sum "nuance-$version.apk" > "nuance-$version.apk.sha256")
-          # An unsigned APK would not install: stop rather than publish it.
-          "$ANDROID_HOME"/build-tools/*/apksigner verify "dist/nuance-$version.apk"
+          # An unsigned APK would not install: stop rather than publish it. Several build-tools may
+          # be installed: the newest one's apksigner.
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
+          "$apksigner" verify --print-certs "dist/nuance-$version.apk"
 
       - name: Publish the release
         env:
