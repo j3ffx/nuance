@@ -99,12 +99,16 @@ console.log(`phone: ${serial}`);
 if (process.argv.includes('--find')) process.exit(0);
 
 const gradlew = join(process.cwd(), process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
-const build = spawnSync(gradlew, [':androidApp:installDebug', '--console=plain', '-q'], {
+const build = spawnSync(gradlew, [':androidApp:assembleDebug', '--console=plain', '-q'], {
   stdio: 'inherit',
   shell: process.platform === 'win32',
-  env: { ...process.env, ANDROID_SERIAL: serial, ...(sdk && { ANDROID_HOME: sdk }) },
+  env: { ...process.env, ...(sdk && { ANDROID_HOME: sdk }) },
 });
 if (build.status !== 0) process.exit(build.status ?? 1);
+// For the phone's current user only: installDebug installs for every user, so a Samsung with
+// "Dual Messenger" got a cloned copy of the app in its second profile.
+const apk = join('androidApp', 'build', 'outputs', 'apk', 'debug', 'androidApp-debug.apk');
+adb('-s', serial, 'install', '-r', '--user', 'current', apk);
 
 adb('-s', serial, 'shell', 'am', 'start', '-S', '-n', `${APP_ID}/${ACTIVITY}`);
 console.log(`✔ installed and launched in ${((Date.now() - started) / 1000).toFixed(1)} s`);
