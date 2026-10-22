@@ -67,6 +67,7 @@ import io.github.j3ffx.nuance.resources.mode_isolate
 import io.github.j3ffx.nuance.resources.mode_simulate
 import io.github.j3ffx.nuance.resources.profile_chip_description
 import io.github.j3ffx.nuance.resources.severity_value
+import io.github.j3ffx.nuance.resources.update_chip
 import io.github.j3ffx.nuance.resources.view_corrected
 import io.github.j3ffx.nuance.resources.view_corrected_as_seen
 import io.github.j3ffx.nuance.resources.view_corrected_seen
@@ -219,6 +220,17 @@ private fun TopBar(
             modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = description }
         )
         Box(Modifier.weight(1f))
+        preferences.availableUpdate?.let { update ->
+            AssistChip(
+                onClick = onSettings,
+                label = { Text(stringResource(Res.string.update_chip, update.version), maxLines = 1) },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = NuanceColors.scrim,
+                    labelColor = NuanceColors.onScrim
+                ),
+                modifier = Modifier.heightIn(min = 48.dp).padding(end = 8.dp)
+            )
+        }
         IconButton(
             onClick = onSettings,
             colors = IconButtonDefaults.iconButtonColors(

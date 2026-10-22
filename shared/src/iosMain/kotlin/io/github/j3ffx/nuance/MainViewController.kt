@@ -3,6 +3,8 @@ package io.github.j3ffx.nuance
 import androidx.compose.ui.window.ComposeUIViewController
 import io.github.j3ffx.nuance.platform.KeyValueStore
 import io.github.j3ffx.nuance.platform.Platform
+import io.github.j3ffx.nuance.platform.ReleaseInfo
+import io.github.j3ffx.nuance.platform.UpdateOutcome
 import io.github.j3ffx.nuance.render.NoCameraRenderer
 import platform.Foundation.NSBundle
 import platform.Foundation.NSUserDefaults
@@ -37,6 +39,11 @@ private object IosPlatform : Platform {
     }
 
     override fun shareText(text: String, title: String) = Unit
+
+    /** No update from inside the app on iOS: the App Store or TestFlight will do it (J7). */
+    override suspend fun latestRelease(): ReleaseInfo? = null
+
+    override suspend fun installRelease(release: ReleaseInfo) = UpdateOutcome.Failed
 
     /** iOS reads AppleLanguages at launch: the choice applies the next time the app starts. */
     override var appLanguage: String?

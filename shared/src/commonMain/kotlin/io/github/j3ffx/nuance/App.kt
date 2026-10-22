@@ -40,6 +40,7 @@ import io.github.j3ffx.nuance.dev.DevTools
 import io.github.j3ffx.nuance.onboarding.OnboardingScreen
 import io.github.j3ffx.nuance.platform.Platform
 import io.github.j3ffx.nuance.platform.Preferences
+import io.github.j3ffx.nuance.platform.Versions
 import io.github.j3ffx.nuance.profiles.ProfilesScreen
 import io.github.j3ffx.nuance.render.CameraRenderer
 import io.github.j3ffx.nuance.resources.Res
@@ -145,6 +146,11 @@ private fun Main(
     }
     // Saveable: a language change recreates the activity, and Settings should stay open.
     var screen by rememberSaveable { mutableStateOf(Screen.Camera) }
+    LaunchedEffect(preferences.updateChecks) {
+        if (!preferences.updateChecks) return@LaunchedEffect
+        preferences.availableUpdate = platform.latestRelease()
+            ?.takeIf { Versions.isNewer(it.version, platform.versionName) }
+    }
     LaunchedEffect(devCommand) {
         val command = devCommand ?: return@LaunchedEffect
         command.mode?.let { name -> Mode.entries.firstOrNull { it.name.equals(name, true) } }

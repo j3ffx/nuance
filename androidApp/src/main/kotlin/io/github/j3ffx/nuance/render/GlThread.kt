@@ -6,6 +6,7 @@ import android.opengl.GLES30
 import android.opengl.Matrix
 import android.os.Handler
 import android.os.HandlerThread
+import androidx.core.graphics.createBitmap
 import io.github.j3ffx.nuance.core.Lut3d
 import io.github.j3ffx.nuance.core.modes.ColorFunction
 import java.nio.ByteBuffer
@@ -292,7 +293,7 @@ class GlThread(name: String, private val stats: StatsCollector) {
         val buffer = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder())
         GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, buffer)
         // ARGB_8888 is stored as R, G, B, A bytes: the same layout GL wrote.
-        val upsideDown = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val upsideDown = createBitmap(width, height)
         upsideDown.copyPixelsFromBuffer(buffer.position(0))
         val flip = android.graphics.Matrix().apply { preScale(1f, -1f) }
         return Bitmap.createBitmap(upsideDown, 0, 0, width, height, flip, false).also { upsideDown.recycle() }

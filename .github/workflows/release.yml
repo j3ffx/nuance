@@ -1,0 +1,60 @@
+name: Release
+
+# Pushing a version tag (v0.1.0) publishes its GitHub release: the signed APK, its SHA-256 and the
+# notes of that version from CHANGELOG.md. See CLAUDE.md → Releases.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Signed APK on GitHub Releases
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Notes from CHANGELOG.md (fails if the version has none)
+        run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" > release-notes.md
+
+      - name: Signed release APK
+        env:
+          NUANCE_KEYSTORE_BASE64: ${{ secrets.NUANCE_KEYSTORE_BASE64 }}
+          NUANCE_STORE_PASSWORD: ${{ secrets.NUANCE_STORE_PASSWORD }}
+          NUANCE_KEY_ALIAS: ${{ secrets.NUANCE_KEY_ALIAS }}
+          NUANCE_KEY_PASSWORD: ${{ secrets.NUANCE_KEY_PASSWORD }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "$NUANCE_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/nuance.jks"
+          export NUANCE_STORE_FILE="$RUNNER_TEMP/nuance.jks"
+          ./gradlew :androidApp:assembleRelease "-Pnuance.version=$version"
+          rm "$RUNNER_TEMP/nuance.jks"
+          mkdir dist
+          cp androidApp/build/outputs/apk/release/androidApp-release.apk "dist/nuance-$version.apk"
+          (cd dist && sha256sum "nuance-$version.apk" > "nuance-$version.apk.sha256")
+          # An unsigned APK would not install: stop rather than publish it.
+          "$ANDROID_HOME"/build-tools/*/apksigner verify "dist/nuance-$version.apk"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --title "Nuance ${GITHUB_REF_NAME#v}"
+          --notes-file release-notes.md
+          --verify-tag

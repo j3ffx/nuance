@@ -152,7 +152,14 @@
     <string name="settings_updates">Check for updates</string>
     <string name="settings_updates_help">Asks GitHub; nothing else leaves the phone.</string>
     <string name="check_now">Check now</string>
-    <string name="check_soon">Checking comes with the first published version.</string>
+    <string name="update_install">Install</string>
+    <string name="update_working">One moment…</string>
+    <string name="update_up_to_date">You have the latest version (%1$s).</string>
+    <string name="update_available">Version %1$s is available.</string>
+    <string name="update_installing">Android will ask you to confirm the installation.</string>
+    <string name="update_permission">Allow Nuance to install apps on the page that just opened, then tap Install again.</string>
+    <string name="update_failed">Failed: check your connection and try again.</string>
+    <string name="update_chip">Update %1$s</string>
     <string name="settings_help">Help and warnings</string>
     <string name="settings_about">About and licences</string>
     <string name="settings_version">Version %1$s</string>

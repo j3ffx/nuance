@@ -23,6 +23,9 @@ class Preferences(private val store: KeyValueStore) {
     /** Off by default; offered (unticked) at first launch. The only network call of the app. */
     var updateChecks by stored("updateChecks", false)
 
+    /** A newer version found by a check, until it is installed; not stored. */
+    var availableUpdate by mutableStateOf<ReleaseInfo?>(null)
+
     /** Minutes without touch nor movement before the camera pauses; 0 = never. */
     var autoPauseMinutes by storedInt("autoPauseMinutes", 2)
     var captureFormat by storedEnum("captureFormat", CaptureFormat.Filtered)

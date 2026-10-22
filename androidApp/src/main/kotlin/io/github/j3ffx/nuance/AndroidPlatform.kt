@@ -9,7 +9,11 @@ import android.os.LocaleList
 import androidx.core.content.edit
 import io.github.j3ffx.nuance.platform.KeyValueStore
 import io.github.j3ffx.nuance.platform.Platform
+import io.github.j3ffx.nuance.platform.ReleaseInfo
+import io.github.j3ffx.nuance.platform.UpdateOutcome
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Android's [Platform]: SharedPreferences (never backed up), the share sheet, per-app language.
@@ -54,6 +58,13 @@ class AndroidPlatform(private val context: Context, private val recreate: () -> 
                 recreate()
             }
         }
+
+    private val updater = Updater(context)
+
+    override suspend fun latestRelease(): ReleaseInfo? = withContext(Dispatchers.IO) { updater.latest() }
+
+    override suspend fun installRelease(release: ReleaseInfo): UpdateOutcome =
+        withContext(Dispatchers.IO) { updater.install(release) }
 
     companion object {
         private const val KEY = "appLanguage"
