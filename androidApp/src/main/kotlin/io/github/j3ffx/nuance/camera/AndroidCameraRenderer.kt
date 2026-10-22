@@ -7,6 +7,7 @@ import android.util.Range
 import android.util.Size
 import android.view.Display
 import android.view.SurfaceView
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
@@ -36,11 +37,15 @@ import io.github.j3ffx.nuance.core.charts.SyntheticImage
 import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.naming.ColorNaming
 import io.github.j3ffx.nuance.render.CameraRenderer
+import io.github.j3ffx.nuance.render.CameraStatus
 import io.github.j3ffx.nuance.render.GlThread
+import io.github.j3ffx.nuance.render.ImageZoom
 import io.github.j3ffx.nuance.render.RenderStats
 import io.github.j3ffx.nuance.render.StatsCollector
 import kotlin.coroutines.resume
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -67,8 +72,15 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
 
     private var source by mutableStateOf(CAMERA)
     private var frameRate by mutableIntStateOf(30)
+    private var front by mutableStateOf(false)
     private var luts: List<Lut3d> = emptyList()
     private var gl: GlThread? = null
+    private var bound: Camera? = null
+    private var frozen = false
+    private var imageZoom = ImageZoom()
+
+    private val status = MutableStateFlow(CameraStatus())
+    override val camera: StateFlow<CameraStatus> = status
 
     init {
         collector.update { it.copy(source = source) }
@@ -82,6 +94,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
 
     override fun selectSource(name: String) {
         require(name in sources) { "unknown source $name" }
+        setFrozen(false)
         source = name
         collector.update { RenderStats(source = name, thermal = it.thermal, vsyncMs = it.vsyncMs, views = it.views) }
     }
@@ -97,6 +110,32 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         gl?.setViews(luts)
     }
 
+    override fun setZoom(ratio: Float) {
+        val s = status.value
+        bound?.cameraControl?.setZoomRatio(ratio.coerceIn(s.minZoom, s.maxZoom))
+    }
+
+    override fun setTorch(on: Boolean) {
+        bound?.cameraControl?.enableTorch(on)
+    }
+
+    override fun switchFacing() {
+        setFrozen(false)
+        front = !front
+    }
+
+    override fun setFrozen(frozen: Boolean) {
+        this.frozen = frozen
+        if (!frozen) imageZoom = ImageZoom()
+        gl?.setFrozen(frozen)
+        status.update { it.copy(frozen = frozen) }
+    }
+
+    override fun setImageZoom(scale: Float, cx: Float, cy: Float) {
+        imageZoom = ImageZoom(scale, cx, cy)
+        gl?.setImageZoom(imageZoom)
+    }
+
     override suspend fun sampleColor(x: Float, y: Float): Rgb? {
         val thread = gl ?: return null // the raw preview has no GL side
         val pixels = withTimeoutOrNull(SAMPLE_TIMEOUT_MS) {
@@ -108,7 +147,7 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
     /** The image of the current source, bound to [lifecycleOwner]. */
     @Composable
     fun CameraView(lifecycleOwner: LifecycleOwner, modifier: Modifier) {
-        key(source, frameRate) {
+        key(source, frameRate, front) {
             when (source) {
                 CAMERA -> DirectView(lifecycleOwner, modifier)
                 RAW -> RawPreview(lifecycleOwner, modifier)
@@ -127,8 +166,29 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
         val configuration = LocalConfiguration.current
         LaunchedEffect(configuration) { preview.targetRotation = display().rotation }
         BindCamera(lifecycleOwner) { provider ->
-            val camera = provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview)
+            val selector = if (front) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
+            val camera = provider.bindToLifecycle(lifecycleOwner, selector, preview)
             direct.setSensorRotation(camera.cameraInfo.sensorRotationDegrees)
+            follow(camera, lifecycleOwner, provider)
+        }
+    }
+
+    /** Keeps [status] in step with the bound camera's zoom range, zoom and torch. */
+    private fun follow(camera: Camera, lifecycleOwner: LifecycleOwner, provider: ProcessCameraProvider) {
+        bound = camera
+        val info = camera.cameraInfo
+        val both = provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA) &&
+            provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
+        status.update {
+            it.copy(hasTorch = info.hasFlashUnit(), torch = false, front = front, canSwitchFacing = both)
+        }
+        info.zoomState.observe(lifecycleOwner) { z ->
+            if (bound === camera) {
+                status.update { it.copy(minZoom = z.minZoomRatio, maxZoom = z.maxZoomRatio, zoom = z.zoomRatio) }
+            }
+        }
+        info.torchState.observe(lifecycleOwner) { t ->
+            if (bound === camera) status.update { it.copy(torch = t == androidx.camera.core.TorchState.ON) }
         }
     }
 
@@ -166,7 +226,13 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
 
     @Composable
     private fun rememberGlThread(name: String): GlThread {
-        val thread = remember { GlThread(name, collector).also { t -> if (luts.isNotEmpty()) t.setViews(luts) } }
+        val thread = remember {
+            GlThread(name, collector).also { t ->
+                if (luts.isNotEmpty()) t.setViews(luts)
+                t.setFrozen(frozen)
+                t.setImageZoom(imageZoom)
+            }
+        }
         DisposableEffect(thread) {
             gl = thread
             onDispose {
@@ -190,7 +256,12 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
                 p.unbindAll()
                 bind(p)
             }
-            onDispose { p?.unbindAll() }
+            onDispose {
+                p?.unbindAll()
+                bound = null
+                // Without a camera (raw preview, synthetic sources): no zoom, no torch.
+                status.update { CameraStatus(frozen = it.frozen, front = front, canSwitchFacing = it.canSwitchFacing) }
+            }
         }
     }
 

@@ -1,7 +1,6 @@
 package io.github.j3ffx.nuance.camera
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -150,17 +149,12 @@ private fun CameraArea(controller: CameraController, camera: @Composable (Modifi
                         }
                     )
                 }
-                .pointerInput(Unit) {
-                    detectDragGestures { change, _ ->
-                        if (controller.pipette != null) {
-                            change.consume()
-                            controller.pick(change.position.x / size.width, change.position.y / size.height)
-                        }
-                    }
-                }
+                .pointerInput(Unit) { cameraGestures(controller) }
         )
         ViewLabels(controller.state)
         controller.pipette?.let { PipetteMarker(it) }
+        CameraButtons(controller, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
+        FrozenLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
         PipetteCard(
             controller,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = 8.dp, end = 8.dp)

@@ -107,8 +107,9 @@ class DirectPipeline(gl: GlThread, stats: StatsCollector) :
         // Size of the image once fully upright: a quarter turn in total swaps the buffer's sides.
         val quarterTurn = rotationDegrees % 180 != 0
         val aspect = if (quarterTurn) bufferHeight.toFloat() / bufferWidth else bufferWidth.toFloat() / bufferHeight
+        val (w, h) = if (quarterTurn) bufferHeight to bufferWidth else bufferWidth to bufferHeight
         drawFrame(
-            FrameSource(gl.cameraTexture, true, texMatrix, aspect, extra, mirroring, texture.timestamp),
+            FrameSource(gl.cameraTexture, true, texMatrix, aspect, extra, mirroring, texture.timestamp, w, h),
             arrivalNs
         )
     }

@@ -52,7 +52,8 @@ class FakePipeline(
         Matrix.translateM(texMatrix, 0, 0f, 1f, 0f)
         Matrix.scaleM(texMatrix, 0, 1f, -1f, 1f)
         frame++
-        drawFrame(FrameSource(texture, false, texMatrix, image.width.toFloat() / image.height), arrivalNs)
+        val aspect = image.width.toFloat() / image.height
+        drawFrame(FrameSource(texture, false, texMatrix, aspect, width = image.width, height = image.height), arrivalNs)
         // Fixed rate: the next frame is due one period after this one was due, whatever drawing took.
         nextFrameMs += FRAME_MS
         gl.handler.postAtTime({ tick() }, nextFrameMs)

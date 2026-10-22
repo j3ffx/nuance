@@ -34,7 +34,42 @@ interface CameraRenderer {
      * multi-view mode, the point is read in the view it falls in. Null when there is no image.
      */
     suspend fun sampleColor(x: Float, y: Float): Rgb?
+
+    /** What the camera can do and is doing, for the controls. */
+    val camera: StateFlow<CameraStatus>
+
+    /** Optical or digital zoom of the live camera, within [CameraStatus.minZoom]..[CameraStatus.maxZoom]. */
+    fun setZoom(ratio: Float)
+
+    fun setTorch(on: Boolean)
+
+    /** Back camera ↔ front camera. */
+    fun switchFacing()
+
+    /**
+     * Freezes the image: the current frame is kept (on the GPU) and shown instead of the live one;
+     * the views keep their LUTs, so every mode, the pipette and [setImageZoom] work on it.
+     */
+    fun setFrozen(frozen: Boolean)
+
+    /**
+     * Zoom into the frozen image: [scale] ≥ 1, centred on ([cx], [cy]), fractions of the image from
+     * its top left. The renderer keeps the image filling the view.
+     */
+    fun setImageZoom(scale: Float, cx: Float, cy: Float)
 }
+
+/** The camera's state. Zoom ratios below 1 are the ultra wide lens, where the phone exposes it. */
+data class CameraStatus(
+    val minZoom: Float = 1f,
+    val maxZoom: Float = 1f,
+    val zoom: Float = 1f,
+    val hasTorch: Boolean = false,
+    val torch: Boolean = false,
+    val front: Boolean = false,
+    val canSwitchFacing: Boolean = false,
+    val frozen: Boolean = false
+)
 
 /** What the dev overlay shows. Null when not measured (yet, or not supported by the GPU). */
 data class RenderStats(

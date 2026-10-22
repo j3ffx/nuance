@@ -20,7 +20,14 @@
     <string name="view_corrected_seen">Corrigé, vu %1$s</string>
     <string name="view_corrected_as_seen">Corr. %1$s, vu %2$s</string>
     <string name="view_isolated">Seulement le %1$s</string>
-    <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur ; reste appuyé pour voir l’original.</string>
+    <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur, pince pour zoomer, reste appuyé pour voir l’original.</string>
+    <string name="camera_freeze">Figer l’image</string>
+    <string name="camera_resume">Reprendre l’image en direct</string>
+    <string name="camera_frozen">Image figée : pince pour zoomer, glisse pour te déplacer</string>
+    <string name="camera_torch_on">Allumer la lampe</string>
+    <string name="camera_torch_off">Éteindre la lampe</string>
+    <string name="camera_flip">Changer de caméra (avant ou arrière)</string>
+    <string name="camera_zoom">Zoom %1$s. Touche pour changer d’objectif.</string>
     <string name="action_advanced">Avancé</string>
     <string name="action_settings">Réglages</string>
     <string name="profile_chip_description">Profil : %1$s. Touche pour changer.</string>

@@ -19,7 +19,8 @@ import java.util.concurrent.atomic.AtomicReference
  * - [texMatrix]: its texture transform (SurfaceTexture's, or a flip for 2D images);
  * - [contentAspect]: width / height of the image once upright;
  * - [extraRotation]: clockwise quarter turns, in degrees, still to apply on screen;
- * - [captureNs]: the camera's timestamp, for latency figures (null for synthetic sources).
+ * - [captureNs]: the camera's timestamp, for latency figures (null for synthetic sources);
+ * - [width], [height]: the image's size in pixels once upright (what freezing it copies).
  */
 class FrameSource(
     val texture: Int,
@@ -28,8 +29,13 @@ class FrameSource(
     val contentAspect: Float,
     val extraRotation: Int = 0,
     val mirror: Boolean = false,
-    val captureNs: Long? = null
+    val captureNs: Long? = null,
+    val width: Int = 0,
+    val height: Int = 0
 )
+
+/** A zoom into the frozen image: [scale] ≥ 1 around ([cx], [cy]), fractions from its top left. */
+data class ImageZoom(val scale: Float = 1f, val cx: Float = 0.5f, val cy: Float = 0.5f)
 
 /**
  * The render thread: owns the EGL context, the camera texture, the shaders and the views' LUT
@@ -61,6 +67,15 @@ class GlThread(name: String, private val stats: StatsCollector) {
     private var views: List<LutTexture> = emptyList()
     private val pendingViews = AtomicReference<List<Lut3d>?>()
     private val pendingSample = AtomicReference<SampleRequest?>()
+
+    @Volatile
+    private var freezeRequested = false
+
+    @Volatile
+    private var imageZoom = ImageZoom()
+
+    /** The frozen frame, copied upright into a 2D texture; null while live. */
+    private var frozen: Frozen? = null
     private val mvp = FloatArray(16)
     private val rotation = FloatArray(16)
     private val scale = FloatArray(16)
@@ -114,6 +129,16 @@ class GlThread(name: String, private val stats: StatsCollector) {
         pendingSample.getAndSet(SampleRequest(x, y, onResult))?.onResult?.invoke(null)
     }
 
+    /** Freezes the next frame (kept on the GPU) and shows it until unfrozen. */
+    fun setFrozen(on: Boolean) {
+        freezeRequested = on
+        if (!on) imageZoom = ImageZoom()
+    }
+
+    fun setImageZoom(zoom: ImageZoom) {
+        imageZoom = zoom
+    }
+
     fun createWindowSurface(surface: android.view.Surface): EGLSurface = run { egl.createWindowSurface(surface) }
 
     fun releaseWindowSurface(surface: EGLSurface) = run {
@@ -136,10 +161,20 @@ class GlThread(name: String, private val stats: StatsCollector) {
         }
         if (views.isEmpty()) return // nothing to draw with until the first LUTs are baked
         egl.makeCurrent(target)
+        val shown = when {
+            !freezeRequested -> {
+                frozen?.release()
+                frozen = null
+                source
+            }
+
+            else -> (frozen ?: freeze(source).also { frozen = it }).source
+        }
+        val zoom = imageZoom.takeIf { frozen != null }
         GLES30.glViewport(0, 0, width, height)
         GLES30.glClearColor(0f, 0f, 0f, 1f)
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
-        val program = if (source.external) cameraProgram else imageProgram
+        val program = if (shown.external) cameraProgram else imageProgram
         val rects = ViewLayout.rects(views.size, landscape = width > height)
         timer.begin()
         for ((lut, rect) in views.zip(rects)) {
@@ -149,17 +184,17 @@ class GlThread(name: String, private val stats: StatsCollector) {
             // GL's viewport origin is at the bottom left; ViewRect's at the top left.
             val y = height - (rect.y * height).toInt() - h
             GLES30.glViewport(x, y, w, h)
-            fillMatrix(source, w.toFloat() / h)
-            program.draw(source.texture, source.texMatrix, mvp, lut)
+            fillMatrix(shown, w.toFloat() / h, zoom)
+            program.draw(shown.texture, shown.texMatrix, mvp, lut)
         }
         timer.end()
         pendingSample.getAndSet(null)?.let { request ->
-            request.onResult(sample(request, source, rects, width, height, program))
+            request.onResult(sample(request, shown, zoom, rects, width, height, program))
             egl.makeCurrent(target)
         }
         // Present as soon as possible: the frame's capture time, on the display's (monotonic) clock.
-        egl.swap(target, source.captureNs?.let { stats.toMonotonic(it) })
-        stats.onDraw(source.captureNs, arrivalNs, timer.lastMs)
+        egl.swap(target, shown.captureNs?.let { stats.toMonotonic(it) })
+        stats.onDraw(shown.captureNs, arrivalNs, timer.lastMs)
     }
 
     /**
@@ -170,6 +205,7 @@ class GlThread(name: String, private val stats: StatsCollector) {
     private fun sample(
         request: SampleRequest,
         source: FrameSource,
+        zoom: ImageZoom?,
         rects: List<ViewRect>,
         width: Int,
         height: Int,
@@ -183,15 +219,19 @@ class GlThread(name: String, private val stats: StatsCollector) {
         val py = h - ((request.y - rect.y) / rect.height * h).toInt()
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, sampler.framebuffer)
         GLES30.glViewport(Sampler.SIZE / 2 - px, Sampler.SIZE / 2 - py, w, h)
-        fillMatrix(source, w.toFloat() / h)
+        fillMatrix(source, w.toFloat() / h, zoom)
         program.draw(source.texture, source.texMatrix, mvp, sampler.identity)
         val pixels = sampler.read()
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
         return pixels
     }
 
-    /** Rotates the image upright, then scales it to fill the view, cropping the overflow (centred). */
-    private fun fillMatrix(source: FrameSource, viewAspect: Float) {
+    /**
+     * Rotates the image upright, then scales it to fill the view, cropping the overflow (centred).
+     * With a [zoom], magnifies around its centre, which is kept far enough from the edges for
+     * the image to still fill the view.
+     */
+    private fun fillMatrix(source: FrameSource, viewAspect: Float, zoom: ImageZoom? = null) {
         val content = source.contentAspect
         val sx = if (content > viewAspect) content / viewAspect else 1f
         val sy = if (content > viewAspect) 1f else viewAspect / content
@@ -200,12 +240,40 @@ class GlThread(name: String, private val stats: StatsCollector) {
         Matrix.setIdentityM(scale, 0)
         Matrix.scaleM(scale, 0, if (source.mirror) -sx else sx, sy, 1f)
         Matrix.multiplyMM(mvp, 0, scale, 0, rotation, 0)
+        if (zoom == null || zoom.scale <= 1f) return
+        val z = zoom.scale
+        // Where the zoom's centre sits now (the image spans ±sx, ±sy; y up), kept inside.
+        val px = ((zoom.cx - 0.5f) * 2 * sx).coerceIn(-sx + 1 / z, sx - 1 / z)
+        val py = ((0.5f - zoom.cy) * 2 * sy).coerceIn(-sy + 1 / z, sy - 1 / z)
+        Matrix.setIdentityM(scale, 0)
+        Matrix.scaleM(scale, 0, z, z, 1f)
+        Matrix.translateM(scale, 0, -px, -py, 0f)
+        Matrix.multiplyMM(rotation, 0, scale, 0, mvp, 0)
+        System.arraycopy(rotation, 0, mvp, 0, 16)
+    }
+
+    /**
+     * Copies [source] upright, at its own size, into a 2D texture: the GPU keeps the frozen
+     * frame, nothing goes through the CPU. Drawn without LUT, so the views still apply theirs.
+     */
+    private fun freeze(source: FrameSource): Frozen {
+        val w = source.width.coerceAtLeast(1)
+        val h = source.height.coerceAtLeast(1)
+        val target = Frozen.create(w, h)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, target.framebuffer)
+        GLES30.glViewport(0, 0, w, h)
+        fillMatrix(source, w.toFloat() / h)
+        (if (source.external) cameraProgram else imageProgram)
+            .draw(source.texture, source.texMatrix, mvp, sampler.identity)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        return target
     }
 
     fun quit() {
         run {
             alive = false
             pendingSample.getAndSet(null)?.onResult?.invoke(null)
+            frozen?.release()
             views.forEach { it.release() }
             sampler.release()
             timer.release()
@@ -216,6 +284,59 @@ class GlThread(name: String, private val stats: StatsCollector) {
             egl.release()
         }
         thread.quitSafely()
+    }
+}
+
+/** A frozen frame: a 2D texture holding it upright, drawn like any 2D source. */
+private class Frozen(private val texture: Int, val framebuffer: Int, width: Int, height: Int) {
+    // The texture is filled bottom row first, as GL draws: no flip needed.
+    val source = FrameSource(
+        texture,
+        false,
+        FloatArray(16).also { Matrix.setIdentityM(it, 0) },
+        width.toFloat() / height,
+        width = width,
+        height = height
+    )
+
+    fun release() {
+        GLES30.glDeleteFramebuffers(1, intArrayOf(framebuffer), 0)
+        GLES30.glDeleteTextures(1, intArrayOf(texture), 0)
+    }
+
+    companion object {
+        fun create(width: Int, height: Int): Frozen {
+            val ids = IntArray(1)
+            GLES30.glGenTextures(1, ids, 0)
+            val texture = ids[0]
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE)
+            GLES30.glTexImage2D(
+                GLES30.GL_TEXTURE_2D,
+                0,
+                GLES30.GL_RGBA8,
+                width,
+                height,
+                0,
+                GLES30.GL_RGBA,
+                GLES30.GL_UNSIGNED_BYTE,
+                null
+            )
+            GLES30.glGenFramebuffers(1, ids, 0)
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, ids[0])
+            GLES30.glFramebufferTexture2D(
+                GLES30.GL_FRAMEBUFFER,
+                GLES30.GL_COLOR_ATTACHMENT0,
+                GLES30.GL_TEXTURE_2D,
+                texture,
+                0
+            )
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+            return Frozen(texture, ids[0], width, height)
+        }
     }
 }
 

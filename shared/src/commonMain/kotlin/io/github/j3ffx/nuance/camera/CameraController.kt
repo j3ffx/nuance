@@ -41,6 +41,15 @@ enum class ViewKind {
  */
 data class PipetteState(val x: Float, val y: Float, val color: Rgb? = null)
 
+/** A zoom into the frozen image: [scale] ≥ 1 around ([cx], [cy]), fractions from its top left. */
+data class ImageZoomState(val scale: Float = 1f, val cx: Float = 0.5f, val cy: Float = 0.5f) {
+    /** The centre stays where the zoomed view still lies inside the image. */
+    fun clamped(): ImageZoomState {
+        val half = 0.5f / scale
+        return copy(cx = cx.coerceIn(half, 1 - half), cy = cy.coerceIn(half, 1 - half))
+    }
+}
+
 /** Everything the camera screen shows, as one immutable value. */
 data class ViewState(
     /** The profile the settings came from; they may have been changed since (see [Profile.with]). */
@@ -84,11 +93,7 @@ data class ViewState(
  * baked twice: at 17³ at once (a few ms, so sliders follow the finger), then at full size once the
  * state has stayed put for a moment. A newer change cancels an older bake.
  */
-class CameraController(
-    private val renderer: CameraRenderer,
-    scope: CoroutineScope,
-    initial: Profile = Profile.Default
-) {
+class CameraController(val renderer: CameraRenderer, scope: CoroutineScope, initial: Profile = Profile.Default) {
     var state by mutableStateOf(stateFor(initial))
         private set
 
@@ -103,6 +108,62 @@ class CameraController(
 
     fun closePipette() {
         pipette = null
+    }
+
+    /** The zoom into the frozen image (1 = the whole image). */
+    var imageZoom by mutableStateOf(ImageZoomState())
+        private set
+
+    /** Freezes or resumes the image; a new freeze starts unzoomed. */
+    fun setFrozen(on: Boolean) {
+        imageZoom = ImageZoomState()
+        renderer.setFrozen(on)
+    }
+
+    /**
+     * Two fingers: [zoom] (ratio since the last event) and [pan] (pixels) over an image area of
+     * [size]. Live, it drives the camera's zoom; frozen, the zoom into the image.
+     */
+    fun transform(zoom: Float, pan: androidx.compose.ui.geometry.Offset, size: androidx.compose.ui.unit.IntSize) {
+        val status = renderer.camera.value
+        if (!status.frozen) {
+            if (zoom != 1f) renderer.setZoom((status.zoom * zoom).coerceIn(status.minZoom, status.maxZoom))
+            return
+        }
+        val scale = (imageZoom.scale * zoom).coerceIn(1f, MAX_IMAGE_ZOOM)
+        moveImage(imageZoom.copy(scale = scale), pan, size)
+    }
+
+    /**
+     * One finger moved by [delta] pixels, now at [position]: moves the pipette if it is open,
+     * else the zoomed frozen image. False when there was nothing to move.
+     */
+    fun drag(
+        position: androidx.compose.ui.geometry.Offset,
+        delta: androidx.compose.ui.geometry.Offset,
+        size: androidx.compose.ui.unit.IntSize
+    ): Boolean {
+        if (pipette != null) {
+            pick(position.x / size.width, position.y / size.height)
+            return true
+        }
+        if (!renderer.camera.value.frozen || imageZoom.scale <= 1f) return false
+        moveImage(imageZoom, delta, size)
+        return true
+    }
+
+    private fun moveImage(
+        zoom: ImageZoomState,
+        pan: androidx.compose.ui.geometry.Offset,
+        size: androidx.compose.ui.unit.IntSize
+    ) {
+        // The image follows the fingers: its centre moves the other way, by the shown fraction.
+        val moved = zoom.copy(
+            cx = zoom.cx - pan.x / size.width / zoom.scale,
+            cy = zoom.cy - pan.y / size.height / zoom.scale
+        ).clamped()
+        imageZoom = moved
+        renderer.setImageZoom(moved.scale, moved.cx, moved.cy)
     }
 
     /** Switches to [profile]'s settings and mode. */
@@ -166,6 +227,9 @@ class CameraController(
 
         /** How often the pipette reads its point again: the scene moves under it. */
         const val PIPETTE_MS = 300L
+
+        /** The frozen image is a preview frame (1080p): beyond this, it is only blur. */
+        const val MAX_IMAGE_ZOOM = 6f
 
         fun functionFor(kind: ViewKind, s: Settings): LinearFunction {
             val views = ColorFunction.comparer(s)

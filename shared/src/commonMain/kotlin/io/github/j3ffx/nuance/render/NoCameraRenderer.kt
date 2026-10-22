@@ -15,4 +15,16 @@ class NoCameraRenderer : CameraRenderer {
     override fun setViews(luts: List<Lut3d>, bakeMs: Float?) = Unit
 
     override suspend fun sampleColor(x: Float, y: Float): Rgb? = null
+
+    override val camera: StateFlow<CameraStatus> = MutableStateFlow(CameraStatus())
+
+    override fun setZoom(ratio: Float) = Unit
+
+    override fun setTorch(on: Boolean) = Unit
+
+    override fun switchFacing() = Unit
+
+    override fun setFrozen(frozen: Boolean) = Unit
+
+    override fun setImageZoom(scale: Float, cx: Float, cy: Float) = Unit
 }
