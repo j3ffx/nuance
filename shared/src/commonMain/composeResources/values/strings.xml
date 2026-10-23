@@ -45,8 +45,9 @@
     <string name="camera_open_image">Open a photo from the gallery</string>
     <string name="camera_back">Back to the camera</string>
     <string name="camera_paused">Camera paused to save battery. Touch the screen to resume.</string>
+    <string name="camera_unpause">Resume</string>
     <string name="camera_hot">Phone is hot: image slowed down to let it cool</string>
-    <string name="settings_find_profile">Find my profile (take the test again)</string>
+    <string name="settings_find_profile">Find my profile (3-minute test)</string>
     <string name="camera_back_button">Back to the camera</string>
     <string name="capture_gallery">Gallery</string>
     <string name="capture_photo">Photo</string>
@@ -69,6 +70,7 @@
     <string name="pipette_seen">You probably see it as: %1$s</string>
     <string name="pipette_seen_same">You probably see it the same</string>
     <string name="pipette_isolate">Isolate this colour</string>
+    <string name="isolate_hint">Or tap the image, then “Isolate this colour”</string>
     <string name="pipette_close">Close the pipette</string>
     <string name="color_black">black</string>
     <string name="color_white">white</string>

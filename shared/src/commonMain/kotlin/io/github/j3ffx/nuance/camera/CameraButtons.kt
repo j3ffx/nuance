@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -73,6 +74,7 @@ import io.github.j3ffx.nuance.resources.camera_recording
 import io.github.j3ffx.nuance.resources.camera_resume
 import io.github.j3ffx.nuance.resources.camera_torch_off
 import io.github.j3ffx.nuance.resources.camera_torch_on
+import io.github.j3ffx.nuance.resources.camera_unpause
 import io.github.j3ffx.nuance.resources.camera_video
 import io.github.j3ffx.nuance.resources.camera_video_failed
 import io.github.j3ffx.nuance.resources.camera_video_saved
@@ -312,12 +314,19 @@ internal fun PausedCover(controller: CameraController) {
         Modifier.fillMaxSize().background(NuanceColors.scrim).clickable { controller.noteTouch() },
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            stringResource(Res.string.camera_paused),
-            color = NuanceColors.onScrim,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(32.dp).semantics { liveRegion = LiveRegionMode.Polite }
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                stringResource(Res.string.camera_paused),
+                color = NuanceColors.onScrim,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(32.dp).semantics { liveRegion = LiveRegionMode.Polite }
+            )
+            // Any touch resumes, but a button says so plainly (and TalkBack can reach it).
+            Button(onClick = controller::noteTouch, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icon(CameraIcons.Play, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.camera_unpause), modifier = Modifier.padding(start = 8.dp))
+            }
+        }
     }
 }
 

@@ -41,6 +41,7 @@ import io.github.j3ffx.nuance.platform.ThemeChoice
 import io.github.j3ffx.nuance.platform.UpdateOutcome
 import io.github.j3ffx.nuance.platform.UpdateProgress
 import io.github.j3ffx.nuance.platform.Versions
+import io.github.j3ffx.nuance.profiles.lastScreeningText
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.about_text
 import io.github.j3ffx.nuance.resources.auto_pause_minutes
@@ -193,7 +194,11 @@ fun SettingsScreen(
         ) { preferences.updateChecks = it }
         UpdateRow(preferences, platform)
 
-        LinkRow(stringResource(Res.string.settings_find_profile), onFindProfile)
+        LinkRow(
+            stringResource(Res.string.settings_find_profile),
+            onFindProfile,
+            lastScreeningText(preferences.lastScreening)
+        )
         LinkRow(stringResource(Res.string.settings_help), onHelp)
         LinkRow(stringResource(Res.string.settings_about), onAbout)
         Text(
@@ -309,14 +314,23 @@ private fun UpdateRow(preferences: Preferences, platform: Platform) {
 }
 
 @Composable
-private fun LinkRow(text: String, onClick: () -> Unit) {
+private fun LinkRow(text: String, onClick: () -> Unit, subtitle: String? = null) {
     // A chevron says it opens a page: the text colour alone would not.
     Row(
         Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClick = onClick)
             .semantics { role = Role.Button }.padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Column(Modifier.weight(1f)) {
+            Text(text, style = MaterialTheme.typography.bodyLarge)
+            subtitle?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
     }
 }

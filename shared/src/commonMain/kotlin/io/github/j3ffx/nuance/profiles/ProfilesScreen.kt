@@ -313,11 +313,16 @@ private fun ImportDialog(onImport: (Profile) -> Unit, onCancel: () -> Unit) {
 /** The last "Find my profile" result, under the button that takes it again. */
 @Composable
 private fun LastScreening(stored: String) {
-    val last = ScreeningSummary.decode(stored) ?: return
-    val text = if (last.axis == null) {
+    Text(lastScreeningText(stored) ?: return, style = MaterialTheme.typography.bodyMedium)
+}
+
+/** "Dernier test : Protan 100 %", or null when the test was never taken. */
+@Composable
+internal fun lastScreeningText(stored: String): String? {
+    val last = ScreeningSummary.decode(stored) ?: return null
+    return if (last.axis == null) {
         stringResource(Res.string.screening_last_none)
     } else {
         stringResource(Res.string.screening_last, profileSummary(last.axis, last.severity))
     }
-    Text(text, style = MaterialTheme.typography.bodyMedium)
 }

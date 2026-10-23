@@ -80,6 +80,7 @@ import io.github.j3ffx.nuance.resources.compare_four
 import io.github.j3ffx.nuance.resources.compare_two
 import io.github.j3ffx.nuance.resources.hold_for_original
 import io.github.j3ffx.nuance.resources.intensity_value
+import io.github.j3ffx.nuance.resources.isolate_hint
 import io.github.j3ffx.nuance.resources.mode_caption_compare
 import io.github.j3ffx.nuance.resources.mode_caption_correct
 import io.github.j3ffx.nuance.resources.mode_caption_isolate
@@ -486,12 +487,22 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                     }
                 )
 
-                Mode.Isolate -> Choices(
-                    options = HuePreset.entries,
-                    label = { hueName(it) },
-                    onSelect = { p -> controller.update { it.copy(settings = it.settings.copy(isolateHue = p.hue)) } },
-                    isSelected = { it == nearestPreset(s.isolateHue) }
-                )
+                Mode.Isolate -> {
+                    Choices(
+                        options = HuePreset.entries,
+                        label = { hueName(it) },
+                        onSelect = { p ->
+                            controller.update { it.copy(settings = it.settings.copy(isolateHue = p.hue)) }
+                        },
+                        isSelected = { it == nearestPreset(s.isolateHue) }
+                    )
+                    // Any colour of the scene, not only the presets: the pipette's button does it.
+                    Text(
+                        stringResource(Res.string.isolate_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             // Named after what it adjusts; Simulate has nothing more to adjust.
             val adjust = when (state.mode) {

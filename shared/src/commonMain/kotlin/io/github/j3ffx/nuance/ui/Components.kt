@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -163,9 +164,11 @@ fun <T> Choices(
 fun LabeledSlider(text: String, value: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier) {
         Text(text, style = MaterialTheme.typography.bodyLarge)
+        // The track's unfilled part in "outline": the default was below 3:1 on the dark surface.
         Slider(
             value = value,
             onValueChange = onChange,
+            colors = SliderDefaults.colors(inactiveTrackColor = MaterialTheme.colorScheme.outline),
             modifier = Modifier.fillMaxWidth().semantics { stateDescription = text }
         )
     }
