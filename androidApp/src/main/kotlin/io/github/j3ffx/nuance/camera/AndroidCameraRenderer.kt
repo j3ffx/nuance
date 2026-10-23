@@ -408,8 +408,10 @@ class AndroidCameraRenderer(private val context: Context) : CameraRenderer {
             onDispose {
                 p?.unbindAll()
                 bound = null
-                // Without a camera (raw preview, synthetic sources): no zoom, no torch.
-                status.update { CameraStatus(frozen = it.frozen, front = front, canSwitchFacing = it.canSwitchFacing) }
+                // Without a camera (a gallery photo, the raw preview, synthetic sources): no zoom, no
+                // torch. Only those: resetting the whole status here also cleared "a gallery photo is
+                // shown" (this runs right after showImage), and the way back to the camera vanished.
+                status.update { it.copy(minZoom = 1f, maxZoom = 1f, zoom = 1f, hasTorch = false, torch = false) }
             }
         }
     }
