@@ -89,7 +89,32 @@ class ProfileTest {
         assertFalse(sample.isModifiedBy(s))
         assertFalse(sample.isModifiedBy(s.copy(intensity = s.intensity + 0.001)), "below a whole percent")
         assertTrue(sample.isModifiedBy(s.copy(contrast = s.contrast + 0.05)))
-        assertTrue(sample.isModifiedBy(s.copy(profile = s.profile.copy(severity = 0.9))))
+        assertTrue(sample.isModifiedBy(s.copy(profile = s.profile.scaledTo(0.9))))
         assertFalse(sample.copy(mode = Mode.Isolate).isModifiedBy(s), "the mode is not a setting")
+    }
+
+    @Test
+    fun aMixedProfileRoundTripsAndOlderAppsReadItsMainAxis() {
+        val mix = Profile("p3", "Moi", protan = 100, deutan = 0, tritan = 30)
+        val text = ProfileCodec.encode(mix)
+        assertEquals(mix, ProfileCodec.decode(text))
+        // 0.1.x reads only a= and s=: the main axis, at its severity.
+        assertTrue(";a=p;s=100;" in text, text)
+    }
+
+    @Test
+    fun profilesWrittenBy01xStillRead() {
+        val p = ProfileCodec.decode("nuance1;id=x;n=Ancien;a=t;s=40;m=s")!!
+        assertEquals(listOf(0, 0, 40), listOf(p.protan, p.deutan, p.tritan))
+        assertEquals(Axis.Tritan, p.axis)
+        assertEquals(40, p.severity)
+    }
+
+    @Test
+    fun theMainAxisIsTheStrongest() {
+        val mix = Profile("p4", "", protan = 20, deutan = 0, tritan = 70)
+        assertEquals(Axis.Tritan, mix.axis)
+        assertEquals(70, mix.severity)
+        assertTrue(mix.cvd.isMixed)
     }
 }

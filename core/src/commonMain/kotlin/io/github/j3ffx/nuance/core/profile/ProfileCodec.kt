@@ -6,7 +6,10 @@ import io.github.j3ffx.nuance.core.modes.Mode
 /**
  * Profiles as short text, to share one with someone (a message, a note, a file) and to keep the
  * list on the phone. One line per profile, e.g.
- * `nuance1;n=Pour Léa;a=d;s=60;m=c;i=100;st=error-redistribution;c=0;sa=0;h=29;w=30`.
+ * `nuance1;n=Pour Léa;a=d;s=60;p=0;d=60;t=0;m=c;i=100;st=lab-remap;c=0;sa=0;h=29;w=30`.
+ *
+ * `p`, `d` and `t` are each axis's severity (mixed profiles, 0.1.2); `a` and `s` repeat the main
+ * axis, which is all 0.1.0 and 0.1.1 read, and all they wrote.
  *
  * Unknown keys are ignored and missing ones take their default, so an older app reads a newer
  * profile. In the name, `%`, `;`, `=` and line breaks are escaped as %XX.
@@ -20,6 +23,9 @@ object ProfileCodec {
         if (p.name.isNotEmpty()) add("n=${escape(p.name)}")
         add("a=${axisCode(p.axis)}")
         add("s=${p.severity}")
+        add("p=${p.protan}")
+        add("d=${p.deutan}")
+        add("t=${p.tritan}")
         add("m=${modeCode(p.mode)}")
         add("i=${p.intensity}")
         add("st=${escape(p.strategyId)}")
@@ -38,11 +44,23 @@ object ProfileCodec {
             if (eq <= 0) null else part.substring(0, eq) to unescape(part.substring(eq + 1))
         }.toMap()
         return runCatching {
+            // Each axis if given; else the main one alone, as 0.1.x wrote it.
+            val mixed = listOf("p", "d", "t").any { it in fields }
+            val axis = if (mixed) null else fields["a"]?.let(::axisOf) ?: return null
+            val severity = if (mixed) 0 else fields["s"]?.toInt() ?: return null
+            fun of(key: String, a: Axis) = if (mixed) {
+                fields[key]?.toInt() ?: 0
+            } else if (axis == a) {
+                severity
+            } else {
+                0
+            }
             Profile(
                 id = fields["id"] ?: "imported",
                 name = fields["n"].orEmpty(),
-                axis = fields["a"]?.let(::axisOf) ?: return null,
-                severity = fields["s"]?.toInt() ?: return null,
+                protan = of("p", Axis.Protan),
+                deutan = of("d", Axis.Deutan),
+                tritan = of("t", Axis.Tritan),
                 mode = fields["m"]?.let(::modeOf) ?: Mode.Correct,
                 intensity = fields["i"]?.toInt() ?: 100,
                 strategyId = fields["st"] ?: Profile.Default.strategyId,

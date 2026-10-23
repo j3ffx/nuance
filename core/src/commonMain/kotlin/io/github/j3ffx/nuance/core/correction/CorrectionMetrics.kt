@@ -70,15 +70,17 @@ object CorrectionMetrics {
      * on the profile's confusion lines, clearly different for typical vision (ΔE2000 ≥ 8).
      */
     fun confusionPairs(profile: CvdProfile): List<Pair<Vec3, Vec3>> {
-        val cone = profile.axis.cone
         val out = ArrayList<Pair<Vec3, Vec3>>()
-        for (c in grid()) {
-            val lms = Lms.FromLinearRgb * c
-            for (factor in doubleArrayOf(0.6, 0.75, 0.9, 1.1, 1.25, 1.4)) {
-                val moved = Lms.ToLinearRgb * (lms + Lms.axis(cone) * (lms[cone] * (factor - 1)))
-                if (!Srgb.inGamut(moved)) continue
-                if (deltaE2000(Lab.fromLinear(c), Lab.fromLinear(moved)) < 8) continue
-                out += c to moved
+        // A mix confuses along each of its axes.
+        for (cone in profile.components.ifEmpty { listOf(profile.axis) }.map { it.cone }) {
+            for (c in grid()) {
+                val lms = Lms.FromLinearRgb * c
+                for (factor in doubleArrayOf(0.6, 0.75, 0.9, 1.1, 1.25, 1.4)) {
+                    val moved = Lms.ToLinearRgb * (lms + Lms.axis(cone) * (lms[cone] * (factor - 1)))
+                    if (!Srgb.inGamut(moved)) continue
+                    if (deltaE2000(Lab.fromLinear(c), Lab.fromLinear(moved)) < 8) continue
+                    out += c to moved
+                }
             }
         }
         return out

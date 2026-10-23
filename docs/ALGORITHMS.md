@@ -113,6 +113,43 @@ inférieur à 2·10⁻⁴ pour Viénot, à 2·10⁻³ pour Brettel.
   à cet axe. Brettel 1997 est le modèle de référence ; pour les formes partielles, on interpole
   avec l'original, faute de modèle mieux fondé.
 
+### Profils mixtes
+
+Un profil peut toucher plusieurs axes à la fois, chacun de 0 à 100 % : c'est la demande du premier
+testeur (« le daltonisme peut impliquer plusieurs types de cônes »), et le projet a choisi de laisser
+le mélange libre.
+
+Ce que dit la littérature :
+
+- **Protan et deutan ensemble, de naissance** : pratiquement pas documenté. Les gènes des cônes L
+  et M sont voisins sur le chromosome X ; perdre les deux donne une monochromatie à cônes S, pas
+  un « protan + deutan ».
+- **Rouge-vert et bleu-jaune** : bien documenté, surtout quand une atteinte acquise s'ajoute
+  (cristallin jauni, cataracte, glaucome, DMLA ; le type II de Verriest, « deutan avec perte
+  bleu-jaune » ; la règle de Köllner, qui relie les atteintes de la rétine au bleu-jaune).
+- **Aucun modèle de simulation validé** pour plusieurs types de cônes : Machado 2009 et Brettel
+  1997 traitent un cône à la fois.
+
+Le choix de Nuance, une **approximation assumée**, dite telle quelle dans l'appli :
+
+- **simulation** : les axes s'enchaînent en RGB linéaire, rouge-vert d'abord (la matrice protan,
+  puis la matrice deutan si les deux sont là), puis tritan (Brettel interpolé, appliqué à la
+  couleur déjà simulée). L'ordre est fixé pour que le résultat soit toujours le même ;
+- **corrections** : la perte rouge-vert (a\* pour le remappage, le décalage rouge-vert pour la
+  redistribution) et la perte bleu-jaune (b\*, le décalage tritan) sont toutes deux réécrites,
+  chacune pondérée par la sévérité de son axe rapportée à la plus forte ;
+- **axe principal** : le plus fort. Il sert aux textes, au test intégré et aux outils qui ne
+  traitent qu'un axe ; les étiquettes de Comparer disent « vu avec ton profil » pour un mélange.
+
+Les tests (`MixedProfileTest`) vérifient : un profil à un seul axe donne **exactement** la même
+simulation qu'avant (et les images de référence de `GoldenTest` n'ont pas bougé) ; aucun axe =
+l'identité ; les gris restent gris ; 1 % d'un second axe ne crée pas de saut ; et, pour protan
+100 % + tritan 50 %, chaque correction sépare plus de paires confondues (celles des deux axes)
+qu'avant correction, sans bouger les gris.
+
+Le format texte des profils écrit `p=`, `d=`, `t=` (une sévérité par axe) et répète l'axe
+principal en `a=` et `s=` : la 0.1.1 lit un profil mixte comme son axe principal seul.
+
 ## 4. Corrections
 
 L'interface `CorrectionStrategy` (`core/.../correction/`) en propose deux. L'intensité va de 0

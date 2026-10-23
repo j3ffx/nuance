@@ -99,10 +99,12 @@ import io.github.j3ffx.nuance.resources.update_done_chip
 import io.github.j3ffx.nuance.resources.view_corrected
 import io.github.j3ffx.nuance.resources.view_corrected_as_seen
 import io.github.j3ffx.nuance.resources.view_corrected_seen
+import io.github.j3ffx.nuance.resources.view_corrected_seen_you
 import io.github.j3ffx.nuance.resources.view_isolated
 import io.github.j3ffx.nuance.resources.view_original
 import io.github.j3ffx.nuance.resources.view_real
 import io.github.j3ffx.nuance.resources.view_real_seen
+import io.github.j3ffx.nuance.resources.view_real_seen_you
 import io.github.j3ffx.nuance.ui.Choices
 import io.github.j3ffx.nuance.ui.LabeledSlider
 import io.github.j3ffx.nuance.ui.NuanceColors
@@ -271,7 +273,7 @@ private fun TopBar(
     val s = controller.state.settings
     val profile = preferences.profile(controller.state.profileId)
     val name = profile?.name?.takeIf { it.isNotEmpty() }
-    val summary = profileSummary(s.profile.axis, (s.profile.severity * 100).roundToInt())
+    val summary = profileSummary(s.profile)
     val named = if (name != null) "$name · $summary" else summary
     // Changed since the profile was picked: written out, so it is never a colour alone.
     val modified = profile?.isModifiedBy(s) == true
@@ -408,11 +410,26 @@ private fun ViewLabels(state: ViewState) {
 @Composable
 internal fun viewLabel(kind: ViewKind, axis: String, state: ViewState): String = when (kind) {
     ViewKind.Real -> stringResource(Res.string.view_real)
-    ViewKind.RealSeen -> stringResource(Res.string.view_real_seen, axis)
+
+    // A mix has no one name: "with your profile".
+    ViewKind.RealSeen -> if (state.settings.profile.isMixed) {
+        stringResource(Res.string.view_real_seen_you)
+    } else {
+        stringResource(Res.string.view_real_seen, axis)
+    }
+
     ViewKind.Corrected -> stringResource(Res.string.view_corrected)
-    ViewKind.CorrectedSeen -> stringResource(Res.string.view_corrected_seen, axis)
+
+    ViewKind.CorrectedSeen -> if (state.settings.profile.isMixed) {
+        stringResource(Res.string.view_corrected_seen_you)
+    } else {
+        stringResource(Res.string.view_corrected_seen, axis)
+    }
+
     ViewKind.Isolated -> stringResource(Res.string.view_isolated, hueName(nearestPreset(state.settings.isolateHue)))
+
     ViewKind.ProtanCorrectedSeen -> stringResource(Res.string.view_corrected_as_seen, axisName(Axis.Protan), axis)
+
     ViewKind.DeutanCorrectedSeen -> stringResource(Res.string.view_corrected_as_seen, axisName(Axis.Deutan), axis)
 }
 
@@ -481,7 +498,8 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                     { v ->
                         controller.update {
                             it.copy(
-                                settings = it.settings.copy(profile = it.settings.profile.copy(severity = v.toDouble()))
+                                // A mix keeps its proportions: the slider sets the strongest axis.
+                                settings = it.settings.copy(profile = it.settings.profile.scaledTo(v.toDouble()))
                             )
                         }
                     }

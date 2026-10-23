@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
 import io.github.j3ffx.nuance.core.correction.ErrorRedistribution
 import io.github.j3ffx.nuance.core.cvd.Axis
+import io.github.j3ffx.nuance.core.cvd.CvdProfile
 import io.github.j3ffx.nuance.core.modes.HuePreset
 import io.github.j3ffx.nuance.core.naming.Chroma
 import io.github.j3ffx.nuance.core.naming.ColorName
@@ -87,7 +88,9 @@ import io.github.j3ffx.nuance.resources.hue_yellow
 import io.github.j3ffx.nuance.resources.profile_summary
 import io.github.j3ffx.nuance.resources.strategy_error_redistribution
 import io.github.j3ffx.nuance.resources.strategy_lab_remap
+import io.github.j3ffx.nuance.resources.vision_none
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
 /** A page with a title and a back arrow, its content scrolling. */
@@ -228,13 +231,24 @@ fun axisHelp(a: Axis): String = stringResource(
     }
 )
 
-/** "Deutan 60 %": a preset's name, and the summary under a named profile. */
+/** "Deutan 60 %": one axis at a severity in percent. */
 @Composable
 fun profileSummary(axis: Axis, severity: Int): String =
     stringResource(Res.string.profile_summary, axisTitle(axis), severity)
 
+/** "Protan 100 % + Tritan 30 %", strongest first; "Vision typique" when no axis is affected. */
 @Composable
-fun profileName(p: Profile): String = p.name.ifEmpty { profileSummary(p.axis, p.severity) }
+fun profileSummary(cvd: CvdProfile): String =
+    cvd.components.map { profileSummary(it, (cvd.severityOf(it) * 100).roundToInt()) }
+        .joinToString(" + ")
+        .ifEmpty { stringResource(Res.string.vision_none) }
+
+/** A preset's name, and the summary under a named profile. */
+@Composable
+fun profileSummary(p: Profile): String = profileSummary(p.cvd)
+
+@Composable
+fun profileName(p: Profile): String = p.name.ifEmpty { profileSummary(p) }
 
 @Composable
 fun hueName(p: HuePreset): String = stringResource(

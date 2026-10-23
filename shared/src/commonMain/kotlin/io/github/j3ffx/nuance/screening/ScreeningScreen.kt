@@ -53,6 +53,7 @@ import io.github.j3ffx.nuance.core.screening.D15
 import io.github.j3ffx.nuance.core.screening.Plate
 import io.github.j3ffx.nuance.core.screening.Screening
 import io.github.j3ffx.nuance.core.screening.ScreeningResult
+import io.github.j3ffx.nuance.profiles.VisionEditor
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.camera_back
 import io.github.j3ffx.nuance.resources.screening_arrange_help
@@ -359,8 +360,11 @@ private fun PatchStep(session: Screening, see: (Rgb) -> Rgb, onAnswer: (Int?) ->
 
 @Composable
 private fun ResultStep(result: ScreeningResult, onKeep: (Profile) -> Unit, onFinish: () -> Unit, onRedo: () -> Unit) {
-    var axis by remember(result) { mutableStateOf(result.axis ?: Axis.Deutan) }
-    var severity by remember(result) { mutableIntStateOf(result.severity.coerceIn(0, 100)) }
+    var severities by remember(result) {
+        val axis = result.axis ?: Axis.Deutan
+        val severity = result.severity.coerceIn(0, 100)
+        mutableStateOf(Axis.entries.map { if (it == axis) severity else 0 })
+    }
     val name = stringResource(Res.string.screening_save_name)
     SectionTitle(stringResource(Res.string.screening_result_title))
     if (result.axis == null) {
@@ -400,17 +404,13 @@ private fun ResultStep(result: ScreeningResult, onKeep: (Profile) -> Unit, onFin
             Text(stringResource(Res.string.screening_choose_anyway))
         }
     } else {
-        // The proposal can be adjusted before it is kept.
-        Choices(Axis.entries, { axisTitle(it) }, { axis = it }, { it == axis })
-        LabeledSlider(
-            stringResource(Res.string.severity_value, severity),
-            severity / 100f,
-            { severity = (it * 100).roundToInt() }
-        )
+        // The proposal can be adjusted before it is kept, another axis added too.
+        VisionEditor(severities, { severities = it })
+        val kept = Profile("", name, protan = severities[0], deutan = severities[1], tritan = severities[2])
         Button(
-            onClick = { onKeep(Profile("", name, axis, severity)) },
+            onClick = { onKeep(kept) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-        ) { Text(stringResource(Res.string.screening_use, profileSummary(axis, severity))) }
+        ) { Text(stringResource(Res.string.screening_use, profileSummary(kept))) }
     }
     OutlinedButton(onClick = onRedo, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
         Text(stringResource(Res.string.screening_redo))

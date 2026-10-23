@@ -47,6 +47,10 @@ class Mat3(private val m: DoubleArray) {
         return Mat3(r)
     }
 
+    operator fun times(k: Double) = Mat3(DoubleArray(9) { m[it] * k })
+
+    operator fun plus(o: Mat3) = Mat3(DoubleArray(9) { m[it] + o.m[it] })
+
     fun row(i: Int) = Vec3(m[i * 3], m[i * 3 + 1], m[i * 3 + 2])
 
     fun inverse(): Mat3 {

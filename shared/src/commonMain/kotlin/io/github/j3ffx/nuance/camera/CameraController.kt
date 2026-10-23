@@ -8,6 +8,7 @@ import io.github.j3ffx.nuance.core.Lut3d
 import io.github.j3ffx.nuance.core.Rgb
 import io.github.j3ffx.nuance.core.correction.CorrectionMetrics
 import io.github.j3ffx.nuance.core.cvd.Axis
+import io.github.j3ffx.nuance.core.cvd.CvdProfile
 import io.github.j3ffx.nuance.core.modes.ColorFunction
 import io.github.j3ffx.nuance.core.modes.LinearFunction
 import io.github.j3ffx.nuance.core.modes.Mode
@@ -173,10 +174,12 @@ class CameraController(
         if (captureMessage == message) captureMessage = null
     }
 
-    /** "deutan60_correct": the profile and the mode, in the file names. */
+    /** "deutan60_correct", "protan100-tritan30_compare": the profile and the mode, in the file names. */
     private fun captureName(): String {
         val p = state.settings.profile
-        return "${p.axis.name.lowercase()}${(p.severity * 100).roundToInt()}_${state.mode.name.lowercase()}"
+        val axes = p.components.ifEmpty { listOf(p.axis) }
+            .joinToString("-") { "${it.name.lowercase()}${(p.severityOf(it) * 100).roundToInt()}" }
+        return "${axes}_${state.mode.name.lowercase()}"
     }
 
     /** The zoom into the frozen image (1 = the whole image). */
@@ -320,7 +323,7 @@ class CameraController(
         /** The correction made for [axis] at the profile's severity, seen with the profile itself. */
         private fun correctedAs(axis: Axis, s: Settings): LinearFunction {
             val simulate = ColorFunction.simulation(s.profile)
-            val correct = ColorFunction.correction(s.copy(profile = s.profile.copy(axis = axis)))
+            val correct = ColorFunction.correction(s.copy(profile = CvdProfile(axis, s.profile.severity)))
             return { simulate(CorrectionMetrics.clampLinear(correct(it))) }
         }
     }

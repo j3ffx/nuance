@@ -20,8 +20,10 @@
     <string name="view_original">Original</string>
     <string name="view_real">Original</string>
     <string name="view_real_seen">Vu par un %1$s</string>
+    <string name="view_real_seen_you">Vu avec ton profil</string>
     <string name="view_corrected">Corrigé</string>
     <string name="view_corrected_seen">Corrigé, vu par un %1$s</string>
+    <string name="view_corrected_seen_you">Corrigé, vu avec ton profil</string>
     <string name="view_corrected_as_seen">Corr. %1$s, vu par un %2$s</string>
     <string name="view_isolated">Seulement le %1$s</string>
     <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur, pince pour zoomer, reste appuyé pour voir l’original.</string>
@@ -102,6 +104,10 @@
     <string name="axis_deutan_help">Rouge-vert, le plus fréquent</string>
     <string name="axis_tritan_help">Bleu-jaune, plus rare</string>
     <string name="profile_summary">%1$s %2$d %</string>
+    <string name="vision_value">%1$s : %2$d %</string>
+    <string name="vision_none">Vision typique</string>
+    <string name="vision_hint">Le plus souvent, un seul type. Pas sûr ? Laisse 60 %, tu pourras ajuster.</string>
+    <string name="vision_mixed_note">Plusieurs types à la fois : Nuance les combine, mais aucun modèle n’a été validé pour ça. Fie-toi à ce que tu vois.</string>
 
     <!-- Hues -->
     <string name="hue_red">rouge</string>
@@ -202,7 +208,7 @@
     <string name="help_photos_title">Photos et vidéos</string>
     <string name="help_photos">Les photos et vidéos vont dans l’album Nuance de ta galerie, sans position. Paramètres → Photos et vidéos → « Filtrée + originale » garde aussi l’original. « Galerie » ouvre une photo et lui applique les mêmes filtres ; « Caméra » te ramène.</string>
     <string name="help_profile_title">Ton profil</string>
-    <string name="help_profile">Ton profil dit quelles couleurs tu confonds, et à quel point. Touche-le en haut de la caméra pour en changer, ou pour enregistrer les réglages que tu as changés. Tu ne connais pas ton type ? « Trouver mon profil » est un test de 3 minutes qui en propose un.\n\nAchromatopsie (vision sans couleurs) : la correction n’a pas de sens, mais le contraste, dans « Régler la correction », peut aider.</string>
+    <string name="help_profile">Ton profil dit quelles couleurs tu confonds, et à quel point : un curseur par type. Le plus souvent un seul est touché ; tu peux en mélanger plusieurs (par exemple protan et un peu de tritan), c’est alors une approximation, faute de modèle validé. Touche ton profil en haut de la caméra pour en changer, ou pour enregistrer les réglages que tu as changés. Tu ne connais pas ton type ? « Trouver mon profil » est un test de 3 minutes qui en propose un.\n\nAchromatopsie (vision sans couleurs) : la correction n’a pas de sens, mais le contraste, dans « Régler la correction », peut aider.</string>
     <string name="help_privacy_title">Confidentialité</string>
     <string name="help_privacy">Les images ne quittent jamais le téléphone. Pas de compte, pas de statistiques. La seule connexion possible est la vérification des mises à jour sur GitHub, désactivée par défaut.</string>
     <string name="help_medical_title">Pas un dispositif médical</string>
@@ -258,7 +264,8 @@
     <string name="onb_intro">Nuance filtre l’image de la caméra pour t’aider à distinguer les couleurs.</string>
     <string name="onb_correct">Corriger les couleurs selon ton profil</string>
     <string name="onb_isolate">Isoler une couleur</string>
-    <string name="onb_compare">Montrer à tes proches ce que tu vois</string>
+    <string name="onb_compare">Comparer avant et après, côte à côte</string>
+    <string name="onb_simulate">Montrer à tes proches ce que tu vois</string>
     <string name="onb_not_medical">Ce n’est pas un dispositif médical : seul un ophtalmologiste ou un orthoptiste peut poser un diagnostic.</string>
     <string name="onb_private">Rien ne sort du téléphone : pas de compte, pas de statistiques.</string>
     <string name="onb_profile">Ton profil</string>

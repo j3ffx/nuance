@@ -15,24 +15,33 @@ import io.github.j3ffx.nuance.core.color.Vec3
  *   from 90 % to 100 %, the matrix moves linearly from Machado's 90 % step to Viénot, so the
  *   severity slider has no jump;
  * - tritan: Brettel 1997 for the total form; partial forms interpolate it with the original colour
- *   (Machado's tritan matrices were never validated with tritan observers).
+ *   (Machado's tritan matrices were never validated with tritan observers);
+ * - several axes: chained, see [linear].
  *
  * Everything happens on linear RGB.
  */
 object Simulation {
-    /** The simulation as a function of linear RGB. Matrices are computed once, here. */
+    /**
+     * The simulation as a function of linear RGB. Matrices are computed once, here. A mixed profile
+     * chains the axes, red-green first (protan, then deutan), then tritan: an approximation, since
+     * no model was validated for more than one cone type (docs/ALGORITHMS.md, "Profils mixtes").
+     * With one axis, it is that axis's simulation exactly.
+     */
     fun linear(profile: CvdProfile): (Vec3) -> Vec3 {
-        val s = profile.severity
-        if (s == 0.0) return { it }
-        return when (profile.axis) {
-            Axis.Protan, Axis.Deutan -> {
-                val m = redGreenMatrix(profile.axis, s)
-                return { m * it }
-            }
+        val redGreen = listOf(Axis.Protan, Axis.Deutan)
+            .filter { profile.severityOf(it) > 0 }
+            .map { redGreenMatrix(it, profile.severityOf(it)) }
+            .reduceOrNull { first, then -> then * first }
+        val t = profile.tritan
+        val brettel = if (t > 0) Brettel1997(Axis.Tritan) else null
+        return when {
+            brettel == null && redGreen == null -> { c -> c }
 
-            Axis.Tritan -> {
-                val brettel = Brettel1997(Axis.Tritan)
-                return { Vec3.lerp(it, brettel.simulate(it), s) }
+            brettel == null -> { c -> redGreen!! * c }
+
+            else -> { c ->
+                val rg = redGreen?.let { it * c } ?: c
+                Vec3.lerp(rg, brettel.simulate(rg), t)
             }
         }
     }

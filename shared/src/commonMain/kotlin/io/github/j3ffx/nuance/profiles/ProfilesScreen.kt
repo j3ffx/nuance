@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -72,18 +74,12 @@ import io.github.j3ffx.nuance.resources.save
 import io.github.j3ffx.nuance.resources.screening_last
 import io.github.j3ffx.nuance.resources.screening_last_none
 import io.github.j3ffx.nuance.resources.screening_title
-import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.share_title
 import io.github.j3ffx.nuance.screening.ScreeningSummary
-import io.github.j3ffx.nuance.ui.Choices
-import io.github.j3ffx.nuance.ui.LabeledSlider
 import io.github.j3ffx.nuance.ui.Page
 import io.github.j3ffx.nuance.ui.SectionTitle
-import io.github.j3ffx.nuance.ui.axisHelp
-import io.github.j3ffx.nuance.ui.axisTitle
 import io.github.j3ffx.nuance.ui.profileName
 import io.github.j3ffx.nuance.ui.profileSummary
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -195,7 +191,7 @@ private fun ProfileRow(
     onDelete: (() -> Unit)?
 ) {
     var menu by remember { mutableStateOf(false) }
-    val summary = if (p.name.isNotEmpty()) profileSummary(p.axis, p.severity) else null
+    val summary = if (p.name.isNotEmpty()) profileSummary(p) else null
     val state = if (inUse) stringResource(Res.string.profile_in_use) else null
     ListItem(
         headlineContent = {
@@ -244,30 +240,33 @@ private fun ProfileRow(
     )
 }
 
-/** Name, axis and severity; the camera settings are saved from the camera's Advanced panel. */
+/** Name and severities; the camera settings are saved from the camera (the profile sheet). */
 @Composable
 private fun ProfileEditor(initial: Profile, onSave: (Profile) -> Unit, onCancel: () -> Unit) {
     var name by remember { mutableStateOf(initial.name) }
-    var axis by remember { mutableStateOf(initial.axis) }
-    var severity by remember { mutableStateOf(initial.severity) }
+    var severities by remember { mutableStateOf(listOf(initial.protan, initial.deutan, initial.tritan)) }
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(stringResource(Res.string.profile_edit_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(name, {
                     name = it
                 }, label = { Text(stringResource(Res.string.profile_name)) }, singleLine = true)
-                Choices(Axis.entries, { axisTitle(it) }, { axis = it }, { it == axis })
-                Text(axisHelp(axis), style = MaterialTheme.typography.bodyMedium)
-                LabeledSlider(stringResource(Res.string.severity_value, severity), severity / 100f, {
-                    severity =
-                        (it * 100).roundToInt()
-                })
+                VisionEditor(severities, { severities = it })
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(initial.copy(name = name.trim(), axis = axis, severity = severity)) }) {
+            TextButton(onClick = {
+                onSave(
+                    initial.copy(
+                        name = name.trim(),
+                        protan = severities[0],
+                        deutan = severities[1],
+                        tritan = severities[2]
+                    )
+                )
+            }) {
                 Text(stringResource(Res.string.save))
             }
         },

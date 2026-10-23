@@ -28,8 +28,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.profile.Profile
+import io.github.j3ffx.nuance.profiles.VisionEditor
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.onb_compare
 import io.github.j3ffx.nuance.resources.onb_correct
@@ -41,18 +41,14 @@ import io.github.j3ffx.nuance.resources.onb_know
 import io.github.j3ffx.nuance.resources.onb_not_medical
 import io.github.j3ffx.nuance.resources.onb_private
 import io.github.j3ffx.nuance.resources.onb_profile
+import io.github.j3ffx.nuance.resources.onb_simulate
 import io.github.j3ffx.nuance.resources.onb_start
 import io.github.j3ffx.nuance.resources.onb_take_test
 import io.github.j3ffx.nuance.resources.onb_title
 import io.github.j3ffx.nuance.resources.onb_updates
 import io.github.j3ffx.nuance.resources.settings_updates_help
-import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.ui.Choices
-import io.github.j3ffx.nuance.ui.LabeledSlider
 import io.github.j3ffx.nuance.ui.SectionTitle
-import io.github.j3ffx.nuance.ui.axisHelp
-import io.github.j3ffx.nuance.ui.axisTitle
-import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -62,9 +58,9 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun OnboardingScreen(onDone: (Profile, Boolean, Boolean) -> Unit) {
-    var knows by remember { mutableStateOf<Boolean?>(null) }
-    var axis by remember { mutableStateOf(Axis.Deutan) }
-    var severity by remember { mutableStateOf(60) }
+    // "I don't know" is picked to start with: "Start" is never greyed out without a reason.
+    var knows by remember { mutableStateOf(false) }
+    var severities by remember { mutableStateOf(listOf(0, 60, 0)) }
     var updates by remember { mutableStateOf(false) }
     Surface(Modifier.fillMaxSize()) {
         Column(
@@ -79,7 +75,12 @@ fun OnboardingScreen(onDone: (Profile, Boolean, Boolean) -> Unit) {
                 }
             )
             Text(stringResource(Res.string.onb_intro), style = MaterialTheme.typography.bodyLarge)
-            for (line in listOf(Res.string.onb_correct, Res.string.onb_isolate, Res.string.onb_compare)) {
+            for (line in listOf(
+                Res.string.onb_correct,
+                Res.string.onb_isolate,
+                Res.string.onb_simulate,
+                Res.string.onb_compare
+            )) {
                 Text("•  " + stringResource(line), style = MaterialTheme.typography.bodyLarge)
             }
             Text(stringResource(Res.string.onb_not_medical), style = MaterialTheme.typography.bodyMedium)
@@ -92,22 +93,10 @@ fun OnboardingScreen(onDone: (Profile, Boolean, Boolean) -> Unit) {
                 { knows = it },
                 { it == knows }
             )
-            when (knows) {
-                true -> {
-                    Choices(Axis.entries, { axisTitle(it) }, { axis = it }, { it == axis })
-                    Text(axisHelp(axis), style = MaterialTheme.typography.bodyMedium)
-                    LabeledSlider(stringResource(Res.string.severity_value, severity), severity / 100f, {
-                        severity =
-                            (it * 100).roundToInt()
-                    })
-                }
-
-                false -> Text(
-                    stringResource(Res.string.onb_dont_know_help),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
-                null -> Unit
+            if (knows) {
+                VisionEditor(severities, { severities = it })
+            } else {
+                Text(stringResource(Res.string.onb_dont_know_help), style = MaterialTheme.typography.bodyMedium)
             }
 
             Row(
@@ -123,25 +112,27 @@ fun OnboardingScreen(onDone: (Profile, Boolean, Boolean) -> Unit) {
                 }
             }
 
-            Button(
-                onClick = {
-                    val profile = if (knows ==
-                        true
-                    ) {
-                        Profile.Default.copy(axis = axis, severity = severity)
-                    } else {
-                        Profile.Default
-                    }
-                    onDone(profile, updates, false)
-                },
-                enabled = knows != null,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-            ) { Text(stringResource(Res.string.onb_start)) }
-            if (knows == false) {
-                OutlinedButton(
+            val start = {
+                val profile = if (knows) {
+                    Profile.Default.copy(protan = severities[0], deutan = severities[1], tritan = severities[2])
+                } else {
+                    Profile.Default
+                }
+                onDone(profile, updates, false)
+            }
+            if (knows) {
+                Button(onClick = start, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(stringResource(Res.string.onb_start))
+                }
+            } else {
+                // Not knowing one's type: the test is the main way forward.
+                Button(
                     onClick = { onDone(Profile.Default, updates, true) },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                 ) { Text(stringResource(Res.string.onb_take_test)) }
+                OutlinedButton(onClick = start, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Text(stringResource(Res.string.onb_start))
+                }
             }
         }
     }
