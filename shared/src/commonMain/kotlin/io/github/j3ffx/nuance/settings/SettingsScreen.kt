@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -294,13 +298,15 @@ private fun UpdateRow(preferences: Preferences, platform: Platform) {
 
 @Composable
 private fun LinkRow(text: String, onClick: () -> Unit) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.secondary,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClick = onClick)
-            .semantics { role = Role.Button }.padding(vertical = 12.dp)
-    )
+    // A chevron says it opens a page: the text colour alone would not.
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClick = onClick)
+            .semantics { role = Role.Button }.padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+    }
 }
 
 @Composable

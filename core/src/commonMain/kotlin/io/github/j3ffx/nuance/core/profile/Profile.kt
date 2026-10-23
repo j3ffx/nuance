@@ -61,6 +61,12 @@ data class Profile(
         isolateWidth = settings.isolateWidth.roundToInt().coerceIn(5, 90)
     )
 
+    /**
+     * True when [settings] differ from this profile's own, at the stored precision (whole
+     * percents and degrees). The mode is not compared: switching modes changes nothing to save.
+     */
+    fun isModifiedBy(settings: Settings): Boolean = with(settings, mode) != this
+
     companion object {
         const val PRESET_PREFIX = "preset-"
 
@@ -73,5 +79,8 @@ data class Profile(
 
         /** Used until the person picks a profile: deutan, the most common axis, at 60 %. */
         val Default = Profile("preset-default", "", Axis.Deutan, 60)
+
+        /** Every profile that comes with the app, [Default] first, so the one in use is always listed. */
+        val builtIns: List<Profile> = listOf(Default) + presets
     }
 }

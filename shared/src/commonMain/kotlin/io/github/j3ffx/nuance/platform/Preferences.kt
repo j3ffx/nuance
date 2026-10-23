@@ -46,7 +46,7 @@ class Preferences(private val store: KeyValueStore) {
     /** The original too by default: a filtered capture can't be put through another mode later. */
     var captureFormat by storedEnum("captureFormat", CaptureFormat.FilteredAndOriginal)
 
-    /** The person's own profiles; presets come from [Profile.presets] and are never stored. */
+    /** The person's own profiles; built-in ones come from [Profile.builtIns] and are never stored. */
     var profiles: List<Profile> by mutableStateOf(ProfileCodec.decodeAll(store.getString("profiles").orEmpty()))
         private set
 
@@ -75,10 +75,9 @@ class Preferences(private val store: KeyValueStore) {
     /** The last "Find my profile" result ([ScreeningSummary]), empty if never taken. */
     var lastScreening by storedString("lastScreening", "")
 
-    val allProfiles: List<Profile> get() = profiles + Profile.presets
+    val allProfiles: List<Profile> get() = profiles + Profile.builtIns
 
-    fun profile(id: String): Profile? =
-        allProfiles.firstOrNull { it.id == id } ?: Profile.Default.takeIf { it.id == id }
+    fun profile(id: String): Profile? = allProfiles.firstOrNull { it.id == id }
 
     fun saveProfile(p: Profile) {
         profiles = if (profiles.any { it.id == p.id }) profiles.map { if (it.id == p.id) p else it } else profiles + p

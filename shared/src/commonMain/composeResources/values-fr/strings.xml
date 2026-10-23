@@ -45,6 +45,10 @@
     <string name="action_advanced">Avancé</string>
     <string name="action_settings">Réglages</string>
     <string name="profile_chip_description">Profil : %1$s. Touche pour changer.</string>
+    <string name="profile_modified">%1$s · modifié</string>
+    <string name="profile_sheet_title">Profil utilisé</string>
+    <string name="profiles_manage">Gérer les profils</string>
+    <string name="profile_changed_note">Tu as changé des réglages depuis « %1$s ».</string>
 
     <!-- Pipette -->
     <string name="pipette_reading">Lecture de la couleur…</string>
@@ -93,7 +97,6 @@
 
     <!-- Advanced panel -->
     <string name="advanced_title_mode">Réglages de « %1$s »</string>
-    <string name="advanced_profile">Profil</string>
     <string name="advanced_method">Méthode de correction</string>
     <string name="strategy_error_redistribution">Recoloration</string>
     <string name="strategy_lab_remap">Clair et foncé (recommandée)</string>
@@ -103,16 +106,16 @@
     <string name="advanced_isolate">Couleur à garder</string>
     <string name="isolate_width_value">Plage de teinte : ±%1$d°</string>
     <string name="advanced_compare">Vues affichées</string>
-    <string name="reset_defaults">Revenir aux valeurs par défaut</string>
+    <string name="reset_to_profile">Revenir à « %1$s »</string>
     <string name="save_to_profile">Enregistrer dans « %1$s »</string>
     <string name="save_as_new">Enregistrer comme nouveau profil</string>
-    <string name="saved">Enregistré</string>
+    <string name="saved">Enregistré dans « %1$s »</string>
 
     <!-- Profiles -->
     <string name="profiles_title">Profils</string>
     <string name="profiles_mine">Mes profils</string>
     <string name="profiles_presets">Préréglages</string>
-    <string name="profiles_empty">Aucun profil à toi pour l’instant. Crées-en un, ou règle la caméra puis « Enregistrer » dans Avancé.</string>
+    <string name="profiles_empty">Aucun profil à toi pour l’instant. Crées-en un, ou règle la caméra, touche ton profil en haut, puis « Enregistrer comme nouveau profil ».</string>
     <string name="profile_new">Nouveau profil</string>
     <string name="profile_import">Importer</string>
     <string name="profile_use">Utiliser</string>
@@ -159,7 +162,8 @@
     <string name="update_available">La version %1$s est disponible.</string>
     <string name="update_permission">Autorise Nuance à installer des applis dans la page qui vient de s’ouvrir, puis touche Installer de nouveau.</string>
     <string name="update_failed">Échec : vérifie ta connexion et réessaie.</string>
-    <string name="update_chip">Mise à jour %1$s</string>
+    <string name="update_chip">Mise à jour dispo</string>
+    <string name="update_chip_description">Mise à jour disponible : version %1$s. Ouvre les réglages.</string>
     <string name="update_downloading">Téléchargement… %1$d %</string>
     <string name="update_verifying">Vérification de la mise à jour…</string>
     <string name="update_waiting">Android vérifie la mise à jour, puis te demandera de confirmer. Ça peut prendre quelques secondes.</string>

@@ -45,6 +45,10 @@
     <string name="action_advanced">Advanced</string>
     <string name="action_settings">Settings</string>
     <string name="profile_chip_description">Profile: %1$s. Tap to change.</string>
+    <string name="profile_modified">%1$s · changed</string>
+    <string name="profile_sheet_title">Profile in use</string>
+    <string name="profiles_manage">Manage profiles</string>
+    <string name="profile_changed_note">You changed settings since “%1$s”.</string>
 
     <!-- Pipette -->
     <string name="pipette_reading">Reading the colour…</string>
@@ -93,7 +97,6 @@
 
     <!-- Advanced panel -->
     <string name="advanced_title_mode">“%1$s” settings</string>
-    <string name="advanced_profile">Profile</string>
     <string name="advanced_method">Correction method</string>
     <string name="strategy_error_redistribution">Recolouring</string>
     <string name="strategy_lab_remap">Light and dark (recommended)</string>
@@ -103,16 +106,16 @@
     <string name="advanced_isolate">Colour to keep</string>
     <string name="isolate_width_value">Hue range: ±%1$d°</string>
     <string name="advanced_compare">Views shown</string>
-    <string name="reset_defaults">Reset to defaults</string>
+    <string name="reset_to_profile">Back to “%1$s”</string>
     <string name="save_to_profile">Save to “%1$s”</string>
     <string name="save_as_new">Save as a new profile</string>
-    <string name="saved">Saved</string>
+    <string name="saved">Saved to “%1$s”</string>
 
     <!-- Profiles -->
     <string name="profiles_title">Profiles</string>
     <string name="profiles_mine">My profiles</string>
     <string name="profiles_presets">Presets</string>
-    <string name="profiles_empty">No profile of your own yet. Create one, or set up the camera and tap “Save” in Advanced.</string>
+    <string name="profiles_empty">No profile of your own yet. Create one, or set up the camera, tap your profile at the top, then “Save as a new profile”.</string>
     <string name="profile_new">New profile</string>
     <string name="profile_import">Import</string>
     <string name="profile_use">Use</string>
@@ -159,7 +162,8 @@
     <string name="update_available">Version %1$s is available.</string>
     <string name="update_permission">Allow Nuance to install apps on the page that just opened, then tap Install again.</string>
     <string name="update_failed">Failed: check your connection and try again.</string>
-    <string name="update_chip">Update %1$s</string>
+    <string name="update_chip">Update available</string>
+    <string name="update_chip_description">Update available: version %1$s. Opens the settings.</string>
     <string name="update_downloading">Downloading… %1$d %</string>
     <string name="update_verifying">Checking the update…</string>
     <string name="update_waiting">Android is checking the update, then will ask you to confirm. This can take a few seconds.</string>

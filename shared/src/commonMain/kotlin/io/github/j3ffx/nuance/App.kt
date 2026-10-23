@@ -200,6 +200,8 @@ private fun Main(
                 controller.applyProfile(it)
                 screen = Screen.Camera
             },
+            // The profile in use was edited: the camera follows it.
+            onEdited = { if (it.id == controller.state.profileId) controller.applyProfile(it) },
             onFindProfile = { screen = Screen.Test },
             onBack = { screen = Screen.Camera }
         )

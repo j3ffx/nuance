@@ -4,6 +4,7 @@ import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.Mode
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -73,5 +74,22 @@ class ProfileTest {
     fun settingsRoundTripThroughTheProfile() {
         val back = sample.with(sample.toSettings(), sample.mode)
         assertEquals(sample, back)
+    }
+
+    @Test
+    fun builtInsStartWithTheDefaultAndAreAllPresets() {
+        assertEquals(Profile.Default, Profile.builtIns.first())
+        assertEquals(Profile.presets, Profile.builtIns.drop(1))
+        assertTrue(Profile.builtIns.all { it.isPreset })
+    }
+
+    @Test
+    fun onlyAChangeThatWouldBeSavedCountsAsModified() {
+        val s = sample.toSettings()
+        assertFalse(sample.isModifiedBy(s))
+        assertFalse(sample.isModifiedBy(s.copy(intensity = s.intensity + 0.001)), "below a whole percent")
+        assertTrue(sample.isModifiedBy(s.copy(contrast = s.contrast + 0.05)))
+        assertTrue(sample.isModifiedBy(s.copy(profile = s.profile.copy(severity = 0.9))))
+        assertFalse(sample.copy(mode = Mode.Isolate).isModifiedBy(s), "the mode is not a setting")
     }
 }

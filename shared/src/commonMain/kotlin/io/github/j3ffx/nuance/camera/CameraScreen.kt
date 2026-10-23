@@ -22,9 +22,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -51,6 +54,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
 import io.github.j3ffx.nuance.core.cvd.Axis
@@ -70,8 +74,10 @@ import io.github.j3ffx.nuance.resources.mode_correct
 import io.github.j3ffx.nuance.resources.mode_isolate
 import io.github.j3ffx.nuance.resources.mode_simulate
 import io.github.j3ffx.nuance.resources.profile_chip_description
+import io.github.j3ffx.nuance.resources.profile_modified
 import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.update_chip
+import io.github.j3ffx.nuance.resources.update_chip_description
 import io.github.j3ffx.nuance.resources.update_done_chip
 import io.github.j3ffx.nuance.resources.view_corrected
 import io.github.j3ffx.nuance.resources.view_corrected_as_seen
@@ -216,26 +222,44 @@ private fun TopBar(
     onSettings: () -> Unit
 ) {
     val s = controller.state.settings
-    val name = preferences.profile(controller.state.profileId)?.name?.takeIf { it.isNotEmpty() }
+    val profile = preferences.profile(controller.state.profileId)
+    val name = profile?.name?.takeIf { it.isNotEmpty() }
     val summary = profileSummary(s.profile.axis, (s.profile.severity * 100).roundToInt())
-    val label = if (name != null) "$name · $summary" else summary
+    val named = if (name != null) "$name · $summary" else summary
+    // Changed since the profile was picked: written out, so it is never a colour alone.
+    val modified = profile?.isModifiedBy(s) == true
+    val label = if (modified) stringResource(Res.string.profile_modified, named) else named
     val description = stringResource(Res.string.profile_chip_description, label)
     Row(
         Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AssistChip(
-            onClick = onProfile,
-            label = { Text(label, maxLines = 1) },
-            leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            colors = AssistChipDefaults.assistChipColors(
-                containerColor = NuanceColors.scrim,
-                labelColor = NuanceColors.onScrim,
-                leadingIconContentColor = NuanceColors.onScrim
-            ),
-            modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = description }
-        )
-        Box(Modifier.weight(1f))
+        // The chip gives way first, so the gear always fits; the arrow says it opens a list.
+        Box(Modifier.weight(1f)) {
+            AssistChip(
+                onClick = onProfile,
+                label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                // A pencil too when changed: the shape still tells it once a long name cuts the text.
+                leadingIcon = {
+                    Icon(
+                        if (modified) Icons.Filled.Edit else Icons.Filled.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                trailingIcon = {
+                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+                },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = NuanceColors.scrim,
+                    labelColor = NuanceColors.onScrim,
+                    leadingIconContentColor = NuanceColors.onScrim,
+                    trailingIconContentColor = NuanceColors.onScrim
+                ),
+                modifier = Modifier.heightIn(min = 48.dp)
+                    .semantics { contentDescription = description }
+            )
+        }
         preferences.justUpdated?.let { version ->
             AssistChip(
                 onClick = { preferences.justUpdated = null },
@@ -250,14 +274,22 @@ private fun TopBar(
             )
         }
         preferences.availableUpdate?.let { update ->
+            val updateDescription = stringResource(Res.string.update_chip_description, update.version)
             AssistChip(
                 onClick = onSettings,
-                label = { Text(stringResource(Res.string.update_chip, update.version), maxLines = 1) },
+                label = { Text(stringResource(Res.string.update_chip), maxLines = 1) },
+                leadingIcon = {
+                    Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                },
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor = NuanceColors.scrim,
-                    labelColor = NuanceColors.onScrim
+                    labelColor = NuanceColors.onScrim,
+                    leadingIconContentColor = NuanceColors.onScrim
                 ),
-                modifier = Modifier.heightIn(min = 48.dp).padding(end = 8.dp)
+                modifier = Modifier.heightIn(min = 48.dp).padding(end = 8.dp).semantics {
+                    contentDescription =
+                        updateDescription
+                }
             )
         }
         IconButton(

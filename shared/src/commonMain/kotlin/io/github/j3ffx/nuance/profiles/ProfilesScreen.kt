@@ -88,6 +88,7 @@ fun ProfilesScreen(
     platform: Platform,
     activeProfileId: String,
     onUse: (Profile) -> Unit,
+    onEdited: (Profile) -> Unit,
     onFindProfile: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -134,7 +135,7 @@ fun ProfilesScreen(
         }
 
         SectionTitle(stringResource(Res.string.profiles_presets))
-        for (p in Profile.presets) {
+        for (p in Profile.builtIns) {
             ProfileCard(
                 p,
                 inUse = p.id == activeProfileId,
@@ -151,6 +152,7 @@ fun ProfilesScreen(
     editing?.let { p ->
         ProfileEditor(p, onSave = {
             preferences.saveProfile(it)
+            onEdited(it)
             editing = null
         }, onCancel = { editing = null })
     }
