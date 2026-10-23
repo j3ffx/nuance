@@ -119,13 +119,15 @@ L'interface `CorrectionStrategy` (`core/.../correction/`) en propose deux. L'int
 (l'image d'origine) à 1. Aucune ne bouge les gris ni le blanc : une couleur neutre ne perd rien
 dans la simulation, il n'y a donc rien à déplacer (vérifié par les tests, ΔE < 0,5).
 
-- **Redistribution de l'erreur** (stratégie par défaut, intensité 100 %), d'après Fidaner, Lin et Ozguven (2005), _Analysis of Color
+- **Redistribution de l'erreur** (« Recoloration » dans l'appli ; la stratégie par défaut jusqu'à la
+  0.1.1), d'après Fidaner, Lin et Ozguven (2005), _Analysis of Color
   Blindness_, Stanford EE368. On simule, on calcule ce que la personne perd (original − simulé), et
   on l'ajoute aux canaux qu'elle perçoit encore. Pour protan et deutan, la matrice de l'article
   (le rouge perdu va vers le vert et le bleu) ; pour tritan, l'adaptation habituelle (le bleu perdu
   va vers le rouge et le vert), que l'article ne traite pas. Calculée en RGB linéaire, alors que
   l'original travaillait sur des valeurs encodées.
-- **Remappage CIELAB** (dans le panneau Avancé). Ce que la simulation retire sur l'axe opposé perdu
+- **Remappage CIELAB** (« Clair et foncé », la stratégie par défaut depuis la 0.1.2, intensité
+  100 %). Ce que la simulation retire sur l'axe opposé perdu
   (rouge-vert, a\*, pour protan et deutan ; bleu-jaune, b\*, pour tritan) est réécrit sur les axes
   que la personne perçoit encore : surtout la clarté, un peu l'autre axe opposé.
 
@@ -158,19 +160,26 @@ perdue dans la **clarté**, que tous les axes perçoivent, sépare le mieux et d
 teinte des tons chair. D'où les gains retenus : 0,65 sur la clarté, 0,2 sur l'autre axe opposé,
 calibrés pour qu'une intensité de 100 % reste supportable (ΔE moyen de l'ordre de 13 à 15).
 
-### Le choix final : à l'œil, à travers la simulation
+### Le choix final : d'abord à l'œil, puis par un daltonien
 
-Le critère dit si deux couleurs deviennent _différentes_, pas si l'image reste lisible. Sur le
-téléphone, en comparant pour les trois axes l'image corrigée **vue à travers la simulation** (le
-seul moyen pour une personne à la vision typique de juger), la redistribution d'erreur a été
-préférée partout. Explication probable : elle **recolore** (les rouges perdus partent vers des
-teintes que la personne perçoit), et garde des couleurs franches et cohérentes d'un objet à
-l'autre ; le remappage sépare surtout par la clarté, ce qui se lit comme des ombres ou des reflets
-plutôt que comme des couleurs. Elle est donc la stratégie par défaut, à intensité 100 %, et le
-remappage reste dans le panneau Avancé.
+**D'abord, à travers la simulation.** Sur le téléphone, en comparant pour les trois axes l'image
+corrigée **vue à travers la simulation** (le seul moyen pour une personne à la vision typique de
+juger), la redistribution d'erreur avait été préférée : elle **recolore** et garde des couleurs
+franches, là où le remappage sépare surtout par la clarté. Elle a été la stratégie par défaut
+jusqu'à la 0.1.1.
 
-Ce jugement reste celui d'un œil typique regardant une simulation : le test avec une personne
-daltonienne tranchera.
+**Puis, par un premier testeur protan** (protan à 100 % d'après le test intégré) : avec elle,
+« le rouge devient blanc ». Le calcul le confirme : à 100 %, la redistribution ajoute le rouge perdu
+à parts égales au vert et au bleu, si bien qu'un rouge pur devient un rose très pâle (#FFBDCE)
+qu'un protan voit gris clair (#C6C6CE), à un écart de ΔE2000 4,5 seulement d'un vrai gris clair :
+l'information « rouge » se retrouve sur l'axe neutre du protan. Avec le remappage, le même rouge
+devient jaune-orangé (#FFD678), vu jaune, à ΔE2000 24 du gris et 48 du vert. Le remappage est donc
+la stratégie par défaut depuis la 0.1.2 ; les profils enregistrés avec l'ancienne ont basculé une
+fois (elle n'avait jamais été choisie, seulement présélectionnée). La recoloration reste à un
+toucher, sous le curseur d'intensité.
+
+La leçon : une simulation regardée par un œil typique ne remplace pas une personne concernée. Le
+critère de mesure (plus haut) préférait d'ailleurs déjà le remappage.
 
 ### La correction de l'autre axe rouge-vert
 

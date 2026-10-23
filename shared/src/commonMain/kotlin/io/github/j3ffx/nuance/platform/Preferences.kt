@@ -3,6 +3,7 @@ package io.github.j3ffx.nuance.platform
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
 import io.github.j3ffx.nuance.core.profile.Profile
 import io.github.j3ffx.nuance.core.profile.ProfileCodec
 
@@ -17,6 +18,10 @@ enum class CaptureFormat { Filtered, FilteredAndOriginal }
  * and each change is written at once.
  */
 class Preferences(private val store: KeyValueStore) {
+    private companion object {
+        const val STRATEGY_MIGRATED = "strategyMigrated"
+    }
+
     var onboardingDone by stored("onboardingDone", false)
     var theme by storedEnum("theme", ThemeChoice.Dark)
 
@@ -44,6 +49,25 @@ class Preferences(private val store: KeyValueStore) {
     /** The person's own profiles; presets come from [Profile.presets] and are never stored. */
     var profiles: List<Profile> by mutableStateOf(ProfileCodec.decodeAll(store.getString("profiles").orEmpty()))
         private set
+
+    init {
+        // 0.1.x saved every profile with error redistribution, the default then, never picked on
+        // purpose (it was preselected): once, they move to the new default.
+        if (store.getString(STRATEGY_MIGRATED) == null) {
+            val moved = profiles.map {
+                if (it.strategyId == CorrectionStrategy.FORMER_DEFAULT_ID) {
+                    it.copy(strategyId = CorrectionStrategy.Default.id)
+                } else {
+                    it
+                }
+            }
+            if (moved != profiles) {
+                profiles = moved
+                store.putString("profiles", ProfileCodec.encodeAll(moved))
+            }
+            store.putString(STRATEGY_MIGRATED, "true")
+        }
+    }
 
     /** The profile the camera opens with. */
     var defaultProfileId by storedString("defaultProfileId", Profile.Default.id)

@@ -52,6 +52,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
 import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.HuePreset
 import io.github.j3ffx.nuance.core.modes.Mode
@@ -86,6 +87,7 @@ import io.github.j3ffx.nuance.ui.axisName
 import io.github.j3ffx.nuance.ui.hueName
 import io.github.j3ffx.nuance.ui.nearestPreset
 import io.github.j3ffx.nuance.ui.profileSummary
+import io.github.j3ffx.nuance.ui.strategyName
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -334,11 +336,22 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                 }
             }
             when (state.mode) {
-                Mode.Correct, Mode.Compare -> LabeledSlider(
-                    stringResource(Res.string.intensity_value, percent(s.intensity)),
-                    s.intensity.toFloat(),
-                    { v -> controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) } }
-                )
+                Mode.Correct, Mode.Compare -> {
+                    LabeledSlider(
+                        stringResource(Res.string.intensity_value, percent(s.intensity)),
+                        s.intensity.toFloat(),
+                        { v -> controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) } }
+                    )
+                    // The method is one tap away: people compare both on what they look at.
+                    Choices(
+                        options = CorrectionStrategy.all,
+                        label = { strategyName(it) },
+                        onSelect = { st ->
+                            controller.update { it.copy(settings = it.settings.copy(strategyId = st.id)) }
+                        },
+                        isSelected = { it.id == s.strategyId }
+                    )
+                }
 
                 Mode.Simulate -> LabeledSlider(
                     stringResource(Res.string.severity_value, percent(s.profile.severity)),

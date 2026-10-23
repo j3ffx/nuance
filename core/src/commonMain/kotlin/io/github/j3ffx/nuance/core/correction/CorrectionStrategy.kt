@@ -21,15 +21,19 @@ interface CorrectionStrategy {
     fun build(profile: CvdProfile, intensity: Double): (Vec3) -> Vec3
 
     companion object {
-        val all: List<CorrectionStrategy> = listOf(ErrorRedistribution, LabRemap.Default)
+        val all: List<CorrectionStrategy> = listOf(LabRemap.Default, ErrorRedistribution)
 
         fun byId(id: String): CorrectionStrategy = all.firstOrNull { it.id == id } ?: Default
 
         /**
-         * Chosen by eye on the test phone, through the simulation of all three axes, over the
-         * CIELAB remap the separation measure preferred (docs/ALGORITHMS.md, "Corrections").
+         * The CIELAB remap, which the separation measure preferred. Error redistribution was the
+         * default first (chosen by eye, through the simulation), until a protan tester saw reds
+         * fade to white with it (docs/ALGORITHMS.md, "Corrections").
          */
-        val Default: CorrectionStrategy get() = ErrorRedistribution
+        val Default: CorrectionStrategy get() = LabRemap.Default
+
+        /** The former default, which saved profiles name and [Preferences] migrates once. */
+        const val FORMER_DEFAULT_ID = "error-redistribution"
     }
 }
 

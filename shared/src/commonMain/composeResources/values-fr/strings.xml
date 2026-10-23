@@ -95,8 +95,8 @@
     <string name="advanced_title_mode">Réglages de « %1$s »</string>
     <string name="advanced_profile">Profil</string>
     <string name="advanced_method">Méthode de correction</string>
-    <string name="strategy_error_redistribution">Recoloration (recommandée)</string>
-    <string name="strategy_lab_remap">Clair et foncé</string>
+    <string name="strategy_error_redistribution">Recoloration</string>
+    <string name="strategy_lab_remap">Clair et foncé (recommandée)</string>
     <string name="advanced_enhance">Image</string>
     <string name="contrast_value">Contraste : +%1$d %</string>
     <string name="saturation_value">Saturation : +%1$d %</string>

@@ -38,6 +38,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
+import io.github.j3ffx.nuance.core.correction.ErrorRedistribution
 import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.HuePreset
 import io.github.j3ffx.nuance.core.naming.Chroma
@@ -82,6 +84,8 @@ import io.github.j3ffx.nuance.resources.hue_red
 import io.github.j3ffx.nuance.resources.hue_violet
 import io.github.j3ffx.nuance.resources.hue_yellow
 import io.github.j3ffx.nuance.resources.profile_summary
+import io.github.j3ffx.nuance.resources.strategy_error_redistribution
+import io.github.j3ffx.nuance.resources.strategy_lab_remap
 import kotlin.math.abs
 import org.jetbrains.compose.resources.stringResource
 
@@ -279,3 +283,9 @@ fun colorName(n: ColorName): String {
     }
     return text.replaceFirstChar { it.uppercaseChar() }
 }
+
+/** "Clair et foncé (recommandée)" or "Recoloration". */
+@Composable
+fun strategyName(st: CorrectionStrategy): String = stringResource(
+    if (st === ErrorRedistribution) Res.string.strategy_error_redistribution else Res.string.strategy_lab_remap
+)

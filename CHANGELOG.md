@@ -4,9 +4,22 @@
 
 ### Nouveautés
 
+- La méthode de correction se change d’un toucher, sous le curseur d’intensité.
+- Le panneau « Avancé » ne montre que les réglages du mode en cours.
+- « Trouver mon profil » se refait depuis les réglages et la liste des profils.
+- Les boutons de la caméra affichent leur nom quelques secondes à l’ouverture.
+- Les photos gardent aussi l’original par défaut, pour pouvoir le retravailler dans un autre mode.
 - Pendant une mise à jour, l’appli montre où elle en est : téléchargement (en pourcentage),
   vérification, puis l’attente de la confirmation d’Android ; et à la fin, installée ou annulée.
 - Nuance prévient qu’elle va se fermer pendant l’installation, et dit « À jour » quand on la rouvre.
+
+### Corrections
+
+- La correction par défaut devient « Clair et foncé » : avec « Recoloration », les rouges pâlissaient
+  jusqu’à paraître blancs pour un protan. Tes profils enregistrés passent à la nouvelle méthode ; tu
+  peux revenir à l’ancienne d’un toucher.
+- Depuis une photo de la galerie, la touche Retour et un bouton « Revenir à la caméra » ramènent à la
+  caméra (il fallait forcer l’arrêt de l’appli) ; Retour quitte aussi une image figée.
 
 ## 0.1.1 — 2026-10-22
 

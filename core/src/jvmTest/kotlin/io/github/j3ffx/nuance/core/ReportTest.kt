@@ -49,8 +49,8 @@ class ReportTest {
     }
 
     private val strategies: List<Pair<String, CorrectionStrategy>> = listOf(
-        "redistribution d’erreur (défaut)" to ErrorRedistribution,
-        "remappage CIELAB" to LabRemap.Default
+        "redistribution d’erreur" to ErrorRedistribution,
+        "remappage CIELAB (défaut)" to LabRemap.Default
     )
 
     private fun corrections(md: StringBuilder) {

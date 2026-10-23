@@ -36,7 +36,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
-import io.github.j3ffx.nuance.core.correction.ErrorRedistribution
 import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.Mode
 import io.github.j3ffx.nuance.core.profile.Profile
@@ -63,8 +62,6 @@ import io.github.j3ffx.nuance.resources.save_as_new
 import io.github.j3ffx.nuance.resources.save_to_profile
 import io.github.j3ffx.nuance.resources.settings_find_profile
 import io.github.j3ffx.nuance.resources.severity_value
-import io.github.j3ffx.nuance.resources.strategy_error_redistribution
-import io.github.j3ffx.nuance.resources.strategy_lab_remap
 import io.github.j3ffx.nuance.ui.Choices
 import io.github.j3ffx.nuance.ui.LabeledSlider
 import io.github.j3ffx.nuance.ui.SectionTitle
@@ -72,6 +69,7 @@ import io.github.j3ffx.nuance.ui.axisHelp
 import io.github.j3ffx.nuance.ui.axisName
 import io.github.j3ffx.nuance.ui.axisTitle
 import io.github.j3ffx.nuance.ui.profileName
+import io.github.j3ffx.nuance.ui.strategyName
 import kotlin.random.Random
 import org.jetbrains.compose.resources.stringResource
 
@@ -172,17 +170,7 @@ fun AdvancedSheet(controller: CameraController, preferences: Preferences, onDism
                 SectionTitle(stringResource(Res.string.advanced_method))
                 Choices(
                     options = CorrectionStrategy.all,
-                    label = {
-                        stringResource(
-                            if (it ===
-                                ErrorRedistribution
-                            ) {
-                                Res.string.strategy_error_redistribution
-                            } else {
-                                Res.string.strategy_lab_remap
-                            }
-                        )
-                    },
+                    label = { strategyName(it) },
                     onSelect = { strategy -> update { it.copy(strategyId = strategy.id) } },
                     isSelected = { it.id == s.strategyId }
                 )
