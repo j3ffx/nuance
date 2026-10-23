@@ -123,7 +123,7 @@ fun App(
                     ScreeningRoute(preferences, devTools, dev, onKeep = { mine ->
                         preferences.defaultProfileId = mine.id
                         testFirst = false
-                    }, onBack = { testFirst = false })
+                    }, onFinish = { testFirst = false }, onBack = { testFirst = false })
                     return@Surface
                 }
                 if (!cameraGranted) {
@@ -154,6 +154,12 @@ private fun Main(
     }
     // Saveable: a language change recreates the activity, and Settings should stay open.
     var screen by rememberSaveable { mutableStateOf(Screen.Camera) }
+    // Where "Find my profile" was opened from: Back returns there.
+    var testFrom by rememberSaveable { mutableStateOf(Screen.Camera) }
+    fun openTest() {
+        testFrom = screen
+        screen = Screen.Test
+    }
     LaunchedEffect(preferences.updateChecks) {
         if (!preferences.updateChecks) return@LaunchedEffect
         preferences.availableUpdate = platform.latestRelease()
@@ -174,7 +180,7 @@ private fun Main(
     BackHandler(enabled = screen != Screen.Camera) {
         screen = when (screen) {
             Screen.Help, Screen.About -> Screen.Settings
-            Screen.Test -> Screen.Profiles
+            Screen.Test -> testFrom
             else -> Screen.Camera
         }
     }
@@ -185,7 +191,7 @@ private fun Main(
                 preferences,
                 onOpenSettings = { screen = Screen.Settings },
                 onManageProfiles = { screen = Screen.Profiles },
-                onFindProfile = { screen = Screen.Test },
+                onFindProfile = ::openTest,
                 onOpenImage = onOpenImage,
                 camera = camera
             )
@@ -202,21 +208,21 @@ private fun Main(
             },
             // The profile in use was edited: the camera follows it.
             onEdited = { if (it.id == controller.state.profileId) controller.applyProfile(it) },
-            onFindProfile = { screen = Screen.Test },
+            onFindProfile = ::openTest,
             onBack = { screen = Screen.Camera }
         )
 
         Screen.Test -> ScreeningRoute(preferences, devTools, dev, onKeep = { mine ->
             controller.applyProfile(mine)
             screen = Screen.Camera
-        }, onBack = { screen = Screen.Profiles })
+        }, onFinish = { screen = Screen.Camera }, onBack = { screen = testFrom })
 
         Screen.Settings -> SettingsScreen(
             preferences,
             platform,
             onHelp = { screen = Screen.Help },
             onAbout = { screen = Screen.About },
-            onFindProfile = { screen = Screen.Test },
+            onFindProfile = ::openTest,
             onBack = { screen = Screen.Camera }
         )
 
@@ -236,6 +242,7 @@ private fun ScreeningRoute(
     devTools: Boolean,
     dev: DevPreview,
     onKeep: (Profile) -> Unit,
+    onFinish: () -> Unit,
     onBack: () -> Unit
 ) {
     ScreeningScreen(
@@ -244,14 +251,19 @@ private fun ScreeningRoute(
         onTestAs = { dev.testAs = it },
         onResult = { preferences.lastScreening = ScreeningSummary.encode(it) },
         onKeep = { p ->
-            val mine = p.copy(id = newProfileId())
+            // One "My test" profile, replaced by each new result, rather than a pile of them.
+            val mine = p.copy(id = TEST_PROFILE_ID)
             preferences.saveProfile(mine)
             preferences.defaultProfileId = mine.id
             onKeep(mine)
         },
+        onFinish = onFinish,
         onBack = onBack
     )
 }
+
+/** The profile "Find my profile" saves, the same each time so a new result replaces the last. */
+private const val TEST_PROFILE_ID = "my-test"
 
 /** "deutan 60" → deutan at 60 %; an axis alone means 100 %; anything else, none. */
 internal fun parseTestAs(text: String): CvdProfile? {

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -52,16 +54,20 @@ import io.github.j3ffx.nuance.core.screening.Plate
 import io.github.j3ffx.nuance.core.screening.Screening
 import io.github.j3ffx.nuance.core.screening.ScreeningResult
 import io.github.j3ffx.nuance.resources.Res
+import io.github.j3ffx.nuance.resources.camera_back
 import io.github.j3ffx.nuance.resources.screening_arrange_help
 import io.github.j3ffx.nuance.resources.screening_arrange_last
 import io.github.j3ffx.nuance.resources.screening_arrange_left
+import io.github.j3ffx.nuance.resources.screening_arrange_start
 import io.github.j3ffx.nuance.resources.screening_arrange_title
 import io.github.j3ffx.nuance.resources.screening_arrange_undo
 import io.github.j3ffx.nuance.resources.screening_cap
+import io.github.j3ffx.nuance.resources.screening_choose_anyway
 import io.github.j3ffx.nuance.resources.screening_conditions
 import io.github.j3ffx.nuance.resources.screening_confidence_high
 import io.github.j3ffx.nuance.resources.screening_confidence_low
 import io.github.j3ffx.nuance.resources.screening_confidence_medium
+import io.github.j3ffx.nuance.resources.screening_continue
 import io.github.j3ffx.nuance.resources.screening_dev
 import io.github.j3ffx.nuance.resources.screening_intro
 import io.github.j3ffx.nuance.resources.screening_none
@@ -77,6 +83,9 @@ import io.github.j3ffx.nuance.resources.screening_plate_description
 import io.github.j3ffx.nuance.resources.screening_plate_question
 import io.github.j3ffx.nuance.resources.screening_private
 import io.github.j3ffx.nuance.resources.screening_proposed
+import io.github.j3ffx.nuance.resources.screening_quit
+import io.github.j3ffx.nuance.resources.screening_quit_text
+import io.github.j3ffx.nuance.resources.screening_quit_title
 import io.github.j3ffx.nuance.resources.screening_redo
 import io.github.j3ffx.nuance.resources.screening_result_title
 import io.github.j3ffx.nuance.resources.screening_save_name
@@ -103,6 +112,7 @@ import org.jetbrains.compose.resources.stringResource
  * shows every colour of the test through a simulation, so it can be taken "as" a profile.
  * [onKeep] gets the profile to save and use; [onResult] the raw result, to remember.
  */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun ScreeningScreen(
     devTools: Boolean,
@@ -110,6 +120,7 @@ fun ScreeningScreen(
     onTestAs: (CvdProfile?) -> Unit,
     onResult: (ScreeningResult) -> Unit,
     onKeep: (Profile) -> Unit,
+    onFinish: () -> Unit,
     onBack: () -> Unit
 ) {
     var attempt by remember { mutableIntStateOf(0) }
@@ -123,7 +134,29 @@ fun ScreeningScreen(
         if (session.step == Screening.Step.Done) onResult(session.result())
     }
 
-    Page(stringResource(Res.string.screening_title), onBack) {
+    // Leaving mid-test throws away up to three minutes of answers: asked first.
+    var quitting by remember { mutableStateOf(false) }
+    val inProgress = started && session.step != Screening.Step.Done
+    val leave = { if (inProgress) quitting = true else onBack() }
+    BackHandler(enabled = inProgress) { quitting = true }
+    if (quitting) {
+        AlertDialog(
+            onDismissRequest = { quitting = false },
+            title = { Text(stringResource(Res.string.screening_quit_title)) },
+            text = { Text(stringResource(Res.string.screening_quit_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    quitting = false
+                    onBack()
+                }) { Text(stringResource(Res.string.screening_quit)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { quitting = false }) { Text(stringResource(Res.string.screening_continue)) }
+            }
+        )
+    }
+
+    Page(stringResource(Res.string.screening_title), leave) {
         if (!started) {
             Intro(devTools, testAs, onTestAs) { started = true }
             return@Page
@@ -142,7 +175,7 @@ fun ScreeningScreen(
 
                 Screening.Step.Severity -> PatchStep(session, see) { choice -> act { answerTrial(choice) } }
 
-                Screening.Step.Done -> ResultStep(remember(session) { session.result() }, onKeep) {
+                Screening.Step.Done -> ResultStep(remember(session) { session.result() }, onKeep, onFinish) {
                     attempt++
                 }
             }
@@ -239,7 +272,12 @@ private fun ArrangementStep(session: Screening, see: (Rgb) -> Rgb, onPlace: (Int
         Modifier.fillMaxWidth().background(TestBackground, RoundedCornerShape(12.dp)).padding(12.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(Res.string.screening_arrange_last), color = Color.White)
+            Text(
+                stringResource(
+                    if (placed.isEmpty()) Res.string.screening_arrange_start else Res.string.screening_arrange_last
+                ),
+                color = Color.White
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Cap(see(D15.caps[last]), 72, null)
                 // The row so far, small: the pilot, then each cap placed.
@@ -320,7 +358,7 @@ private fun PatchStep(session: Screening, see: (Rgb) -> Rgb, onAnswer: (Int?) ->
 }
 
 @Composable
-private fun ResultStep(result: ScreeningResult, onKeep: (Profile) -> Unit, onRedo: () -> Unit) {
+private fun ResultStep(result: ScreeningResult, onKeep: (Profile) -> Unit, onFinish: () -> Unit, onRedo: () -> Unit) {
     var axis by remember(result) { mutableStateOf(result.axis ?: Axis.Deutan) }
     var severity by remember(result) { mutableIntStateOf(result.severity.coerceIn(0, 100)) }
     val name = stringResource(Res.string.screening_save_name)
@@ -352,17 +390,28 @@ private fun ResultStep(result: ScreeningResult, onKeep: (Profile) -> Unit, onRed
     )
     Text(stringResource(Res.string.screening_not_medical), style = MaterialTheme.typography.bodyMedium)
 
-    // The proposal can be adjusted before it is kept.
-    Choices(Axis.entries, { axisTitle(it) }, { axis = it }, { it == axis })
-    LabeledSlider(
-        stringResource(Res.string.severity_value, severity),
-        severity / 100f,
-        { severity = (it * 100).roundToInt() }
-    )
-    Button(
-        onClick = { onKeep(Profile("", name, axis, severity)) },
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-    ) { Text(stringResource(Res.string.screening_use, profileSummary(axis, severity))) }
+    // Nothing found: the way out comes first, and a profile only if the person wants one anyway.
+    var choosing by remember(result) { mutableStateOf(result.axis != null) }
+    if (!choosing) {
+        Button(onClick = onFinish, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(stringResource(Res.string.camera_back))
+        }
+        TextButton(onClick = { choosing = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(Res.string.screening_choose_anyway))
+        }
+    } else {
+        // The proposal can be adjusted before it is kept.
+        Choices(Axis.entries, { axisTitle(it) }, { axis = it }, { it == axis })
+        LabeledSlider(
+            stringResource(Res.string.severity_value, severity),
+            severity / 100f,
+            { severity = (it * 100).roundToInt() }
+        )
+        Button(
+            onClick = { onKeep(Profile("", name, axis, severity)) },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+        ) { Text(stringResource(Res.string.screening_use, profileSummary(axis, severity))) }
+    }
     OutlinedButton(onClick = onRedo, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
         Text(stringResource(Res.string.screening_redo))
     }

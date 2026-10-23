@@ -210,6 +210,7 @@
     <string name="screening_arrange_title">Ranger les couleurs</string>
     <string name="screening_arrange_help">Touche la pastille dont la couleur est la plus proche de la dernière posée. Continue jusqu’à ce qu’il n’en reste plus.</string>
     <string name="screening_arrange_last">Dernière posée</string>
+    <string name="screening_arrange_start">Point de départ</string>
     <string name="screening_arrange_left">À ranger</string>
     <string name="screening_arrange_undo">Reprendre la dernière</string>
     <string name="screening_cap">Pastille %1$d</string>
@@ -227,6 +228,11 @@
     <string name="screening_confidence_low">Confiance faible : tes réponses ne concordent pas bien. Refais le test dans de bonnes conditions.</string>
     <string name="screening_use">Utiliser « %1$s »</string>
     <string name="screening_redo">Refaire le test</string>
+    <string name="screening_quit_title">Quitter le test ?</string>
+    <string name="screening_quit_text">Tes réponses seront perdues.</string>
+    <string name="screening_quit">Quitter</string>
+    <string name="screening_continue">Continuer le test</string>
+    <string name="screening_choose_anyway">Choisir quand même un profil</string>
     <string name="screening_save_name">Mon test</string>
     <string name="screening_last">Dernier test : %1$s</string>
     <string name="screening_last_none">Dernier test : aucune difficulté repérée</string>

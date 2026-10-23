@@ -210,6 +210,7 @@
     <string name="screening_arrange_title">Sort the colours</string>
     <string name="screening_arrange_help">Tap the cap whose colour is closest to the last one placed. Keep going until none are left.</string>
     <string name="screening_arrange_last">Last placed</string>
+    <string name="screening_arrange_start">Starting point</string>
     <string name="screening_arrange_left">To sort</string>
     <string name="screening_arrange_undo">Take back the last one</string>
     <string name="screening_cap">Cap %1$d</string>
@@ -227,6 +228,11 @@
     <string name="screening_confidence_low">Low confidence: your answers don’t agree well. Take the test again in good conditions.</string>
     <string name="screening_use">Use “%1$s”</string>
     <string name="screening_redo">Take the test again</string>
+    <string name="screening_quit_title">Leave the test?</string>
+    <string name="screening_quit_text">Your answers will be lost.</string>
+    <string name="screening_quit">Leave</string>
+    <string name="screening_continue">Keep going</string>
+    <string name="screening_choose_anyway">Choose a profile anyway</string>
     <string name="screening_save_name">My test</string>
     <string name="screening_last">Last test: %1$s</string>
     <string name="screening_last_none">Last test: no difficulty found</string>
