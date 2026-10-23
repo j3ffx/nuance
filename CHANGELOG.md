@@ -20,6 +20,7 @@
   peux revenir à l’ancienne d’un toucher.
 - Depuis une photo de la galerie, la touche Retour et un bouton « Revenir à la caméra » ramènent à la
   caméra (il fallait forcer l’arrêt de l’appli) ; Retour quitte aussi une image figée.
+- Une photo de la galerie ne se met plus en pause au bout d’une minute.
 
 ## 0.1.1 — 2026-10-22
 
