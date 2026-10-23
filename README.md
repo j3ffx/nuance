@@ -16,19 +16,20 @@ Sur un téléphone **Android 10 ou plus récent** :
 3. Au premier lancement, choisis ton type de daltonisme, ou fais le test « Trouver mon profil ».
 
 Pour les versions suivantes, active « Vérifier les mises à jour » (proposé au premier lancement, ou
-dans les réglages) : l'appli te propose la nouvelle version et l'installe. Le fichier `.sha256` à
+dans les paramètres) : l'appli te propose la nouvelle version et l'installe. Le fichier `.sha256` à
 côté de l'APK permet de vérifier qu'il n'a pas été altéré.
 
 ## Ce que fait Nuance
 
-- **Corriger** les couleurs selon ton profil (type et sévérité), avec une intensité réglable.
+- **Corriger** les couleurs selon ton profil (type et sévérité, ou un mélange de protan, deutan et
+  tritan), avec une intensité réglable.
 - **Isoler une teinte** : « montre-moi seulement le rouge », le reste passe en gris.
 - **Simuler** et **Comparer** : voir ce que perçoit une personne daltonienne, et ce qu'elle perçoit
   de l'image corrigée, en quatre ou deux vues côte à côte. Utile pour les proches.
 - **Trouver mon profil** : un test d'orientation de 3 minutes (planches de points générées par
   l'appli, rangement de pastilles, carrés à comparer).
-- **Pipette** : touche un point de l'image pour connaître le nom de sa couleur, son code, et comment
-  ton profil la perçoit.
+- **Pipette** : touche un point de l'image pour connaître le nom de sa couleur réelle, son code, et
+  comment tu la vois sans doute.
 - **Figer l'image** pour la regarder tranquillement, zoomer et se déplacer dedans ; zoom de la
   caméra, lampe, caméra avant.
 - **Photos et vidéos** filtrées dans l'album « Nuance » de la galerie (avec l'original si tu veux),

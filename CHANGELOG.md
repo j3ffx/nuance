@@ -4,10 +4,28 @@
 
 ### Nouveautés
 
+- Profils mixtes : un curseur par type (protan, deutan, tritan), à mélanger librement, par exemple
+  protan et un peu de tritan. C’est une approximation : aucun modèle n’a été validé pour plusieurs
+  types à la fois.
+- Le profil utilisé est toujours coché, et la puce dit « modifié » quand tu as changé un réglage :
+  un toucher pour l’enregistrer, en créer un nouveau ou revenir au profil.
+- La caméra s’ouvre sur le dernier profil utilisé ; l’écran Profils devient une liste simple, avec
+  Modifier, Partager et Supprimer sous « ⋮ ».
+- Galerie, Photo et Vidéo dans une barre sous l’image, toujours nommés ; à droite, seulement figer,
+  lampe, caméra et zoom.
+- « Régler la correction » (ou l’isolation, la comparaison) remplace « Avancé », et ne cache plus
+  l’image ; « Réglages » devient « Paramètres ».
+- Une ligne sous les modes dit à quoi sert chacun ; les vues s’appellent « Original », « Vu par un
+  deutan », « Corrigé ».
+- Une astuce sur l’image explique la pipette et l’appui long, et « Voir l’original » le fait d’un
+  toucher.
+- La pipette dit « Couleur réelle » et « Tu la vois sans doute comme… », et ne cache plus le point
+  visé.
+- Le test « Trouver mon profil » revient d’où il a été ouvert, demande avant de tout perdre, et
+  remplace le précédent « Mon test » au lieu d’en ajouter un.
+- L’aide, en sections, s’ouvre avec « ? » depuis la caméra, et dit où vont les photos.
 - La méthode de correction se change d’un toucher, sous le curseur d’intensité.
-- Le panneau « Avancé » ne montre que les réglages du mode en cours.
 - « Trouver mon profil » se refait depuis les réglages et la liste des profils.
-- Les boutons de la caméra affichent leur nom quelques secondes à l’ouverture.
 - Les photos gardent aussi l’original par défaut, pour pouvoir le retravailler dans un autre mode.
 - Pendant une mise à jour, l’appli montre où elle en est : téléchargement (en pourcentage),
   vérification, puis l’attente de la confirmation d’Android ; et à la fin, installée ou annulée.
