@@ -166,26 +166,27 @@ fun CameraScreen(
             }
         }
         val controls: @Composable (Modifier) -> Unit = { m -> Controls(controller, { showAdvanced = true }, m) }
-        val capture: @Composable () -> Unit = {
+        val capture: @Composable (Modifier) -> Unit = { m ->
             CaptureBar(
                 controller,
                 preferences.captureFormat == CaptureFormat.FilteredAndOriginal,
                 onOpenImage,
-                Modifier.fillMaxWidth()
+                m.fillMaxWidth()
             )
         }
         if (landscape) {
             Row(Modifier.fillMaxSize()) {
                 image(Modifier.weight(1f).fillMaxHeight())
-                Column(Modifier.width(320.dp).fillMaxHeight()) {
-                    capture()
+                // At the top of the side column: clear of the status bar.
+                Column(Modifier.width(320.dp).fillMaxHeight().background(NuanceColors.scrim)) {
+                    capture(Modifier.statusBarsPadding())
                     controls(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()))
                 }
             }
         } else {
             Column(Modifier.fillMaxSize()) {
                 image(Modifier.weight(1f).fillMaxWidth())
-                capture()
+                capture(Modifier)
                 controls(Modifier.fillMaxWidth())
             }
         }
