@@ -46,6 +46,9 @@ class Preferences(private val store: KeyValueStore) {
      */
     var cameraButtonsLearned by stored("cameraButtonsLearned", false)
 
+    /** Set by the first use of the pipette: until then a hint over the image says how. */
+    var pipetteUsed by stored("pipetteUsed", false)
+
     /** Minutes without touch nor movement before the camera pauses; 0 = never. */
     var autoPauseMinutes by storedInt("autoPauseMinutes", 2)
 

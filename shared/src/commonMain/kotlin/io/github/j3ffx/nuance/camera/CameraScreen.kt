@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -50,12 +51,14 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
@@ -71,6 +74,7 @@ import io.github.j3ffx.nuance.resources.action_settings
 import io.github.j3ffx.nuance.resources.adjust_compare
 import io.github.j3ffx.nuance.resources.adjust_correct
 import io.github.j3ffx.nuance.resources.adjust_isolate
+import io.github.j3ffx.nuance.resources.camera_hint
 import io.github.j3ffx.nuance.resources.compare_four
 import io.github.j3ffx.nuance.resources.compare_two
 import io.github.j3ffx.nuance.resources.hold_for_original
@@ -86,6 +90,7 @@ import io.github.j3ffx.nuance.resources.mode_simulate
 import io.github.j3ffx.nuance.resources.profile_chip_description
 import io.github.j3ffx.nuance.resources.profile_modified
 import io.github.j3ffx.nuance.resources.severity_value
+import io.github.j3ffx.nuance.resources.show_original
 import io.github.j3ffx.nuance.resources.update_chip
 import io.github.j3ffx.nuance.resources.update_chip_description
 import io.github.j3ffx.nuance.resources.update_done_chip
@@ -199,7 +204,10 @@ private fun CameraArea(controller: CameraController, preferences: Preferences, c
                 .semantics { contentDescription = holdDescription }
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onTap = { controller.pick(it.x / size.width, it.y / size.height) },
+                        onTap = {
+                            preferences.pipetteUsed = true
+                            controller.pick(it.x / size.width, it.y / size.height)
+                        },
                         onLongPress = { controller.update { it.copy(showingOriginal = true) } },
                         onPress = {
                             tryAwaitRelease()
@@ -213,6 +221,23 @@ private fun CameraArea(controller: CameraController, preferences: Preferences, c
         controller.pipette?.let { PipetteMarker(it) }
         CameraButtons(controller, preferences, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
         CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
+        // The gestures can't be seen: said over the image until the pipette has been used once.
+        // Above the view labels, where the camera's own messages go, and only when there is none.
+        val status by controller.renderer.camera.collectAsState()
+        val quiet = !status.frozen && !status.recording && !status.image && !status.hot &&
+            controller.captureMessage == null
+        if (!preferences.pipetteUsed && controller.pipette == null && controller.state.views.size == 1 && quiet) {
+            Text(
+                stringResource(Res.string.camera_hint),
+                color = NuanceColors.onScrim,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(start = 8.dp, end = 8.dp, bottom = 48.dp)
+                    .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                    .clearAndSetSemantics {}
+            )
+        }
         PausedCover(controller)
         PipetteCard(
             controller,
@@ -370,7 +395,7 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 for (mode in Mode.entries) {
                     ModeButton(stringResource(modeName(mode)), state.mode == mode) {
-                        controller.update { it.copy(mode = mode) }
+                        controller.update { it.copy(mode = mode, showingOriginal = false) }
                     }
                 }
             }
@@ -443,10 +468,27 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                 Mode.Compare -> Res.string.adjust_compare
                 Mode.Simulate -> null
             }
-            if (adjust != null) {
-                OutlinedButton(onClick = onAdvanced, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(adjust), modifier = Modifier.padding(start = 8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (adjust != null) {
+                    OutlinedButton(onClick = onAdvanced, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(stringResource(adjust), modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+                // Before/after without holding a finger on the image: for TalkBack and for
+                // anyone who finds the long press hard.
+                if (state.mode == Mode.Correct) {
+                    FilterChip(
+                        selected = state.showingOriginal,
+                        onClick = { controller.update { it.copy(showingOriginal = !it.showingOriginal) } },
+                        label = { Text(stringResource(Res.string.show_original), maxLines = 1) },
+                        leadingIcon = if (state.showingOriginal) {
+                            { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    )
                 }
             }
         }

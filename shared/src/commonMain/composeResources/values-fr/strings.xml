@@ -25,6 +25,8 @@
     <string name="view_corrected_as_seen">Corr. %1$s, vu par un %2$s</string>
     <string name="view_isolated">Seulement le %1$s</string>
     <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur, pince pour zoomer, reste appuyé pour voir l’original.</string>
+    <string name="camera_hint">Touche un point pour connaître sa couleur · reste appuyé pour voir l’original</string>
+    <string name="show_original">Voir l’original</string>
     <string name="camera_freeze">Figer l’image</string>
     <string name="camera_resume">Reprendre l’image en direct</string>
     <string name="camera_frozen">Image figée : pince pour zoomer, glisse pour te déplacer</string>
