@@ -136,24 +136,31 @@ fun CameraScreen(
         val landscape = maxWidth > maxHeight
         val image: @Composable (Modifier) -> Unit = { m ->
             Box(m) {
-                CameraArea(
-                    controller,
-                    preferences.captureFormat == CaptureFormat.FilteredAndOriginal,
-                    onOpenImage,
-                    camera
-                )
+                CameraArea(controller, preferences, camera)
                 TopBar(controller, preferences, { showProfiles = true }, onOpenSettings)
             }
         }
         val controls: @Composable (Modifier) -> Unit = { m -> Controls(controller, { showAdvanced = true }, m) }
+        val capture: @Composable () -> Unit = {
+            CaptureBar(
+                controller,
+                preferences.captureFormat == CaptureFormat.FilteredAndOriginal,
+                onOpenImage,
+                Modifier.fillMaxWidth()
+            )
+        }
         if (landscape) {
             Row(Modifier.fillMaxSize()) {
                 image(Modifier.weight(1f).fillMaxHeight())
-                controls(Modifier.width(320.dp).fillMaxHeight().verticalScroll(rememberScrollState()))
+                Column(Modifier.width(320.dp).fillMaxHeight()) {
+                    capture()
+                    controls(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()))
+                }
             }
         } else {
             Column(Modifier.fillMaxSize()) {
                 image(Modifier.weight(1f).fillMaxWidth())
+                capture()
                 controls(Modifier.fillMaxWidth())
             }
         }
@@ -171,12 +178,7 @@ fun CameraScreen(
 }
 
 @Composable
-private fun CameraArea(
-    controller: CameraController,
-    withOriginal: Boolean,
-    onOpenImage: () -> Unit,
-    camera: @Composable (Modifier) -> Unit
-) {
+private fun CameraArea(controller: CameraController, preferences: Preferences, camera: @Composable (Modifier) -> Unit) {
     val holdDescription = stringResource(Res.string.hold_for_original)
     Box(Modifier.fillMaxSize()) {
         camera(Modifier.fillMaxSize())
@@ -199,12 +201,7 @@ private fun CameraArea(
         )
         ViewLabels(controller.state)
         controller.pipette?.let { PipetteMarker(it) }
-        CameraButtons(
-            controller,
-            withOriginal = withOriginal,
-            onOpenImage = onOpenImage,
-            Modifier.align(Alignment.CenterEnd).padding(end = 12.dp)
-        )
+        CameraButtons(controller, preferences, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
         CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
         PausedCover(controller)
         PipetteCard(

@@ -40,6 +40,12 @@ class Preferences(private val store: KeyValueStore) {
     /** Set at launch when the previous run installed this very version; not stored. */
     var justUpdated by mutableStateOf<String?>(null)
 
+    /**
+     * Set by the first tap on one of the camera's side buttons: until then their names are
+     * written beside them (icons alone were not understood).
+     */
+    var cameraButtonsLearned by stored("cameraButtonsLearned", false)
+
     /** Minutes without touch nor movement before the camera pauses; 0 = never. */
     var autoPauseMinutes by storedInt("autoPauseMinutes", 2)
 

@@ -29,8 +29,8 @@
     <string name="camera_flip">Switch camera (front or back)</string>
     <string name="camera_zoom">Zoom %1$s. Tap to change lens.</string>
     <string name="camera_photo">Take a photo</string>
-    <string name="camera_video">Film</string>
-    <string name="camera_video_stop">Stop filming</string>
+    <string name="camera_video">Record video</string>
+    <string name="camera_video_stop">Stop recording</string>
     <string name="camera_recording">● Recording %1$s</string>
     <string name="camera_photo_saved">Photo saved in the Nuance album</string>
     <string name="camera_photo_failed">The photo could not be saved</string>
@@ -41,7 +41,12 @@
     <string name="camera_paused">Camera paused to save battery. Touch the screen to resume.</string>
     <string name="camera_hot">Phone is hot: image slowed down to let it cool</string>
     <string name="settings_find_profile">Find my profile (take the test again)</string>
-    <string name="camera_back_button">← Back to the camera</string>
+    <string name="camera_back_button">Back to the camera</string>
+    <string name="capture_gallery">Gallery</string>
+    <string name="capture_photo">Photo</string>
+    <string name="capture_video">Video</string>
+    <string name="capture_stop">Stop</string>
+    <string name="capture_back">Camera</string>
     <string name="action_advanced">Advanced</string>
     <string name="action_settings">Settings</string>
     <string name="profile_chip_description">Profile: %1$s. Tap to change.</string>

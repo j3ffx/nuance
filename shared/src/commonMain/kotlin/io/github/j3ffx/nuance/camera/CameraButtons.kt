@@ -1,6 +1,7 @@
 package io.github.j3ffx.nuance.camera
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -10,16 +11,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -30,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -44,6 +55,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.render.CameraStatus
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.camera_back
@@ -66,6 +78,11 @@ import io.github.j3ffx.nuance.resources.camera_video_failed
 import io.github.j3ffx.nuance.resources.camera_video_saved
 import io.github.j3ffx.nuance.resources.camera_video_stop
 import io.github.j3ffx.nuance.resources.camera_zoom
+import io.github.j3ffx.nuance.resources.capture_back
+import io.github.j3ffx.nuance.resources.capture_gallery
+import io.github.j3ffx.nuance.resources.capture_photo
+import io.github.j3ffx.nuance.resources.capture_stop
+import io.github.j3ffx.nuance.resources.capture_video
 import io.github.j3ffx.nuance.ui.CameraIcons
 import io.github.j3ffx.nuance.ui.NuanceColors
 import kotlin.math.abs
@@ -74,44 +91,108 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The camera's own buttons, in a column over the image's side: freeze, torch, front/back,
- * and the zoom, which steps through the lenses (pinching zooms finely).
+ * Under the image, as in most camera apps: the gallery (or, on a gallery photo, the way back to
+ * the camera), the shutter, and video. Each button's name is always written under it.
  */
 @Composable
-internal fun CameraButtons(
+internal fun CaptureBar(
     controller: CameraController,
     withOriginal: Boolean,
     onOpenImage: () -> Unit,
     modifier: Modifier
 ) {
     val status by controller.renderer.camera.collectAsState()
-    // Icons alone were not understood: each button's name shows beside it for a few seconds.
-    var named by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        delay(LABELS_MS)
-        named = false
-    }
-    @Composable
-    fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) =
-        NamedButton(icon, description, named, onClick)
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.End) {
+    Row(
+        modifier.background(NuanceColors.scrim).padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         if (status.image) {
-            // A gallery photo is shown: the way back is the first button.
-            RoundButton(CameraIcons.Photo, stringResource(Res.string.camera_back)) {
-                controller.renderer.backToCamera()
-            }
+            CaptureButton(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                stringResource(Res.string.capture_back),
+                stringResource(Res.string.camera_back)
+            ) { controller.renderer.backToCamera() }
         } else {
-            RoundButton(CameraIcons.Gallery, stringResource(Res.string.camera_open_image), onOpenImage)
+            CaptureButton(
+                CameraIcons.Gallery,
+                stringResource(Res.string.capture_gallery),
+                stringResource(Res.string.camera_open_image),
+                onClick = onOpenImage
+            )
         }
-        RoundButton(CameraIcons.Shutter, stringResource(Res.string.camera_photo)) {
-            controller.takePhoto(withOriginal)
-        }
-        if (!status.image) {
-            RoundButton(
+        CaptureButton(
+            CameraIcons.Shutter,
+            stringResource(Res.string.capture_photo),
+            stringResource(Res.string.camera_photo),
+            large = true
+        ) { controller.takePhoto(withOriginal) }
+        if (status.image) {
+            // No video of a still photo; the slot stays, so the shutter keeps its place.
+            Spacer(Modifier.width(CAPTURE_WIDTH))
+        } else {
+            CaptureButton(
                 if (status.recording) CameraIcons.Stop else CameraIcons.Video,
+                stringResource(if (status.recording) Res.string.capture_stop else Res.string.capture_video),
                 stringResource(if (status.recording) Res.string.camera_video_stop else Res.string.camera_video)
             ) { controller.toggleVideo() }
         }
+    }
+}
+
+/** An icon in a circle with its short name under it; TalkBack reads the full [description]. */
+@Composable
+private fun CaptureButton(
+    icon: ImageVector,
+    name: String,
+    description: String,
+    large: Boolean = false,
+    onClick: () -> Unit
+) {
+    Column(
+        Modifier.width(CAPTURE_WIDTH).clip(RoundedCornerShape(12.dp))
+            .clickable(role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = description
+                role = Role.Button
+            }
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            Modifier.size(if (large) 60.dp else 48.dp)
+                .border(2.dp, NuanceColors.onScrim, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = NuanceColors.onScrim, modifier = Modifier.size(26.dp))
+        }
+        Text(
+            name,
+            color = NuanceColors.onScrim,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+    }
+}
+
+/**
+ * What acts on the image itself, in a column over its side: freeze, torch, front/back, and the
+ * zoom, which steps through the lenses (pinching zooms finely). Their names are written beside
+ * them until one is first used; a long press shows a name again.
+ */
+@Composable
+internal fun CameraButtons(controller: CameraController, preferences: Preferences, modifier: Modifier) {
+    val status by controller.renderer.camera.collectAsState()
+    val named = !preferences.cameraButtonsLearned
+
+    @Composable
+    fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) =
+        NamedButton(icon, description, named) {
+            preferences.cameraButtonsLearned = true
+            onClick()
+        }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.End) {
         RoundButton(
             if (status.frozen) CameraIcons.Play else CameraIcons.Pause,
             stringResource(if (status.frozen) Res.string.camera_resume else Res.string.camera_freeze)
@@ -131,7 +212,10 @@ internal fun CameraButtons(
             val text = zoomText(status.zoom)
             val description = stringResource(Res.string.camera_zoom, text)
             Surface(
-                onClick = { controller.renderer.setZoom(nextZoomStep(status)) },
+                onClick = {
+                    preferences.cameraButtonsLearned = true
+                    controller.renderer.setZoom(nextZoomStep(status))
+                },
                 shape = CircleShape,
                 color = NuanceColors.scrim,
                 contentColor = NuanceColors.onScrim,
@@ -173,11 +257,17 @@ internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
             contentColor = NuanceColors.onScrim,
             modifier = modifier.heightIn(min = 48.dp)
         ) {
-            Text(
-                stringResource(Res.string.camera_back_button),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
-            )
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(
+                    stringResource(Res.string.camera_back_button),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
         }
         return
     }
@@ -230,7 +320,11 @@ internal fun PausedCover(controller: CameraController) {
     }
 }
 
-/** A round icon button; with [named], its name is written beside it (the same text TalkBack reads). */
+/**
+ * A round icon button; with [named], its name is written beside it (the same text TalkBack
+ * reads). A long press shows the name in a tooltip.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NamedButton(icon: ImageVector, description: String, named: Boolean, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -245,22 +339,28 @@ private fun NamedButton(icon: ImageVector, description: String, named: Boolean, 
                     .clearAndSetSemantics {}
             )
         }
-        Surface(
-            onClick = onClick,
-            shape = CircleShape,
-            color = NuanceColors.scrim,
-            contentColor = NuanceColors.onScrim,
-            modifier = Modifier.size(52.dp)
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+            tooltip = { PlainTooltip { Text(description) } },
+            state = rememberTooltipState()
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = description, modifier = Modifier.size(26.dp))
+            Surface(
+                onClick = onClick,
+                shape = CircleShape,
+                color = NuanceColors.scrim,
+                contentColor = NuanceColors.onScrim,
+                modifier = Modifier.size(52.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = description, modifier = Modifier.size(26.dp))
+                }
             }
         }
     }
 }
 
-/** How long the buttons' names stay written when the camera screen opens. */
-private const val LABELS_MS = 5000L
+/** Each capture button's width: its name fits under it, and three fit on the narrowest phone. */
+private val CAPTURE_WIDTH = 96.dp
 
 /** "0.6×", "1×", "2.5×". */
 internal fun zoomText(zoom: Float): String {
