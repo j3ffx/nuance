@@ -33,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -40,7 +42,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
 import io.github.j3ffx.nuance.core.modes.Mode
 import io.github.j3ffx.nuance.core.profile.Profile
 import io.github.j3ffx.nuance.platform.Preferences
@@ -48,7 +49,6 @@ import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.advanced_compare
 import io.github.j3ffx.nuance.resources.advanced_enhance
 import io.github.j3ffx.nuance.resources.advanced_isolate
-import io.github.j3ffx.nuance.resources.advanced_method
 import io.github.j3ffx.nuance.resources.advanced_title_mode
 import io.github.j3ffx.nuance.resources.cancel
 import io.github.j3ffx.nuance.resources.compare_four
@@ -72,7 +72,6 @@ import io.github.j3ffx.nuance.ui.LabeledSlider
 import io.github.j3ffx.nuance.ui.SectionTitle
 import io.github.j3ffx.nuance.ui.axisName
 import io.github.j3ffx.nuance.ui.profileName
-import io.github.j3ffx.nuance.ui.strategyName
 import kotlin.random.Random
 import org.jetbrains.compose.resources.stringResource
 
@@ -219,9 +218,12 @@ fun AdvancedSheet(controller: CameraController, preferences: Preferences, onDism
     fun update(transform: (io.github.j3ffx.nuance.core.modes.Settings) -> io.github.j3ffx.nuance.core.modes.Settings) =
         controller.update { it.copy(settings = transform(it.settings)) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    // No dimming, and half the screen at most: the image stays visible while the sliders move.
+    val halfScreen = with(LocalDensity.current) { (LocalWindowInfo.current.containerSize.height / 2).toDp() }
+    ModalBottomSheet(onDismissRequest = onDismiss, scrimColor = Color.Transparent) {
         Column(
-            Modifier.navigationBarsPadding().padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
+            Modifier.heightIn(max = halfScreen).navigationBarsPadding().padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Only what acts on the current mode: the title says which. Who the profile is for
@@ -236,14 +238,7 @@ fun AdvancedSheet(controller: CameraController, preferences: Preferences, onDism
             val corrects = state.mode == Mode.Correct || state.mode == Mode.Compare
 
             if (corrects) {
-                SectionTitle(stringResource(Res.string.advanced_method))
-                Choices(
-                    options = CorrectionStrategy.all,
-                    label = { strategyName(it) },
-                    onSelect = { strategy -> update { it.copy(strategyId = strategy.id) } },
-                    isSelected = { it.id == s.strategyId }
-                )
-
+                // The method is on the main screen, under the intensity: not twice.
                 SectionTitle(stringResource(Res.string.advanced_enhance))
                 LabeledSlider(
                     stringResource(Res.string.contrast_value, percent(s.contrast)),

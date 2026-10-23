@@ -47,7 +47,9 @@
     <string name="capture_video">Video</string>
     <string name="capture_stop">Stop</string>
     <string name="capture_back">Camera</string>
-    <string name="action_advanced">Advanced</string>
+    <string name="adjust_correct">Adjust the correction</string>
+    <string name="adjust_isolate">Adjust the isolation</string>
+    <string name="adjust_compare">Adjust the comparison</string>
     <string name="action_settings">Settings</string>
     <string name="profile_chip_description">Profile: %1$s. Tap to change.</string>
     <string name="profile_modified">%1$s · changed</string>
@@ -101,8 +103,7 @@
     <string name="hue_pink">pink</string>
 
     <!-- Advanced panel -->
-    <string name="advanced_title_mode">“%1$s” settings</string>
-    <string name="advanced_method">Correction method</string>
+    <string name="advanced_title_mode">%1$s: more options</string>
     <string name="strategy_error_redistribution">Recolouring</string>
     <string name="strategy_lab_remap">Light and dark (recommended)</string>
     <string name="advanced_enhance">Image</string>

@@ -65,8 +65,10 @@ import io.github.j3ffx.nuance.platform.CaptureFormat
 import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.render.ViewLayout
 import io.github.j3ffx.nuance.resources.Res
-import io.github.j3ffx.nuance.resources.action_advanced
 import io.github.j3ffx.nuance.resources.action_settings
+import io.github.j3ffx.nuance.resources.adjust_compare
+import io.github.j3ffx.nuance.resources.adjust_correct
+import io.github.j3ffx.nuance.resources.adjust_isolate
 import io.github.j3ffx.nuance.resources.hold_for_original
 import io.github.j3ffx.nuance.resources.intensity_value
 import io.github.j3ffx.nuance.resources.mode_compare
@@ -401,9 +403,18 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                     isSelected = { it == nearestPreset(s.isolateHue) }
                 )
             }
-            OutlinedButton(onClick = onAdvanced, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(stringResource(Res.string.action_advanced), modifier = Modifier.padding(start = 8.dp))
+            // Named after what it adjusts; Simulate has nothing more to adjust.
+            val adjust = when (state.mode) {
+                Mode.Correct -> Res.string.adjust_correct
+                Mode.Isolate -> Res.string.adjust_isolate
+                Mode.Compare -> Res.string.adjust_compare
+                Mode.Simulate -> null
+            }
+            if (adjust != null) {
+                OutlinedButton(onClick = onAdvanced, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(stringResource(adjust), modifier = Modifier.padding(start = 8.dp))
+                }
             }
         }
     }
