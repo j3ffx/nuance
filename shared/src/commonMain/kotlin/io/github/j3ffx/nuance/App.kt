@@ -185,6 +185,7 @@ private fun Main(
                 preferences,
                 onOpenSettings = { screen = Screen.Settings },
                 onManageProfiles = { screen = Screen.Profiles },
+                onFindProfile = { screen = Screen.Test },
                 onOpenImage = onOpenImage,
                 camera = camera
             )
@@ -213,6 +214,7 @@ private fun Main(
             platform,
             onHelp = { screen = Screen.Help },
             onAbout = { screen = Screen.About },
+            onFindProfile = { screen = Screen.Test },
             onBack = { screen = Screen.Camera }
         )
 

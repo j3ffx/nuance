@@ -9,7 +9,9 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -23,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,6 +36,7 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
@@ -43,11 +47,11 @@ import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.render.CameraStatus
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.camera_back
+import io.github.j3ffx.nuance.resources.camera_back_button
 import io.github.j3ffx.nuance.resources.camera_flip
 import io.github.j3ffx.nuance.resources.camera_freeze
 import io.github.j3ffx.nuance.resources.camera_frozen
 import io.github.j3ffx.nuance.resources.camera_hot
-import io.github.j3ffx.nuance.resources.camera_image_shown
 import io.github.j3ffx.nuance.resources.camera_open_image
 import io.github.j3ffx.nuance.resources.camera_paused
 import io.github.j3ffx.nuance.resources.camera_photo
@@ -81,6 +85,15 @@ internal fun CameraButtons(
     modifier: Modifier
 ) {
     val status by controller.renderer.camera.collectAsState()
+    // Icons alone were not understood: each button's name shows beside it for a few seconds.
+    var named by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(LABELS_MS)
+        named = false
+    }
+    @Composable
+    fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) =
+        NamedButton(icon, description, named, onClick)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.End) {
         if (status.image) {
             // A gallery photo is shown: the way back is the first button.
@@ -151,6 +164,23 @@ internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
         }
     }
     val message = controller.captureMessage
+    if (status.image && message == null && !status.recording) {
+        // A written way back to the camera: the camera icon alone was not found.
+        Surface(
+            onClick = { controller.renderer.backToCamera() },
+            shape = RoundedCornerShape(24.dp),
+            color = NuanceColors.scrim,
+            contentColor = NuanceColors.onScrim,
+            modifier = modifier.heightIn(min = 48.dp)
+        ) {
+            Text(
+                stringResource(Res.string.camera_back_button),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+            )
+        }
+        return
+    }
     val text = when {
         status.recording -> stringResource(
             Res.string.camera_recording,
@@ -169,8 +199,6 @@ internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
         status.hot -> stringResource(Res.string.camera_hot)
 
         status.frozen -> stringResource(Res.string.camera_frozen)
-
-        status.image -> stringResource(Res.string.camera_image_shown)
 
         else -> return
     }
@@ -202,20 +230,37 @@ internal fun PausedCover(controller: CameraController) {
     }
 }
 
+/** A round icon button; with [named], its name is written beside it (the same text TalkBack reads). */
 @Composable
-private fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = CircleShape,
-        color = NuanceColors.scrim,
-        contentColor = NuanceColors.onScrim,
-        modifier = Modifier.size(52.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = description, modifier = Modifier.size(26.dp))
+private fun NamedButton(icon: ImageVector, description: String, named: Boolean, onClick: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (named) {
+            Text(
+                description,
+                color = NuanceColors.onScrim,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(end = 8.dp)
+                    .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .clearAndSetSemantics {}
+            )
+        }
+        Surface(
+            onClick = onClick,
+            shape = CircleShape,
+            color = NuanceColors.scrim,
+            contentColor = NuanceColors.onScrim,
+            modifier = Modifier.size(52.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = description, modifier = Modifier.size(26.dp))
+            }
         }
     }
 }
+
+/** How long the buttons' names stay written when the camera screen opens. */
+private const val LABELS_MS = 5000L
 
 /** "0.6×", "1×", "2.5×". */
 internal fun zoomText(zoom: Float): String {

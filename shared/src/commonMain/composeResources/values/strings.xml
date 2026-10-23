@@ -38,9 +38,10 @@
     <string name="camera_video_failed">The video could not be saved</string>
     <string name="camera_open_image">Open a photo from the gallery</string>
     <string name="camera_back">Back to the camera</string>
-    <string name="camera_image_shown">Gallery photo: tap the camera to go back</string>
     <string name="camera_paused">Camera paused to save battery. Touch the screen to resume.</string>
     <string name="camera_hot">Phone is hot: image slowed down to let it cool</string>
+    <string name="settings_find_profile">Find my profile (take the test again)</string>
+    <string name="camera_back_button">← Back to the camera</string>
     <string name="action_advanced">Advanced</string>
     <string name="action_settings">Settings</string>
     <string name="profile_chip_description">Profile: %1$s. Tap to change.</string>
@@ -91,7 +92,7 @@
     <string name="hue_pink">pink</string>
 
     <!-- Advanced panel -->
-    <string name="advanced_title">Advanced settings</string>
+    <string name="advanced_title_mode">“%1$s” settings</string>
     <string name="advanced_profile">Profile</string>
     <string name="advanced_method">Correction method</string>
     <string name="strategy_error_redistribution">Recolouring (recommended)</string>

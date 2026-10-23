@@ -52,6 +52,7 @@ import io.github.j3ffx.nuance.resources.settings_about
 import io.github.j3ffx.nuance.resources.settings_auto_pause
 import io.github.j3ffx.nuance.resources.settings_auto_pause_help
 import io.github.j3ffx.nuance.resources.settings_capture
+import io.github.j3ffx.nuance.resources.settings_find_profile
 import io.github.j3ffx.nuance.resources.settings_help
 import io.github.j3ffx.nuance.resources.settings_language
 import io.github.j3ffx.nuance.resources.settings_theme
@@ -89,6 +90,7 @@ fun SettingsScreen(
     platform: Platform,
     onHelp: () -> Unit,
     onAbout: () -> Unit,
+    onFindProfile: () -> Unit,
     onBack: () -> Unit
 ) {
     val snackbar = remember { SnackbarHostState() }
@@ -175,6 +177,7 @@ fun SettingsScreen(
         ) { preferences.updateChecks = it }
         UpdateRow(preferences, platform)
 
+        LinkRow(stringResource(Res.string.settings_find_profile), onFindProfile)
         LinkRow(stringResource(Res.string.settings_help), onHelp)
         LinkRow(stringResource(Res.string.settings_about), onAbout)
         Text(

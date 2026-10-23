@@ -36,12 +36,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -93,17 +95,24 @@ import org.jetbrains.compose.resources.stringResource
  * everything else folded in the Advanced panel. The views never sit under the controls: in
  * portrait the controls are below the image, in landscape beside it.
  */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun CameraScreen(
     controller: CameraController,
     preferences: Preferences,
     onOpenSettings: () -> Unit,
     onManageProfiles: () -> Unit,
+    onFindProfile: () -> Unit,
     onOpenImage: () -> Unit,
     camera: @Composable (Modifier) -> Unit
 ) {
     var showProfiles by remember { mutableStateOf(false) }
     var showAdvanced by remember { mutableStateOf(false) }
+    val status by controller.renderer.camera.collectAsState()
+    // Back first leaves a gallery photo or a frozen image, before leaving the app.
+    BackHandler(enabled = status.image || status.frozen) {
+        if (status.image) controller.renderer.backToCamera() else controller.setFrozen(false)
+    }
     controller.autoPauseMinutes = preferences.autoPauseMinutes
     BoxWithConstraints(
         Modifier.fillMaxSize().background(NuanceColors.scrim).pointerInput(Unit) {
@@ -145,6 +154,9 @@ fun CameraScreen(
         ProfileSheet(controller, preferences, onManage = {
             showProfiles = false
             onManageProfiles()
+        }, onFindProfile = {
+            showProfiles = false
+            onFindProfile()
         }, onDismiss = { showProfiles = false })
     }
     if (showAdvanced) AdvancedSheet(controller, preferences, onDismiss = { showAdvanced = false })
@@ -383,7 +395,7 @@ private fun ModeButton(text: String, selected: Boolean, onClick: () -> Unit) {
 
 internal fun percent(v: Double) = (v * 100).roundToInt()
 
-private fun modeName(m: Mode): StringResource = when (m) {
+internal fun modeName(m: Mode): StringResource = when (m) {
     Mode.Correct -> Res.string.mode_correct
     Mode.Isolate -> Res.string.mode_isolate
     Mode.Simulate -> Res.string.mode_simulate

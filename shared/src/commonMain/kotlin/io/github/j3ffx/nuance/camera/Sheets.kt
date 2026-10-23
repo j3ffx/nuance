@@ -44,9 +44,10 @@ import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.advanced_compare
 import io.github.j3ffx.nuance.resources.advanced_enhance
+import io.github.j3ffx.nuance.resources.advanced_isolate
 import io.github.j3ffx.nuance.resources.advanced_method
 import io.github.j3ffx.nuance.resources.advanced_profile
-import io.github.j3ffx.nuance.resources.advanced_title
+import io.github.j3ffx.nuance.resources.advanced_title_mode
 import io.github.j3ffx.nuance.resources.cancel
 import io.github.j3ffx.nuance.resources.compare_four
 import io.github.j3ffx.nuance.resources.compare_two
@@ -60,6 +61,7 @@ import io.github.j3ffx.nuance.resources.saturation_value
 import io.github.j3ffx.nuance.resources.save
 import io.github.j3ffx.nuance.resources.save_as_new
 import io.github.j3ffx.nuance.resources.save_to_profile
+import io.github.j3ffx.nuance.resources.settings_find_profile
 import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.strategy_error_redistribution
 import io.github.j3ffx.nuance.resources.strategy_lab_remap
@@ -76,7 +78,13 @@ import org.jetbrains.compose.resources.stringResource
 /** Pick the profile the camera uses; "Manage" opens the profiles screen. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileSheet(controller: CameraController, preferences: Preferences, onManage: () -> Unit, onDismiss: () -> Unit) {
+fun ProfileSheet(
+    controller: CameraController,
+    preferences: Preferences,
+    onManage: () -> Unit,
+    onFindProfile: () -> Unit,
+    onDismiss: () -> Unit
+) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding().padding(horizontal = 16.dp).verticalScroll(rememberScrollState())) {
             for (p in preferences.allProfiles) {
@@ -103,6 +111,9 @@ fun ProfileSheet(controller: CameraController, preferences: Preferences, onManag
                 }
             }
             HorizontalDivider()
+            TextButton(onClick = onFindProfile, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(Res.string.settings_find_profile))
+            }
             TextButton(onClick = onManage, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(Res.string.profiles_title))
             }
@@ -126,65 +137,75 @@ fun AdvancedSheet(controller: CameraController, preferences: Preferences, onDism
             Modifier.navigationBarsPadding().padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Only what acts on the current mode: the title says which.
             Text(
-                stringResource(Res.string.advanced_title),
+                stringResource(Res.string.advanced_title_mode, stringResource(modeName(state.mode))),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.semantics {
                     heading()
                 }
             )
+            val corrects = state.mode == Mode.Correct || state.mode == Mode.Compare
 
-            SectionTitle(stringResource(Res.string.advanced_profile))
-            Choices(
-                options = Axis.entries,
-                label = { axisTitle(it) },
-                onSelect = { a -> update { it.copy(profile = it.profile.copy(axis = a)) } },
-                isSelected = { it == s.profile.axis }
-            )
-            Text(
-                axisHelp(s.profile.axis),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            LabeledSlider(
-                stringResource(Res.string.severity_value, percent(s.profile.severity)),
-                s.profile.severity.toFloat(),
-                { v -> update { it.copy(profile = it.profile.copy(severity = v.toDouble())) } }
-            )
+            // Hue isolation shows one hue whatever the profile: no profile there.
+            if (state.mode != Mode.Isolate) {
+                SectionTitle(stringResource(Res.string.advanced_profile))
+                Choices(
+                    options = Axis.entries,
+                    label = { axisTitle(it) },
+                    onSelect = { a -> update { it.copy(profile = it.profile.copy(axis = a)) } },
+                    isSelected = { it == s.profile.axis }
+                )
+                Text(
+                    axisHelp(s.profile.axis),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                LabeledSlider(
+                    stringResource(Res.string.severity_value, percent(s.profile.severity)),
+                    s.profile.severity.toFloat(),
+                    { v -> update { it.copy(profile = it.profile.copy(severity = v.toDouble())) } }
+                )
+            }
 
-            SectionTitle(stringResource(Res.string.advanced_method))
-            Choices(
-                options = CorrectionStrategy.all,
-                label = {
+            if (corrects) {
+                SectionTitle(stringResource(Res.string.advanced_method))
+                Choices(
+                    options = CorrectionStrategy.all,
+                    label = {
+                        stringResource(
+                            if (it ===
+                                ErrorRedistribution
+                            ) {
+                                Res.string.strategy_error_redistribution
+                            } else {
+                                Res.string.strategy_lab_remap
+                            }
+                        )
+                    },
+                    onSelect = { strategy -> update { it.copy(strategyId = strategy.id) } },
+                    isSelected = { it.id == s.strategyId }
+                )
+
+                SectionTitle(stringResource(Res.string.advanced_enhance))
+                LabeledSlider(
+                    stringResource(Res.string.contrast_value, percent(s.contrast)),
+                    s.contrast.toFloat(),
+                    { v -> update { it.copy(contrast = v.toDouble()) } }
+                )
+                LabeledSlider(
                     stringResource(
-                        if (it ===
-                            ErrorRedistribution
-                        ) {
-                            Res.string.strategy_error_redistribution
-                        } else {
-                            Res.string.strategy_lab_remap
-                        }
-                    )
-                },
-                onSelect = { strategy -> update { it.copy(strategyId = strategy.id) } },
-                isSelected = { it.id == s.strategyId }
-            )
-
-            SectionTitle(stringResource(Res.string.advanced_enhance))
-            LabeledSlider(stringResource(Res.string.contrast_value, percent(s.contrast)), s.contrast.toFloat(), { v ->
-                update { it.copy(contrast = v.toDouble()) }
-            })
-            LabeledSlider(
-                stringResource(
-                    Res.string.saturation_value,
-                    percent(s.saturation)
-                ),
-                s.saturation.toFloat(),
-                { v ->
-                    update { it.copy(saturation = v.toDouble()) }
-                }
-            )
+                        Res.string.saturation_value,
+                        percent(s.saturation)
+                    ),
+                    s.saturation.toFloat(),
+                    { v ->
+                        update { it.copy(saturation = v.toDouble()) }
+                    }
+                )
+            }
             if (state.mode == Mode.Isolate) {
+                SectionTitle(stringResource(Res.string.advanced_isolate))
                 // 5° to 90° on either side of the target hue.
                 LabeledSlider(
                     stringResource(Res.string.isolate_width_value, s.isolateWidth.toInt()),

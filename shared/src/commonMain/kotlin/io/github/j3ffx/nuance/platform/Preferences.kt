@@ -37,7 +37,9 @@ class Preferences(private val store: KeyValueStore) {
 
     /** Minutes without touch nor movement before the camera pauses; 0 = never. */
     var autoPauseMinutes by storedInt("autoPauseMinutes", 2)
-    var captureFormat by storedEnum("captureFormat", CaptureFormat.Filtered)
+
+    /** The original too by default: a filtered capture can't be put through another mode later. */
+    var captureFormat by storedEnum("captureFormat", CaptureFormat.FilteredAndOriginal)
 
     /** The person's own profiles; presets come from [Profile.presets] and are never stored. */
     var profiles: List<Profile> by mutableStateOf(ProfileCodec.decodeAll(store.getString("profiles").orEmpty()))
