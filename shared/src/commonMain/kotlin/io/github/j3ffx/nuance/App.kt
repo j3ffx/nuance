@@ -110,7 +110,7 @@ fun App(
                         if (profile != Profile.Default) {
                             val mine = profile.copy(id = newProfileId())
                             preferences.saveProfile(mine)
-                            preferences.defaultProfileId = mine.id
+                            preferences.currentProfileId = mine.id
                         }
                         preferences.updateChecks = updates
                         preferences.onboardingDone = true
@@ -121,7 +121,7 @@ fun App(
                 // Straight from the first launch: the test needs no camera, so it comes before the permission.
                 if (testFirst) {
                     ScreeningRoute(preferences, devTools, dev, onKeep = { mine ->
-                        preferences.defaultProfileId = mine.id
+                        preferences.currentProfileId = mine.id
                         testFirst = false
                     }, onFinish = { testFirst = false }, onBack = { testFirst = false })
                     return@Surface
@@ -150,10 +150,15 @@ private fun Main(
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(renderer) {
-        CameraController(renderer, scope, preferences.profile(preferences.defaultProfileId) ?: Profile.Default)
+        CameraController(renderer, scope, preferences.profile(preferences.currentProfileId) ?: Profile.Default)
     }
     // Saveable: a language change recreates the activity, and Settings should stay open.
     var screen by rememberSaveable { mutableStateOf(Screen.Camera) }
+    // The camera opens next time with the last profile used; a deleted one falls back to the default.
+    LaunchedEffect(controller.state.profileId, preferences.profiles) {
+        if (preferences.profile(controller.state.profileId) == null) controller.applyProfile(Profile.Default)
+        preferences.currentProfileId = controller.state.profileId
+    }
     // Where "Find my profile" was opened from: Back returns there.
     var testFrom by rememberSaveable { mutableStateOf(Screen.Camera) }
     fun openTest() {
@@ -254,7 +259,7 @@ private fun ScreeningRoute(
             // One "My test" profile, replaced by each new result, rather than a pile of them.
             val mine = p.copy(id = TEST_PROFILE_ID)
             preferences.saveProfile(mine)
-            preferences.defaultProfileId = mine.id
+            preferences.currentProfileId = mine.id
             onKeep(mine)
         },
         onFinish = onFinish,

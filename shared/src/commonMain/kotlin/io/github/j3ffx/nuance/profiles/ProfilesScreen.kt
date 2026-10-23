@@ -1,20 +1,25 @@
 package io.github.j3ffx.nuance.profiles
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -29,9 +34,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.camera.newProfileId
 import io.github.j3ffx.nuance.core.cvd.Axis
@@ -41,23 +47,23 @@ import io.github.j3ffx.nuance.platform.Platform
 import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.cancel
+import io.github.j3ffx.nuance.resources.import_field
 import io.github.j3ffx.nuance.resources.import_help
 import io.github.j3ffx.nuance.resources.import_invalid
 import io.github.j3ffx.nuance.resources.import_paste
 import io.github.j3ffx.nuance.resources.import_title
 import io.github.j3ffx.nuance.resources.imported
-import io.github.j3ffx.nuance.resources.profile_default
+import io.github.j3ffx.nuance.resources.profile_actions
 import io.github.j3ffx.nuance.resources.profile_delete
 import io.github.j3ffx.nuance.resources.profile_delete_confirm
 import io.github.j3ffx.nuance.resources.profile_edit
+import io.github.j3ffx.nuance.resources.profile_edit_title
 import io.github.j3ffx.nuance.resources.profile_import
 import io.github.j3ffx.nuance.resources.profile_in_use
 import io.github.j3ffx.nuance.resources.profile_name
 import io.github.j3ffx.nuance.resources.profile_name_default
 import io.github.j3ffx.nuance.resources.profile_new
-import io.github.j3ffx.nuance.resources.profile_set_default
 import io.github.j3ffx.nuance.resources.profile_share
-import io.github.j3ffx.nuance.resources.profile_use
 import io.github.j3ffx.nuance.resources.profiles_empty
 import io.github.j3ffx.nuance.resources.profiles_mine
 import io.github.j3ffx.nuance.resources.profiles_presets
@@ -122,12 +128,10 @@ fun ProfilesScreen(
             Text(stringResource(Res.string.profiles_empty), style = MaterialTheme.typography.bodyMedium)
         }
         for (p in preferences.profiles) {
-            ProfileCard(
+            ProfileRow(
                 p,
                 inUse = p.id == activeProfileId,
-                isDefault = p.id == preferences.defaultProfileId,
                 onUse = { onUse(p) },
-                onSetDefault = { preferences.defaultProfileId = p.id },
                 onEdit = { editing = p },
                 onShare = { platform.shareText(ProfileCodec.encode(p), shareTitle) },
                 onDelete = { deleting = p }
@@ -136,12 +140,10 @@ fun ProfilesScreen(
 
         SectionTitle(stringResource(Res.string.profiles_presets))
         for (p in Profile.builtIns) {
-            ProfileCard(
+            ProfileRow(
                 p,
                 inUse = p.id == activeProfileId,
-                isDefault = p.id == preferences.defaultProfileId,
                 onUse = { onUse(p) },
-                onSetDefault = { preferences.defaultProfileId = p.id },
                 onEdit = null,
                 onShare = { platform.shareText(ProfileCodec.encode(p), shareTitle) },
                 onDelete = null
@@ -179,74 +181,67 @@ fun ProfilesScreen(
     }
 }
 
+/**
+ * One profile: a tap uses it; the one in use is checked and says so in words. Edit, share and
+ * delete wait behind "⋮", so the list stays a list.
+ */
 @Composable
-private fun ProfileCard(
+private fun ProfileRow(
     p: Profile,
     inUse: Boolean,
-    isDefault: Boolean,
     onUse: () -> Unit,
-    onSetDefault: () -> Unit,
     onEdit: (() -> Unit)?,
     onShare: () -> Unit,
     onDelete: (() -> Unit)?
 ) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                profileName(p),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics {
-                    heading()
-                }
+    var menu by remember { mutableStateOf(false) }
+    val summary = if (p.name.isNotEmpty()) profileSummary(p.axis, p.severity) else null
+    val state = if (inUse) stringResource(Res.string.profile_in_use) else null
+    ListItem(
+        headlineContent = {
+            Text(profileName(p), fontWeight = if (inUse) FontWeight.Bold else FontWeight.Normal)
+        },
+        supportingContent = listOfNotNull(state, summary).takeIf { it.isNotEmpty() }?.let { lines ->
+            { Text(lines.joinToString(" · ")) }
+        },
+        leadingContent = {
+            Icon(
+                Icons.Filled.Check,
+                contentDescription = null,
+                tint = if (inUse) MaterialTheme.colorScheme.primary else Color.Transparent
             )
-            if (p.name.isNotEmpty()) {
-                Text(
-                    profileSummary(p.axis, p.severity),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            // States are written out, with an icon: never told by colour alone.
-            if (inUse) StateLine(Icons.Filled.Check, stringResource(Res.string.profile_in_use))
-            if (isDefault) StateLine(Icons.Filled.Star, stringResource(Res.string.profile_default))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (!inUse) {
-                    TextButton(onClick = onUse, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(Res.string.profile_use))
+        },
+        trailingContent = {
+            Box {
+                IconButton(onClick = { menu = true }) {
+                    Icon(
+                        Icons.Filled.MoreVert,
+                        contentDescription = stringResource(Res.string.profile_actions, profileName(p))
+                    )
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    if (onEdit != null) {
+                        DropdownMenuItem(text = { Text(stringResource(Res.string.profile_edit)) }, onClick = {
+                            menu = false
+                            onEdit()
+                        })
                     }
-                }
-                if (!isDefault) {
-                    TextButton(onClick = onSetDefault, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(Res.string.profile_set_default))
-                    }
-                }
-                if (onEdit !=
-                    null
-                ) {
-                    TextButton(onClick = onEdit, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(Res.string.profile_edit))
-                    }
-                }
-                TextButton(onClick = onShare, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(Res.string.profile_share))
-                }
-                if (onDelete !=
-                    null
-                ) {
-                    TextButton(onClick = onDelete, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(Res.string.profile_delete))
+                    DropdownMenuItem(text = { Text(stringResource(Res.string.profile_share)) }, onClick = {
+                        menu = false
+                        onShare()
+                    })
+                    if (onDelete != null) {
+                        DropdownMenuItem(text = { Text(stringResource(Res.string.profile_delete)) }, onClick = {
+                            menu = false
+                            onDelete()
+                        })
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun StateLine(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
-    androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-        Text(text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
-    }
+        },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .selectable(inUse, role = Role.RadioButton, onClick = onUse)
+    )
 }
 
 /** Name, axis and severity; the camera settings are saved from the camera's Advanced panel. */
@@ -257,7 +252,7 @@ private fun ProfileEditor(initial: Profile, onSave: (Profile) -> Unit, onCancel:
     var severity by remember { mutableStateOf(initial.severity) }
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text(name.ifEmpty { profileSummary(axis, severity) }) },
+        title = { Text(stringResource(Res.string.profile_edit_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(name, {
@@ -296,7 +291,7 @@ private fun ImportDialog(onImport: (Profile) -> Unit, onCancel: () -> Unit) {
                 OutlinedTextField(text, {
                     text = it
                     invalid = false
-                }, minLines = 3, isError = invalid)
+                }, label = { Text(stringResource(Res.string.import_field)) }, minLines = 3, isError = invalid)
                 if (invalid) Text(stringResource(Res.string.import_invalid), color = MaterialTheme.colorScheme.error)
                 TextButton(onClick = {
                     clipboard.getText()?.let { text = it.text }

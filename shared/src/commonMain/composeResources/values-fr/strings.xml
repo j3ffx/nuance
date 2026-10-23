@@ -132,13 +132,12 @@
     <string name="profiles_empty">Aucun profil à toi pour l’instant. Crées-en un, ou règle la caméra, touche ton profil en haut, puis « Enregistrer comme nouveau profil ».</string>
     <string name="profile_new">Nouveau profil</string>
     <string name="profile_import">Importer</string>
-    <string name="profile_use">Utiliser</string>
     <string name="profile_edit">Modifier</string>
+    <string name="profile_edit_title">Modifier le profil</string>
     <string name="profile_share">Partager</string>
     <string name="profile_delete">Supprimer</string>
+    <string name="profile_actions">Actions pour « %1$s »</string>
     <string name="profile_in_use">En cours</string>
-    <string name="profile_default">Ouvre la caméra</string>
-    <string name="profile_set_default">Ouvrir la caméra avec</string>
     <string name="profile_name">Nom</string>
     <string name="profile_name_default">Mon profil</string>
     <string name="profile_delete_confirm">Supprimer « %1$s » ?</string>
@@ -146,6 +145,7 @@
     <string name="cancel">Annuler</string>
     <string name="import_title">Importer un profil</string>
     <string name="import_help">Colle le texte reçu : il commence par « nuance1 ».</string>
+    <string name="import_field">Texte du profil</string>
     <string name="import_paste">Coller</string>
     <string name="import_invalid">Ce texte n’est pas un profil Nuance.</string>
     <string name="imported">Profil importé</string>

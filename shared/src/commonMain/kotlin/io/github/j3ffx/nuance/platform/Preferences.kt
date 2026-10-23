@@ -78,8 +78,8 @@ class Preferences(private val store: KeyValueStore) {
         }
     }
 
-    /** The profile the camera opens with. */
-    var defaultProfileId by storedString("defaultProfileId", Profile.Default.id)
+    /** The profile in use, which the camera opens with next time (stored under its 0.1 name). */
+    var currentProfileId by storedString("defaultProfileId", Profile.Default.id)
 
     /** The last "Find my profile" result ([ScreeningSummary]), empty if never taken. */
     var lastScreening by storedString("lastScreening", "")
@@ -96,7 +96,7 @@ class Preferences(private val store: KeyValueStore) {
     fun deleteProfile(id: String) {
         profiles = profiles.filterNot { it.id == id }
         store.putString("profiles", ProfileCodec.encodeAll(profiles))
-        if (defaultProfileId == id) defaultProfileId = Profile.Default.id
+        if (currentProfileId == id) currentProfileId = Profile.Default.id
     }
 
     private fun stored(key: String, default: Boolean) = Stored(

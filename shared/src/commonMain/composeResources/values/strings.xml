@@ -132,13 +132,12 @@
     <string name="profiles_empty">No profile of your own yet. Create one, or set up the camera, tap your profile at the top, then “Save as a new profile”.</string>
     <string name="profile_new">New profile</string>
     <string name="profile_import">Import</string>
-    <string name="profile_use">Use</string>
     <string name="profile_edit">Edit</string>
+    <string name="profile_edit_title">Edit the profile</string>
     <string name="profile_share">Share</string>
     <string name="profile_delete">Delete</string>
+    <string name="profile_actions">Actions for “%1$s”</string>
     <string name="profile_in_use">In use</string>
-    <string name="profile_default">Opens the camera</string>
-    <string name="profile_set_default">Open the camera with it</string>
     <string name="profile_name">Name</string>
     <string name="profile_name_default">My profile</string>
     <string name="profile_delete_confirm">Delete “%1$s”?</string>
@@ -146,6 +145,7 @@
     <string name="cancel">Cancel</string>
     <string name="import_title">Import a profile</string>
     <string name="import_help">Paste the text you received: it starts with “nuance1”.</string>
+    <string name="import_field">Profile text</string>
     <string name="import_paste">Paste</string>
     <string name="import_invalid">This text isn’t a Nuance profile.</string>
     <string name="imported">Profile imported</string>
