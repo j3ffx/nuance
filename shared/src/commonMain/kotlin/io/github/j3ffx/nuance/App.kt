@@ -159,6 +159,12 @@ private fun Main(
         if (preferences.profile(controller.state.profileId) == null) controller.applyProfile(Profile.Default)
         preferences.currentProfileId = controller.state.profileId
     }
+    // Where the help was opened from (the camera or the settings): Back returns there.
+    var helpFrom by rememberSaveable { mutableStateOf(Screen.Settings) }
+    fun openHelp() {
+        helpFrom = screen
+        screen = Screen.Help
+    }
     // Where "Find my profile" was opened from: Back returns there.
     var testFrom by rememberSaveable { mutableStateOf(Screen.Camera) }
     fun openTest() {
@@ -184,7 +190,8 @@ private fun Main(
     }
     BackHandler(enabled = screen != Screen.Camera) {
         screen = when (screen) {
-            Screen.Help, Screen.About -> Screen.Settings
+            Screen.Help -> helpFrom
+            Screen.About -> Screen.Settings
             Screen.Test -> testFrom
             else -> Screen.Camera
         }
@@ -195,6 +202,7 @@ private fun Main(
                 controller,
                 preferences,
                 onOpenSettings = { screen = Screen.Settings },
+                onOpenHelp = ::openHelp,
                 onManageProfiles = { screen = Screen.Profiles },
                 onFindProfile = ::openTest,
                 onOpenImage = onOpenImage,
@@ -225,13 +233,13 @@ private fun Main(
         Screen.Settings -> SettingsScreen(
             preferences,
             platform,
-            onHelp = { screen = Screen.Help },
+            onHelp = ::openHelp,
             onAbout = { screen = Screen.About },
             onFindProfile = ::openTest,
             onBack = { screen = Screen.Camera }
         )
 
-        Screen.Help -> HelpScreen(onBack = { screen = Screen.Settings })
+        Screen.Help -> HelpScreen(onBack = { screen = helpFrom })
 
         Screen.About -> AboutScreen(onBack = { screen = Screen.Settings })
     }

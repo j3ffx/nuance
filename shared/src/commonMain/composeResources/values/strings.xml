@@ -191,8 +191,21 @@
     <string name="on">On</string>
     <string name="off">Off</string>
 
-    <string name="help_text">Nuance changes the camera image to help you tell apart the colours you confuse. It doesn’t give “normal” vision and doesn’t cure anything.\n\nIt isn’t a medical device. For a diagnosis, see an ophthalmologist or an orthoptist.\n\nThe modes\n• Correct: changes the colours for your profile. The slider sets how much.\n• Isolate: keeps one colour, the rest turns grey.\n• Simulate: shows what a person with this profile sees.\n• Compare: four views side by side, to understand the correction.\nTap a point of the image to know its colour (the pipette); touch and hold to see the original.\n\nDon’t know your type? “Find my profile”, in Profiles, is a 3-minute test that proposes one. It gives an indication, not a diagnosis.\n\nAchromatopsia (vision without colours): correcting makes no sense, but contrast, in Advanced, can help.\n\nPrivacy: images never leave the phone. No account, no statistics. The only possible connection is the update check on GitHub, off by default.</string>
     <string name="about_text">Nuance is free software (GPL-3.0 licence). Source code: github.com/j3ffx/nuance\n\nModels and references: Machado, Oliveira and Fernandes (2009); Viénot, Brettel and Mollon (1999); Brettel, Viénot and Mollon (1997); Fidaner, Lin and Ozguven (2005); Sharma, Wu and Dalal (2005); Oklab (Björn Ottosson, 2020); Farnsworth (1947) and Vingrys and King-Smith (1988) for the hue arrangement test. Values checked against DaltonLens (public domain and MIT) and colour-science (BSD-3-Clause).\n\nLibraries: Kotlin and Compose Multiplatform, AndroidX, CameraX and the Material icons (Apache-2.0 licence).</string>
+    <string name="help_intro">Nuance changes the camera image to help you tell apart the colours you confuse.</string>
+    <string name="help_modes_title">The modes</string>
+    <string name="help_modes">• Correct: changes the colours for your profile. The slider sets the strength; “Light and dark” or “Recolouring” are two ways of doing it.\n• Isolate: keeps one colour only, the rest turns grey.\n• Simulate: shows what a person with your profile sees, to show someone else.\n• Compare: before and after side by side, in 4 views or in 2 that you pick.</string>
+    <string name="help_image_title">The pipette and the image</string>
+    <string name="help_image">Tap a point of the image to know its real colour, and how you probably see it. Touch and hold, or “Show the original”, to see the image without the filter. Pinch to zoom. The pause button freezes the image: you can then zoom into it and move around.</string>
+    <string name="help_photos_title">Photos and videos</string>
+    <string name="help_photos">Photos and videos go to the Nuance album of your gallery, without any location. Settings → Photos and videos → “Filtered + original” also keeps the original. “Gallery” opens a photo and puts the same filters on it; “Camera” brings you back.</string>
+    <string name="help_profile_title">Your profile</string>
+    <string name="help_profile">Your profile says which colours you confuse, and how much. Tap it at the top of the camera to change it, or to save the settings you changed. Don’t know your type? “Find my profile” is a 3-minute test that suggests one.\n\nAchromatopsia (vision without colours): correction makes no sense, but the contrast, in “Adjust the correction”, can help.</string>
+    <string name="help_privacy_title">Privacy</string>
+    <string name="help_privacy">Images never leave the phone. No account, no statistics. The only possible connection is the update check on GitHub, off by default.</string>
+    <string name="help_medical_title">Not a medical device</string>
+    <string name="help_medical">Nuance doesn’t give “normal” vision and doesn’t cure anything. The test gives an indication, not a diagnosis: for one, see an eye doctor or an orthoptist.</string>
+    <string name="action_help">Help</string>
 
     <!-- Find my profile -->
     <string name="screening_title">Find my profile</string>

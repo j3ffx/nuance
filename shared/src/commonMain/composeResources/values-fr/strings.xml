@@ -191,8 +191,21 @@
     <string name="on">Activé</string>
     <string name="off">Désactivé</string>
 
-    <string name="help_text">Nuance modifie l’image de la caméra pour t’aider à distinguer les couleurs que tu confonds. Il ne rend pas une vision « normale » et ne soigne rien.\n\nCe n’est pas un dispositif médical. Pour un diagnostic, consulte un ophtalmologiste ou un orthoptiste.\n\nLes modes\n• Corriger : change les couleurs selon ton profil. Le curseur règle la force.\n• Isoler : garde une seule couleur, le reste passe en gris.\n• Simuler : montre ce que voit une personne avec ce profil.\n• Comparer : quatre vues côte à côte, pour comprendre la correction.\nTouche un point de l’image pour connaître sa couleur (la pipette) ; reste appuyé pour voir l’original.\n\nTu ne connais pas ton type ? « Trouver mon profil », dans Profils, est un test de 3 minutes qui en propose un. Il donne une orientation, pas un diagnostic.\n\nAchromatopsie (vision sans couleurs) : la correction n’a pas de sens, mais le contraste, dans Avancé, peut aider.\n\nConfidentialité : les images ne quittent jamais le téléphone. Pas de compte, pas de statistiques. La seule connexion possible est la vérification des mises à jour sur GitHub, désactivée par défaut.</string>
     <string name="about_text">Nuance est un logiciel libre (licence GPL-3.0). Code source : github.com/j3ffx/nuance\n\nModèles et références : Machado, Oliveira et Fernandes (2009) ; Viénot, Brettel et Mollon (1999) ; Brettel, Viénot et Mollon (1997) ; Fidaner, Lin et Ozguven (2005) ; Sharma, Wu et Dalal (2005) ; Oklab (Björn Ottosson, 2020) ; Farnsworth (1947) et Vingrys et King-Smith (1988) pour le test de rangement des teintes. Valeurs vérifiées avec DaltonLens (domaine public et MIT) et colour-science (BSD-3-Clause).\n\nBibliothèques : Kotlin et Compose Multiplatform, AndroidX, CameraX et les icônes Material (licence Apache-2.0).</string>
+    <string name="help_intro">Nuance modifie l’image de la caméra pour t’aider à distinguer les couleurs que tu confonds.</string>
+    <string name="help_modes_title">Les modes</string>
+    <string name="help_modes">• Corriger : change les couleurs selon ton profil. Le curseur règle la force ; « Clair et foncé » ou « Recoloration » sont deux façons de faire.\n• Isoler : garde une seule couleur, le reste passe en gris.\n• Simuler : montre ce que voit une personne avec ton profil, pour le montrer à quelqu’un.\n• Comparer : avant et après côte à côte, en 4 vues ou en 2 que tu choisis.</string>
+    <string name="help_image_title">La pipette et l’image</string>
+    <string name="help_image">Touche un point de l’image pour connaître sa couleur réelle, et comment tu la vois sans doute. Reste appuyé, ou « Voir l’original », pour voir l’image sans filtre. Pince pour zoomer. Le bouton pause fige l’image : tu peux alors zoomer dedans et te déplacer.</string>
+    <string name="help_photos_title">Photos et vidéos</string>
+    <string name="help_photos">Les photos et vidéos vont dans l’album Nuance de ta galerie, sans position. Paramètres → Photos et vidéos → « Filtrée + originale » garde aussi l’original. « Galerie » ouvre une photo et lui applique les mêmes filtres ; « Caméra » te ramène.</string>
+    <string name="help_profile_title">Ton profil</string>
+    <string name="help_profile">Ton profil dit quelles couleurs tu confonds, et à quel point. Touche-le en haut de la caméra pour en changer, ou pour enregistrer les réglages que tu as changés. Tu ne connais pas ton type ? « Trouver mon profil » est un test de 3 minutes qui en propose un.\n\nAchromatopsie (vision sans couleurs) : la correction n’a pas de sens, mais le contraste, dans « Régler la correction », peut aider.</string>
+    <string name="help_privacy_title">Confidentialité</string>
+    <string name="help_privacy">Les images ne quittent jamais le téléphone. Pas de compte, pas de statistiques. La seule connexion possible est la vérification des mises à jour sur GitHub, désactivée par défaut.</string>
+    <string name="help_medical_title">Pas un dispositif médical</string>
+    <string name="help_medical">Nuance ne rend pas une vision « normale » et ne soigne rien. Le test donne une orientation, pas un diagnostic : pour en avoir un, consulte un ophtalmologiste ou un orthoptiste.</string>
+    <string name="action_help">Aide</string>
 
     <!-- Find my profile -->
     <string name="screening_title">Trouver mon profil</string>

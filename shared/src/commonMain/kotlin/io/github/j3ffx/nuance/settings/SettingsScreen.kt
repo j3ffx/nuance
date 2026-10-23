@@ -48,7 +48,19 @@ import io.github.j3ffx.nuance.resources.auto_pause_never
 import io.github.j3ffx.nuance.resources.capture_both
 import io.github.j3ffx.nuance.resources.capture_filtered
 import io.github.j3ffx.nuance.resources.check_now
-import io.github.j3ffx.nuance.resources.help_text
+import io.github.j3ffx.nuance.resources.help_image
+import io.github.j3ffx.nuance.resources.help_image_title
+import io.github.j3ffx.nuance.resources.help_intro
+import io.github.j3ffx.nuance.resources.help_medical
+import io.github.j3ffx.nuance.resources.help_medical_title
+import io.github.j3ffx.nuance.resources.help_modes
+import io.github.j3ffx.nuance.resources.help_modes_title
+import io.github.j3ffx.nuance.resources.help_photos
+import io.github.j3ffx.nuance.resources.help_photos_title
+import io.github.j3ffx.nuance.resources.help_privacy
+import io.github.j3ffx.nuance.resources.help_privacy_title
+import io.github.j3ffx.nuance.resources.help_profile
+import io.github.j3ffx.nuance.resources.help_profile_title
 import io.github.j3ffx.nuance.resources.language_phone
 import io.github.j3ffx.nuance.resources.off
 import io.github.j3ffx.nuance.resources.on
@@ -309,9 +321,25 @@ private fun LinkRow(text: String, onClick: () -> Unit) {
     }
 }
 
+/** The help, in sections whose titles TalkBack announces as headings. */
 @Composable
-fun HelpScreen(onBack: () -> Unit) =
-    TextScreen(stringResource(Res.string.settings_help), stringResource(Res.string.help_text), onBack)
+fun HelpScreen(onBack: () -> Unit) {
+    val sections = listOf(
+        Res.string.help_modes_title to Res.string.help_modes,
+        Res.string.help_image_title to Res.string.help_image,
+        Res.string.help_photos_title to Res.string.help_photos,
+        Res.string.help_profile_title to Res.string.help_profile,
+        Res.string.help_privacy_title to Res.string.help_privacy,
+        Res.string.help_medical_title to Res.string.help_medical
+    )
+    Page(stringResource(Res.string.settings_help), onBack) {
+        Text(stringResource(Res.string.help_intro), style = MaterialTheme.typography.bodyLarge)
+        for ((title, body) in sections) {
+            SectionTitle(stringResource(title))
+            Text(stringResource(body), style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) =

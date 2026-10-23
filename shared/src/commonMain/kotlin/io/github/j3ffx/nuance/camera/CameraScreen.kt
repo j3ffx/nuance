@@ -70,6 +70,7 @@ import io.github.j3ffx.nuance.platform.CaptureFormat
 import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.render.ViewLayout
 import io.github.j3ffx.nuance.resources.Res
+import io.github.j3ffx.nuance.resources.action_help
 import io.github.j3ffx.nuance.resources.action_settings
 import io.github.j3ffx.nuance.resources.adjust_compare
 import io.github.j3ffx.nuance.resources.adjust_correct
@@ -124,6 +125,7 @@ fun CameraScreen(
     controller: CameraController,
     preferences: Preferences,
     onOpenSettings: () -> Unit,
+    onOpenHelp: () -> Unit,
     onManageProfiles: () -> Unit,
     onFindProfile: () -> Unit,
     onOpenImage: () -> Unit,
@@ -157,7 +159,7 @@ fun CameraScreen(
         val image: @Composable (Modifier) -> Unit = { m ->
             Box(m) {
                 CameraArea(controller, preferences, camera)
-                TopBar(controller, preferences, { showProfiles = true }, onOpenSettings)
+                TopBar(controller, preferences, { showProfiles = true }, onOpenHelp, onOpenSettings)
             }
         }
         val controls: @Composable (Modifier) -> Unit = { m -> Controls(controller, { showAdvanced = true }, m) }
@@ -262,6 +264,7 @@ private fun TopBar(
     controller: CameraController,
     preferences: Preferences,
     onProfile: () -> Unit,
+    onHelp: () -> Unit,
     onSettings: () -> Unit
 ) {
     val s = controller.state.settings
@@ -335,6 +338,24 @@ private fun TopBar(
                 }
             )
         }
+        // Help one tap away, where the questions come up.
+        val helpDescription = stringResource(Res.string.action_help)
+        IconButton(
+            onClick = onHelp,
+            modifier = Modifier.semantics { contentDescription = helpDescription },
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = NuanceColors.scrim,
+                contentColor = NuanceColors.onScrim
+            )
+        ) {
+            Text(
+                "?",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clearAndSetSemantics {}
+            )
+        }
+        Box(Modifier.width(8.dp))
         IconButton(
             onClick = onSettings,
             colors = IconButtonDefaults.iconButtonColors(
