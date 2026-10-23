@@ -65,7 +65,9 @@
 
     <!-- Pipette -->
     <string name="pipette_reading">Reading the colour…</string>
-    <string name="pipette_seen">For a %1$s: %2$s</string>
+    <string name="pipette_real">Real colour: %1$s</string>
+    <string name="pipette_seen">You probably see it as: %1$s</string>
+    <string name="pipette_seen_same">You probably see it the same</string>
     <string name="pipette_isolate">Isolate this colour</string>
     <string name="pipette_close">Close the pipette</string>
     <string name="color_black">black</string>

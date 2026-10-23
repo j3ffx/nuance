@@ -132,9 +132,14 @@ fun CameraScreen(
     var showProfiles by remember { mutableStateOf(false) }
     var showAdvanced by remember { mutableStateOf(false) }
     val status by controller.renderer.camera.collectAsState()
-    // Back first leaves a gallery photo or a frozen image, before leaving the app.
-    BackHandler(enabled = status.image || status.frozen) {
-        if (status.image) controller.renderer.backToCamera() else controller.setFrozen(false)
+    // Back first closes the pipette, then leaves a gallery photo or a frozen image, before
+    // leaving the app.
+    BackHandler(enabled = controller.pipette != null || status.image || status.frozen) {
+        when {
+            controller.pipette != null -> controller.closePipette()
+            status.image -> controller.renderer.backToCamera()
+            else -> controller.setFrozen(false)
+        }
     }
     controller.autoPauseMinutes = preferences.autoPauseMinutes
     BoxWithConstraints(
@@ -239,9 +244,15 @@ private fun CameraArea(controller: CameraController, preferences: Preferences, c
             )
         }
         PausedCover(controller)
+        // Away from the point it names: at the bottom when the point is in the top half.
+        val low = (controller.pipette?.y ?: 1f) < 0.5f
         PipetteCard(
             controller,
-            Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = 8.dp, end = 8.dp)
+            if (low) {
+                Modifier.align(Alignment.BottomCenter).padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+            } else {
+                Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = 8.dp, end = 8.dp)
+            }
         )
     }
 }

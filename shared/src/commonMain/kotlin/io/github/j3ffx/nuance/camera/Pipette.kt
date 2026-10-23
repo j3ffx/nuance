@@ -45,9 +45,10 @@ import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.pipette_close
 import io.github.j3ffx.nuance.resources.pipette_isolate
 import io.github.j3ffx.nuance.resources.pipette_reading
+import io.github.j3ffx.nuance.resources.pipette_real
 import io.github.j3ffx.nuance.resources.pipette_seen
+import io.github.j3ffx.nuance.resources.pipette_seen_same
 import io.github.j3ffx.nuance.ui.NuanceColors
-import io.github.j3ffx.nuance.ui.axisName
 import io.github.j3ffx.nuance.ui.colorName
 import org.jetbrains.compose.resources.stringResource
 
@@ -73,8 +74,8 @@ internal fun PipetteMarker(pipette: PipetteState) {
 }
 
 /**
- * What the pipette reads: the colour's name, its code and a swatch, then the same colour as the
- * profile perceives it. In "Isolate", it can make this colour the one to keep.
+ * What the pipette reads: the real colour's name, a swatch and its code, then how the profile
+ * probably sees it (or that it looks the same). In "Isolate", it can make this colour the one to keep.
  */
 @Composable
 internal fun PipetteCard(controller: CameraController, modifier: Modifier) {
@@ -93,27 +94,36 @@ internal fun PipetteCard(controller: CameraController, modifier: Modifier) {
                 if (color == null) {
                     Text(stringResource(Res.string.pipette_reading), style = MaterialTheme.typography.bodyLarge)
                 } else {
+                    // The colour in front of the camera, before any filter: said so, since in
+                    // "Correct" the screen shows it changed.
+                    val name = colorName(ColorNaming.name(color))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Swatch(color, 40)
                         Column(Modifier.padding(start = 12.dp)) {
                             Text(
-                                colorName(ColorNaming.name(color)),
+                                stringResource(Res.string.pipette_real, name),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text(ColorNaming.hex(color), style = MaterialTheme.typography.bodyMedium)
+                            Text(ColorNaming.hex(color), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                     if (profile.severity > 0) {
                         val seen = Simulation.rgb(profile)(color)
+                        val seenName = colorName(ColorNaming.name(seen))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Swatch(seen, 24)
                             Text(
-                                stringResource(
-                                    Res.string.pipette_seen,
-                                    axisName(profile.axis),
-                                    colorName(ColorNaming.name(seen))
-                                ),
+                                if (seenName == name) {
+                                    stringResource(Res.string.pipette_seen_same)
+                                } else {
+                                    stringResource(
+                                        Res.string.pipette_seen,
+                                        seenName.replaceFirstChar {
+                                            it.lowercaseChar()
+                                        }
+                                    )
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(start = 12.dp)
                             )
