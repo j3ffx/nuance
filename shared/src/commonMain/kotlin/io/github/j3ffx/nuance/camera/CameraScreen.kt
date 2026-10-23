@@ -48,8 +48,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -69,8 +71,14 @@ import io.github.j3ffx.nuance.resources.action_settings
 import io.github.j3ffx.nuance.resources.adjust_compare
 import io.github.j3ffx.nuance.resources.adjust_correct
 import io.github.j3ffx.nuance.resources.adjust_isolate
+import io.github.j3ffx.nuance.resources.compare_four
+import io.github.j3ffx.nuance.resources.compare_two
 import io.github.j3ffx.nuance.resources.hold_for_original
 import io.github.j3ffx.nuance.resources.intensity_value
+import io.github.j3ffx.nuance.resources.mode_caption_compare
+import io.github.j3ffx.nuance.resources.mode_caption_correct
+import io.github.j3ffx.nuance.resources.mode_caption_isolate
+import io.github.j3ffx.nuance.resources.mode_caption_simulate
 import io.github.j3ffx.nuance.resources.mode_compare
 import io.github.j3ffx.nuance.resources.mode_correct
 import io.github.j3ffx.nuance.resources.mode_isolate
@@ -366,6 +374,13 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                     }
                 }
             }
+            // What the picked mode is for, in a few words: the names alone assumed too much.
+            Text(
+                stringResource(modeCaption(state.mode)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            )
             when (state.mode) {
                 Mode.Correct, Mode.Compare -> {
                     LabeledSlider(
@@ -382,6 +397,24 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                         },
                         isSelected = { it.id == s.strategyId }
                     )
+                    if (state.mode == Mode.Compare) {
+                        Choices(
+                            options = listOf(4, 2),
+                            label = {
+                                stringResource(
+                                    if (it ==
+                                        4
+                                    ) {
+                                        Res.string.compare_four
+                                    } else {
+                                        Res.string.compare_two
+                                    }
+                                )
+                            },
+                            onSelect = { n -> controller.update { it.copy(compareCount = n) } },
+                            isSelected = { it == state.compareCount }
+                        )
+                    }
                 }
 
                 Mode.Simulate -> LabeledSlider(
@@ -447,6 +480,13 @@ private fun ModeButton(text: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 internal fun percent(v: Double) = (v * 100).roundToInt()
+
+internal fun modeCaption(m: Mode): StringResource = when (m) {
+    Mode.Correct -> Res.string.mode_caption_correct
+    Mode.Isolate -> Res.string.mode_caption_isolate
+    Mode.Simulate -> Res.string.mode_caption_simulate
+    Mode.Compare -> Res.string.mode_caption_compare
+}
 
 internal fun modeName(m: Mode): StringResource = when (m) {
     Mode.Correct -> Res.string.mode_correct

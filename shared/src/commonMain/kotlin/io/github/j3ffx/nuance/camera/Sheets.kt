@@ -51,8 +51,6 @@ import io.github.j3ffx.nuance.resources.advanced_enhance
 import io.github.j3ffx.nuance.resources.advanced_isolate
 import io.github.j3ffx.nuance.resources.advanced_title_mode
 import io.github.j3ffx.nuance.resources.cancel
-import io.github.j3ffx.nuance.resources.compare_four
-import io.github.j3ffx.nuance.resources.compare_two
 import io.github.j3ffx.nuance.resources.contrast_value
 import io.github.j3ffx.nuance.resources.isolate_width_value
 import io.github.j3ffx.nuance.resources.profile_changed_note
@@ -267,14 +265,9 @@ fun AdvancedSheet(controller: CameraController, preferences: Preferences, onDism
             }
 
             if (state.mode == Mode.Compare) {
-                SectionTitle(stringResource(Res.string.advanced_compare))
-                Choices(
-                    options = listOf(4, 2),
-                    label = { stringResource(if (it == 4) Res.string.compare_four else Res.string.compare_two) },
-                    onSelect = { n -> controller.update { it.copy(compareCount = n) } },
-                    isSelected = { it == state.compareCount }
-                )
+                // 4 or 2 views is on the main screen; which 2, here.
                 if (state.compareCount == 2) {
+                    SectionTitle(stringResource(Res.string.advanced_compare))
                     val axis = axisName(s.profile.axis)
                     Choices(
                         options = listOf(ViewKind.Real, ViewKind.RealSeen, ViewKind.Corrected, ViewKind.CorrectedSeen),

@@ -184,7 +184,8 @@ private fun CaptureButton(
 @Composable
 internal fun CameraButtons(controller: CameraController, preferences: Preferences, modifier: Modifier) {
     val status by controller.renderer.camera.collectAsState()
-    val named = !preferences.cameraButtonsLearned
+    // Several views: written names would cover a view's own label.
+    val named = !preferences.cameraButtonsLearned && controller.state.views.size == 1
 
     @Composable
     fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) =
