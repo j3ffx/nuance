@@ -50,7 +50,6 @@
     <string name="camera_unpause">Resume</string>
     <string name="camera_hot">Phone is hot: image slowed down to let it cool</string>
     <string name="settings_find_profile">Find my profile (3-minute test)</string>
-    <string name="camera_back_button">Back to the camera</string>
     <string name="capture_gallery">Gallery</string>
     <string name="capture_photo">Photo</string>
     <string name="capture_video">Video</string>

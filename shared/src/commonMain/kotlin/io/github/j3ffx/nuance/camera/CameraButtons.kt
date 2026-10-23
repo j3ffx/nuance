@@ -60,7 +60,6 @@ import io.github.j3ffx.nuance.platform.Preferences
 import io.github.j3ffx.nuance.render.CameraStatus
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.camera_back
-import io.github.j3ffx.nuance.resources.camera_back_button
 import io.github.j3ffx.nuance.resources.camera_flip
 import io.github.j3ffx.nuance.resources.camera_freeze
 import io.github.j3ffx.nuance.resources.camera_frozen
@@ -251,29 +250,6 @@ internal fun CameraLabel(controller: CameraController, modifier: Modifier) {
         }
     }
     val message = controller.captureMessage
-    if (status.image && message == null && !status.recording) {
-        // A written way back to the camera: the camera icon alone was not found.
-        Surface(
-            onClick = { controller.renderer.backToCamera() },
-            shape = RoundedCornerShape(24.dp),
-            color = NuanceColors.scrim,
-            contentColor = NuanceColors.onScrim,
-            modifier = modifier.heightIn(min = 48.dp)
-        ) {
-            Row(
-                Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text(
-                    stringResource(Res.string.camera_back_button),
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-        }
-        return
-    }
     val text = when {
         status.recording -> stringResource(
             Res.string.camera_recording,

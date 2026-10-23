@@ -50,7 +50,6 @@
     <string name="camera_unpause">Reprendre</string>
     <string name="camera_hot">Téléphone chaud : image ralentie pour le laisser refroidir</string>
     <string name="settings_find_profile">Trouver mon profil (test de 3 min)</string>
-    <string name="camera_back_button">Revenir à la caméra</string>
     <string name="capture_gallery">Galerie</string>
     <string name="capture_photo">Photo</string>
     <string name="capture_video">Vidéo</string>
