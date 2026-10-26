@@ -11,8 +11,8 @@
   et sous l’image des boutons à icône : ◐ Clarté / Teintes (la méthode), ⊞ 4 / 2 vues, 👁 Original, et
   l’icône de réglages pour « Plus de réglages ».
 - Les boutons ne se touchent plus, dans toute l’appli.
-- En paysage, comme une appli photo : Galerie, Photo et Vidéo le long du bord droit, les réglages en
-  deux lignes sous l’image.
+- En paysage, comme une appli photo : Galerie, Photo et Vidéo posés sur l’image, contre le bord
+  droit, et tous les réglages sur une seule ligne fine sous l’image.
 
 ## 0.1.2 — 2026-10-23
 

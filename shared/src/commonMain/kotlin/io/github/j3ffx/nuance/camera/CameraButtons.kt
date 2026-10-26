@@ -108,12 +108,14 @@ internal fun CaptureBar(
     val content: @Composable () -> Unit = {
         if (status.image) {
             CaptureButton(
+                !vertical,
                 Icons.AutoMirrored.Filled.ArrowBack,
                 stringResource(Res.string.capture_back),
                 stringResource(Res.string.camera_back)
             ) { controller.renderer.backToCamera() }
         } else {
             CaptureButton(
+                !vertical,
                 CameraIcons.Gallery,
                 stringResource(Res.string.capture_gallery),
                 stringResource(Res.string.camera_open_image),
@@ -121,6 +123,7 @@ internal fun CaptureBar(
             )
         }
         CaptureButton(
+            !vertical,
             CameraIcons.Shutter,
             stringResource(Res.string.capture_photo),
             stringResource(Res.string.camera_photo),
@@ -128,9 +131,10 @@ internal fun CaptureBar(
         ) { controller.takePhoto(withOriginal) }
         if (status.image) {
             // No video of a still photo; the slot stays, so the shutter keeps its place.
-            Spacer(Modifier.width(CAPTURE_WIDTH))
+            Spacer(if (vertical) Modifier.size(48.dp) else Modifier.width(CAPTURE_WIDTH))
         } else {
             CaptureButton(
+                !vertical,
                 if (status.recording) CameraIcons.Stop else CameraIcons.Video,
                 stringResource(if (status.recording) Res.string.capture_stop else Res.string.capture_video),
                 stringResource(if (status.recording) Res.string.camera_video_stop else Res.string.camera_video)
@@ -155,6 +159,7 @@ internal fun CaptureBar(
 /** An icon in a circle with its short name under it; TalkBack reads the full [description]. */
 @Composable
 private fun CaptureButton(
+    named: Boolean,
     icon: ImageVector,
     name: String,
     description: String,
@@ -162,7 +167,7 @@ private fun CaptureButton(
     onClick: () -> Unit
 ) {
     Column(
-        Modifier.width(CAPTURE_WIDTH).clip(RoundedCornerShape(12.dp))
+        (if (named) Modifier.width(CAPTURE_WIDTH) else Modifier).clip(RoundedCornerShape(12.dp))
             .clickable(role = Role.Button, onClick = onClick)
             .clearAndSetSemantics {
                 contentDescription = description
@@ -180,15 +185,17 @@ private fun CaptureButton(
         ) {
             Icon(icon, contentDescription = null, tint = NuanceColors.onScrim, modifier = Modifier.size(26.dp))
         }
-        Text(
-            name,
-            color = NuanceColors.onScrim,
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1,
-            modifier = Modifier.padding(top = 4.dp)
-                .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
-                .padding(horizontal = 6.dp, vertical = 1.dp)
-        )
+        if (named) {
+            Text(
+                name,
+                color = NuanceColors.onScrim,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                modifier = Modifier.padding(top = 4.dp)
+                    .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
+                    .padding(horizontal = 6.dp, vertical = 1.dp)
+            )
+        }
     }
 }
 

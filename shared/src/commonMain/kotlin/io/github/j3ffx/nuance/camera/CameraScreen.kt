@@ -181,24 +181,33 @@ fun CameraScreen(
         val density = LocalDensity.current
         val withOriginal = preferences.captureFormat == CaptureFormat.FilteredAndOriginal
         if (landscape) {
-            // Like a camera app: the capture buttons in a column down the right edge, the
-            // settings panel under the image (over it, it hid half of the bottom views in
-            // Compare), both on the panel's colour.
-            Row(Modifier.fillMaxSize()) {
-                Column(Modifier.weight(1f).fillMaxHeight()) {
-                    Box(Modifier.weight(1f).fillMaxWidth()) {
-                        CameraArea(controller, preferences, bottomInset = 0.dp, endInset = 0.dp, camera = camera)
+            // As in portrait, the capture buttons float over the image, down its right edge,
+            // without names (no height for them; the icons are the usual ones, TalkBack says
+            // them). At the bottom, clear of the top bar. The settings panel is under the image:
+            // over it, it hid half of the bottom views in Compare.
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    Box(Modifier.fillMaxSize()) {
+                        CameraArea(
+                            controller,
+                            preferences,
+                            bottomInset = 0.dp,
+                            endInset = with(density) { captureSize.width.toDp() },
+                            camera = camera
+                        )
                         TopBar(controller, preferences, { showProfiles = true }, onOpenHelp, onOpenSettings)
                     }
-                    Controls(controller, { showAdvanced = true }, wide = true, modifier = Modifier.fillMaxWidth())
+                    CaptureBar(
+                        controller,
+                        withOriginal,
+                        onOpenImage,
+                        vertical = true,
+                        modifier = Modifier.align(Alignment.BottomEnd).displayCutoutPadding()
+                            .padding(end = 4.dp, bottom = 4.dp)
+                            .onSizeChanged { captureSize = it }
+                    )
                 }
-                Box(
-                    Modifier.fillMaxHeight().background(MaterialTheme.colorScheme.surface)
-                        .displayCutoutPadding().navigationBarsPadding(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CaptureBar(controller, withOriginal, onOpenImage, vertical = true, modifier = Modifier)
-                }
+                Controls(controller, { showAdvanced = true }, wide = true, modifier = Modifier.fillMaxWidth())
             }
         } else {
             Column(Modifier.fillMaxSize()) {
@@ -486,7 +495,7 @@ internal fun viewLabel(kind: ViewKind, axis: String, state: ViewState): String =
  * The settings panel, kept short so the image stays large. In portrait, under the image: the
  * modes and what the picked one does, its one slider with the value on the same line, then a row
  * of icon chips (method, views, original) and the "more settings" icon. In landscape ([wide]),
- * two lines under the image: modes and icons, then what the mode does and its slider.
+ * one line under the image: modes, the mode's setting, icons.
  */
 @Composable
 private fun Controls(controller: CameraController, onAdvanced: () -> Unit, wide: Boolean, modifier: Modifier) {
@@ -496,17 +505,16 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, wide:
         color = MaterialTheme.colorScheme.surface
     ) {
         Column(
-            Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 6.dp),
+            Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = if (wide) 2.dp else 6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             if (wide) {
+                // One line, so the image keeps its height: the modes, the mode's setting, the icons.
+                // No caption here (no room): the portrait panel and the help have it.
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ModeRow(controller, wide = true, modifier = Modifier.weight(1f))
-                    ActionRow(controller, onAdvanced, Modifier.padding(start = 12.dp))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ModeCaption(state.mode, Modifier.weight(0.4f).padding(end = 12.dp))
-                    Box(Modifier.weight(0.6f)) { ModeSetting(controller, hint = false) }
+                    ModeRow(controller, wide = true, modifier = Modifier)
+                    Box(Modifier.weight(1f).padding(horizontal = 12.dp)) { ModeSetting(controller, hint = false) }
+                    ActionRow(controller, onAdvanced, Modifier)
                 }
             } else {
                 ModeRow(controller, wide = false, modifier = Modifier.fillMaxWidth())
