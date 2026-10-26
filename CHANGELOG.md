@@ -1,6 +1,6 @@
 # Nouveautés de Nuance
 
-## Depuis la dernière version
+## 0.1.3 — 2026-10-26
 
 ### Nouveautés
 
