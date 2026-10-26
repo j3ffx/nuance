@@ -1,5 +1,16 @@
 # Nouveautés de Nuance
 
+## Depuis la dernière version
+
+### Nouveautés
+
+- Le panneau sous l’image est bien plus court : le curseur et sa valeur tiennent sur une ligne, et
+  les choix (méthode, nombre de vues, voir sans correction, plus de réglages) sur une rangée.
+- La caméra se voit derrière les boutons Galerie, Photo et Vidéo : plus de bande noire.
+- Des noms plus clairs : « Une couleur » et « Ma vision » pour les modes, « Force de la
+  correction », « Méthode : par la clarté / par les teintes », « Voir sans correction », « Plus de
+  réglages », « Couleurs plus vives »…
+
 ## 0.1.2 — 2026-10-23
 
 ### Nouveautés

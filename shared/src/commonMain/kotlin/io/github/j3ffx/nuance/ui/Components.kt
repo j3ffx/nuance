@@ -1,5 +1,6 @@
 package io.github.j3ffx.nuance.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -88,6 +89,8 @@ import io.github.j3ffx.nuance.resources.hue_yellow
 import io.github.j3ffx.nuance.resources.profile_summary
 import io.github.j3ffx.nuance.resources.strategy_error_redistribution
 import io.github.j3ffx.nuance.resources.strategy_lab_remap
+import io.github.j3ffx.nuance.resources.strategy_short_error_redistribution
+import io.github.j3ffx.nuance.resources.strategy_short_lab_remap
 import io.github.j3ffx.nuance.resources.vision_none
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -159,6 +162,47 @@ fun <T> Choices(
                 modifier = Modifier.heightIn(min = 48.dp)
             )
         }
+    }
+}
+
+/** Like [Choices], on one line that scrolls sideways: for a long list in a short panel. */
+@Composable
+fun <T> ChoicesRow(
+    options: List<T>,
+    label: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
+    isSelected: (T) -> Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (option in options) {
+            val on = isSelected(option)
+            FilterChip(
+                selected = on,
+                onClick = { onSelect(option) },
+                label = { Text(label(option), maxLines = 1) },
+                leadingIcon = if (on) {
+                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                } else {
+                    null
+                },
+                modifier = Modifier.heightIn(min = 48.dp)
+            )
+        }
+    }
+}
+
+/** A slider with its value written on the same line, left of it: one line instead of two. */
+@Composable
+fun InlineSlider(text: String, value: Float, onChange: (Float) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(end = 12.dp))
+        Slider(
+            value = value,
+            onValueChange = onChange,
+            colors = SliderDefaults.colors(inactiveTrackColor = MaterialTheme.colorScheme.outline),
+            modifier = Modifier.weight(1f).semantics { stateDescription = text }
+        )
     }
 }
 
@@ -305,4 +349,16 @@ fun colorName(n: ColorName): String {
 @Composable
 fun strategyName(st: CorrectionStrategy): String = stringResource(
     if (st === ErrorRedistribution) Res.string.strategy_error_redistribution else Res.string.strategy_lab_remap
+)
+
+/** "par la clarté" or "par les teintes": the method's name inside "Méthode : …". */
+@Composable
+fun strategyShortName(st: CorrectionStrategy): String = stringResource(
+    if (st ===
+        ErrorRedistribution
+    ) {
+        Res.string.strategy_short_error_redistribution
+    } else {
+        Res.string.strategy_short_lab_remap
+    }
 )

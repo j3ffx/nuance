@@ -6,15 +6,15 @@
 
     <!-- Camera screen -->
     <string name="mode_correct">Corriger</string>
-    <string name="mode_isolate">Isoler</string>
-    <string name="mode_simulate">Simuler</string>
+    <string name="mode_isolate">Une couleur</string>
+    <string name="mode_simulate">Ma vision</string>
     <string name="mode_compare">Comparer</string>
-    <string name="mode_caption_correct">Couleurs adaptées à ton profil</string>
-    <string name="mode_caption_isolate">Une seule couleur, le reste en gris</string>
-    <string name="mode_caption_simulate">Pour montrer à quelqu’un ce que tu vois</string>
-    <string name="mode_caption_compare">Avant et après, côte à côte</string>
-    <string name="severity_value">Sévérité : %1$d %</string>
-    <string name="intensity_value">Intensité : %1$d %</string>
+    <string name="mode_caption_correct">Change les couleurs pour que tu les distingues mieux</string>
+    <string name="mode_caption_isolate">Garde une seule couleur, le reste passe en gris</string>
+    <string name="mode_caption_simulate">Montre aux autres comment tu vois les couleurs</string>
+    <string name="mode_caption_compare">L’image normale et l’image corrigée, côte à côte</string>
+    <string name="severity_value">Force du daltonisme : %1$d %</string>
+    <string name="intensity_value">Force de la correction : %1$d %</string>
     <string name="compare_four">4 vues</string>
     <string name="compare_two">2 vues</string>
     <string name="view_original">Original</string>
@@ -26,9 +26,9 @@
     <string name="view_corrected_seen_you">Corrigé, vu avec ton profil</string>
     <string name="view_corrected_as_seen">Corr. %1$s, vu par un %2$s</string>
     <string name="view_isolated">Seulement le %1$s</string>
-    <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur, pince pour zoomer, reste appuyé pour voir l’original.</string>
-    <string name="camera_hint">Touche un point pour connaître sa couleur · reste appuyé pour voir l’original</string>
-    <string name="show_original">Voir l’original</string>
+    <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur, pince pour zoomer, reste appuyé pour voir sans correction.</string>
+    <string name="camera_hint">Touche un point pour connaître sa couleur · reste appuyé pour voir sans correction</string>
+    <string name="show_original">Voir sans correction</string>
     <string name="camera_freeze">Figer l’image</string>
     <string name="camera_resume">Reprendre l’image en direct</string>
     <string name="camera_frozen">Image figée : pince pour zoomer, glisse pour te déplacer</string>
@@ -54,10 +54,7 @@
     <string name="capture_photo">Photo</string>
     <string name="capture_video">Vidéo</string>
     <string name="capture_stop">Arrêter</string>
-    <string name="capture_back">Caméra</string>
-    <string name="adjust_correct">Régler la correction</string>
-    <string name="adjust_isolate">Régler l’isolation</string>
-    <string name="adjust_compare">Régler la comparaison</string>
+    <string name="capture_back">Retour</string>
     <string name="action_settings">Paramètres</string>
     <string name="profile_chip_description">Profil : %1$s. Touche pour changer.</string>
     <string name="profile_modified">%1$s · modifié</string>
@@ -70,8 +67,8 @@
     <string name="pipette_real">Couleur réelle : %1$s</string>
     <string name="pipette_seen">Tu la vois sans doute comme : %1$s</string>
     <string name="pipette_seen_same">Tu la vois sans doute pareil</string>
-    <string name="pipette_isolate">Isoler cette couleur</string>
-    <string name="isolate_hint">Ou touche l’image, puis « Isoler cette couleur »</string>
+    <string name="pipette_isolate">Garder cette couleur</string>
+    <string name="isolate_hint">Une autre couleur ? Touche-la dans l’image, puis « Garder cette couleur ».</string>
     <string name="pipette_close">Fermer la pipette</string>
     <string name="color_black">noir</string>
     <string name="color_white">blanc</string>
@@ -118,14 +115,14 @@
     <string name="hue_pink">rose</string>
 
     <!-- Advanced panel -->
-    <string name="advanced_title_mode">%1$s : plus de réglages</string>
-    <string name="strategy_error_redistribution">Recoloration</string>
-    <string name="strategy_lab_remap">Clair et foncé (recommandée)</string>
-    <string name="advanced_enhance">Image</string>
-    <string name="contrast_value">Contraste : +%1$d %</string>
-    <string name="saturation_value">Saturation : +%1$d %</string>
+    <string name="advanced_title_mode">Plus de réglages : %1$s</string>
+    <string name="strategy_error_redistribution">Par les teintes</string>
+    <string name="strategy_lab_remap">Par la clarté (conseillé)</string>
+    <string name="advanced_enhance">Contraste et couleurs</string>
+    <string name="contrast_value">Plus de contraste : +%1$d %</string>
+    <string name="saturation_value">Couleurs plus vives : +%1$d %</string>
     <string name="advanced_isolate">Couleur à garder</string>
-    <string name="isolate_width_value">Plage de teinte : ±%1$d°</string>
+    <string name="isolate_width_value">Couleurs voisines gardées : ±%1$d°</string>
     <string name="advanced_compare">Vues affichées</string>
     <string name="reset_to_profile">Revenir à « %1$s »</string>
     <string name="save_to_profile">Enregistrer dans « %1$s »</string>
@@ -201,13 +198,13 @@
     <string name="about_text">Nuance est un logiciel libre (licence GPL-3.0). Code source : github.com/j3ffx/nuance\n\nModèles et références : Machado, Oliveira et Fernandes (2009) ; Viénot, Brettel et Mollon (1999) ; Brettel, Viénot et Mollon (1997) ; Fidaner, Lin et Ozguven (2005) ; Sharma, Wu et Dalal (2005) ; Oklab (Björn Ottosson, 2020) ; Farnsworth (1947) et Vingrys et King-Smith (1988) pour le test de rangement des teintes. Valeurs vérifiées avec DaltonLens (domaine public et MIT) et colour-science (BSD-3-Clause).\n\nBibliothèques : Kotlin et Compose Multiplatform, AndroidX, CameraX et les icônes Material (licence Apache-2.0).</string>
     <string name="help_intro">Nuance modifie l’image de la caméra pour t’aider à distinguer les couleurs que tu confonds.</string>
     <string name="help_modes_title">Les modes</string>
-    <string name="help_modes">• Corriger : change les couleurs selon ton profil. Le curseur règle la force ; « Clair et foncé » ou « Recoloration » sont deux façons de faire.\n• Isoler : garde une seule couleur, le reste passe en gris.\n• Simuler : montre ce que voit une personne avec ton profil, pour le montrer à quelqu’un.\n• Comparer : avant et après côte à côte, en 4 vues ou en 2 que tu choisis.</string>
+    <string name="help_modes">• Corriger : change les couleurs pour que tu les distingues mieux. Le curseur règle la force ; « Méthode » passe de « par la clarté » à « par les teintes », deux façons de faire.\n• Une couleur : garde une seule couleur, le reste passe en gris.\n• Ma vision : montre comment tu vois les couleurs, pour le faire comprendre à quelqu’un.\n• Comparer : l’image normale et l’image corrigée côte à côte, en 4 vues ou en 2.</string>
     <string name="help_image_title">La pipette et l’image</string>
-    <string name="help_image">Touche un point de l’image pour connaître sa couleur réelle, et comment tu la vois sans doute. Reste appuyé, ou « Voir l’original », pour voir l’image sans filtre. Pince pour zoomer. Le bouton pause fige l’image : tu peux alors zoomer dedans et te déplacer.</string>
+    <string name="help_image">Touche un point de l’image pour connaître sa couleur réelle, et comment tu la vois sans doute. Reste appuyé, ou « Voir sans correction », pour voir l’image sans filtre. Pince pour zoomer. Le bouton pause fige l’image : tu peux alors zoomer dedans et te déplacer.</string>
     <string name="help_photos_title">Photos et vidéos</string>
-    <string name="help_photos">Les photos et vidéos vont dans l’album Nuance de ta galerie, sans position. Paramètres → Photos et vidéos → « Filtrée + originale » garde aussi l’original. « Galerie » ouvre une photo et lui applique les mêmes filtres ; « Caméra » te ramène.</string>
+    <string name="help_photos">Les photos et vidéos vont dans l’album Nuance de ta galerie, sans position. Paramètres → Photos et vidéos → « Filtrée + originale » garde aussi l’original. « Galerie » ouvre une photo et lui applique les mêmes filtres ; « Retour » te ramène.</string>
     <string name="help_profile_title">Ton profil</string>
-    <string name="help_profile">Ton profil dit quelles couleurs tu confonds, et à quel point : un curseur par type. Le plus souvent un seul est touché ; tu peux en mélanger plusieurs (par exemple protan et un peu de tritan), c’est alors une approximation, faute de modèle validé. Touche ton profil en haut de la caméra pour en changer, ou pour enregistrer les réglages que tu as changés. Tu ne connais pas ton type ? « Trouver mon profil » est un test de 3 minutes qui en propose un.\n\nAchromatopsie (vision sans couleurs) : la correction n’a pas de sens, mais le contraste, dans « Régler la correction », peut aider.</string>
+    <string name="help_profile">Ton profil dit quelles couleurs tu confonds, et à quel point : un curseur par type. Le plus souvent un seul est touché ; tu peux en mélanger plusieurs (par exemple protan et un peu de tritan), c’est alors une approximation, faute de modèle validé. Touche ton profil en haut de la caméra pour en changer, ou pour enregistrer les réglages que tu as changés. Tu ne connais pas ton type ? « Trouver mon profil » est un test de 3 minutes qui en propose un.\n\nAchromatopsie (vision sans couleurs) : la correction n’a pas de sens, mais le contraste, dans « Plus de réglages », peut aider.</string>
     <string name="help_privacy_title">Confidentialité</string>
     <string name="help_privacy">Les images ne quittent jamais le téléphone. Pas de compte, pas de statistiques. La seule connexion possible est la vérification des mises à jour sur GitHub, désactivée par défaut.</string>
     <string name="help_medical_title">Pas un dispositif médical</string>
@@ -262,7 +259,7 @@
     <string name="onb_title">Bienvenue dans Nuance</string>
     <string name="onb_intro">Nuance filtre l’image de la caméra pour t’aider à distinguer les couleurs.</string>
     <string name="onb_correct">Corriger les couleurs selon ton profil</string>
-    <string name="onb_isolate">Isoler une couleur</string>
+    <string name="onb_isolate">Garder une seule couleur, le reste en gris</string>
     <string name="onb_compare">Comparer avant et après, côte à côte</string>
     <string name="onb_simulate">Montrer à tes proches ce que tu vois</string>
     <string name="onb_not_medical">Ce n’est pas un dispositif médical : seul un ophtalmologiste ou un orthoptiste peut poser un diagnostic.</string>
@@ -273,4 +270,10 @@
     <string name="onb_dont_know_help">Nuance part du type le plus fréquent (deutan, 60 %). Tu pourras le changer à tout moment, ou le trouver avec un petit test.</string>
     <string name="onb_updates">Vérifier les mises à jour sur GitHub</string>
     <string name="onb_start">Commencer</string>
+    <string name="strategy_short_lab_remap">par la clarté</string>
+    <string name="strategy_short_error_redistribution">par les teintes</string>
+    <string name="method_chip">Méthode : %1$s</string>
+    <string name="method_chip_description">Méthode de correction : %1$s. Touche pour changer.</string>
+    <string name="views_chip_description">%1$s. Touche pour changer.</string>
+    <string name="adjust_more">Plus de réglages</string>
 </resources>

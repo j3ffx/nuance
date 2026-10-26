@@ -104,7 +104,7 @@ internal fun CaptureBar(
 ) {
     val status by controller.renderer.camera.collectAsState()
     Row(
-        modifier.background(NuanceColors.scrim).padding(vertical = 6.dp),
+        modifier.padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -161,7 +161,9 @@ private fun CaptureButton(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
+            // Over the image: a dark disc and a light ring read on any scene.
             Modifier.size(if (large) 60.dp else 48.dp)
+                .background(NuanceColors.scrim, CircleShape)
                 .border(2.dp, NuanceColors.onScrim, CircleShape),
             contentAlignment = Alignment.Center
         ) {
@@ -172,7 +174,9 @@ private fun CaptureButton(
             color = NuanceColors.onScrim,
             style = MaterialTheme.typography.labelMedium,
             maxLines = 1,
-            modifier = Modifier.padding(top = 2.dp)
+            modifier = Modifier.padding(top = 4.dp)
+                .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
+                .padding(horizontal = 6.dp, vertical = 1.dp)
         )
     }
 }

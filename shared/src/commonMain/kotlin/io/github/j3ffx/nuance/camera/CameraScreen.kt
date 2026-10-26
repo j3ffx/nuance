@@ -37,6 +37,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -60,6 +63,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
 import io.github.j3ffx.nuance.core.cvd.Axis
@@ -72,15 +76,15 @@ import io.github.j3ffx.nuance.render.ViewLayout
 import io.github.j3ffx.nuance.resources.Res
 import io.github.j3ffx.nuance.resources.action_help
 import io.github.j3ffx.nuance.resources.action_settings
-import io.github.j3ffx.nuance.resources.adjust_compare
-import io.github.j3ffx.nuance.resources.adjust_correct
-import io.github.j3ffx.nuance.resources.adjust_isolate
+import io.github.j3ffx.nuance.resources.adjust_more
 import io.github.j3ffx.nuance.resources.camera_hint
 import io.github.j3ffx.nuance.resources.compare_four
 import io.github.j3ffx.nuance.resources.compare_two
 import io.github.j3ffx.nuance.resources.hold_for_original
 import io.github.j3ffx.nuance.resources.intensity_value
 import io.github.j3ffx.nuance.resources.isolate_hint
+import io.github.j3ffx.nuance.resources.method_chip
+import io.github.j3ffx.nuance.resources.method_chip_description
 import io.github.j3ffx.nuance.resources.mode_caption_compare
 import io.github.j3ffx.nuance.resources.mode_caption_correct
 import io.github.j3ffx.nuance.resources.mode_caption_isolate
@@ -105,22 +109,26 @@ import io.github.j3ffx.nuance.resources.view_original
 import io.github.j3ffx.nuance.resources.view_real
 import io.github.j3ffx.nuance.resources.view_real_seen
 import io.github.j3ffx.nuance.resources.view_real_seen_you
+import io.github.j3ffx.nuance.resources.views_chip_description
 import io.github.j3ffx.nuance.ui.Choices
+import io.github.j3ffx.nuance.ui.ChoicesRow
+import io.github.j3ffx.nuance.ui.InlineSlider
 import io.github.j3ffx.nuance.ui.LabeledSlider
 import io.github.j3ffx.nuance.ui.NuanceColors
 import io.github.j3ffx.nuance.ui.axisName
 import io.github.j3ffx.nuance.ui.hueName
 import io.github.j3ffx.nuance.ui.nearestPreset
 import io.github.j3ffx.nuance.ui.profileSummary
-import io.github.j3ffx.nuance.ui.strategyName
+import io.github.j3ffx.nuance.ui.strategyShortName
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
  * The camera screen, in two layers: what matters in one gesture (profile, mode, one slider),
- * everything else folded in the Advanced panel. The views never sit under the controls: in
- * portrait the controls are below the image, in landscape beside it.
+ * everything else folded in "More settings". The settings panel never covers the image: in
+ * portrait it is below, in landscape beside it; only the capture bar floats over the image's
+ * bottom, so no black band sits behind it.
  */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -159,9 +167,13 @@ fun CameraScreen(
         }
     ) {
         val landscape = maxWidth > maxHeight
-        val image: @Composable (Modifier) -> Unit = { m ->
+        // In portrait the capture bar floats over the bottom of the image: what lies at the
+        // image's bottom (labels, hints, the pipette card) moves up by its height.
+        var captureHeight by remember { mutableStateOf(0.dp) }
+        val density = LocalDensity.current
+        val image: @Composable (Modifier, Dp) -> Unit = { m, bottomInset ->
             Box(m) {
-                CameraArea(controller, preferences, camera)
+                CameraArea(controller, preferences, bottomInset, camera)
                 TopBar(controller, preferences, { showProfiles = true }, onOpenHelp, onOpenSettings)
             }
         }
@@ -176,7 +188,7 @@ fun CameraScreen(
         }
         if (landscape) {
             Row(Modifier.fillMaxSize()) {
-                image(Modifier.weight(1f).fillMaxHeight())
+                image(Modifier.weight(1f).fillMaxHeight(), 0.dp)
                 // At the top of the side column: clear of the status bar.
                 Column(Modifier.width(320.dp).fillMaxHeight().background(NuanceColors.scrim)) {
                     capture(Modifier.statusBarsPadding())
@@ -185,8 +197,13 @@ fun CameraScreen(
             }
         } else {
             Column(Modifier.fillMaxSize()) {
-                image(Modifier.weight(1f).fillMaxWidth())
-                capture(Modifier)
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    image(Modifier.fillMaxSize(), captureHeight)
+                    capture(
+                        Modifier.align(Alignment.BottomCenter)
+                            .onSizeChanged { captureHeight = with(density) { it.height.toDp() } }
+                    )
+                }
                 controls(Modifier.fillMaxWidth())
             }
         }
@@ -204,7 +221,12 @@ fun CameraScreen(
 }
 
 @Composable
-private fun CameraArea(controller: CameraController, preferences: Preferences, camera: @Composable (Modifier) -> Unit) {
+private fun CameraArea(
+    controller: CameraController,
+    preferences: Preferences,
+    bottomInset: Dp,
+    camera: @Composable (Modifier) -> Unit
+) {
     val holdDescription = stringResource(Res.string.hold_for_original)
     Box(Modifier.fillMaxSize()) {
         camera(Modifier.fillMaxSize())
@@ -228,10 +250,10 @@ private fun CameraArea(controller: CameraController, preferences: Preferences, c
                 }
                 .pointerInput(Unit) { cameraGestures(controller) }
         )
-        ViewLabels(controller.state)
+        ViewLabels(controller.state, bottomInset)
         controller.pipette?.let { PipetteMarker(it) }
         CameraButtons(controller, preferences, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
-        CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp))
+        CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomInset + 48.dp))
         // The gestures can't be seen: said over the image until the pipette has been used once.
         // Above the view labels, where the camera's own messages go, and only when there is none.
         val status by controller.renderer.camera.collectAsState()
@@ -243,7 +265,8 @@ private fun CameraArea(controller: CameraController, preferences: Preferences, c
                 color = NuanceColors.onScrim,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(start = 8.dp, end = 8.dp, bottom = 48.dp)
+                modifier = Modifier.align(Alignment.BottomCenter)
+                    .padding(start = 8.dp, end = 8.dp, bottom = bottomInset + 48.dp)
                     .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
                     .padding(horizontal = 10.dp, vertical = 6.dp)
                     .clearAndSetSemantics {}
@@ -255,7 +278,7 @@ private fun CameraArea(controller: CameraController, preferences: Preferences, c
         PipetteCard(
             controller,
             if (low) {
-                Modifier.align(Alignment.BottomCenter).padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                Modifier.align(Alignment.BottomCenter).padding(start = 8.dp, end = 8.dp, bottom = bottomInset + 8.dp)
             } else {
                 Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = 8.dp, end = 8.dp)
             }
@@ -373,7 +396,7 @@ private fun TopBar(
 }
 
 @Composable
-private fun ViewLabels(state: ViewState) {
+private fun ViewLabels(state: ViewState, bottomInset: Dp) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val rects = ViewLayout.rects(state.views.size, maxWidth > maxHeight)
         val axis = axisName(state.settings.profile.axis)
@@ -386,7 +409,9 @@ private fun ViewLabels(state: ViewState) {
                 // the main mode needs no label
                 else -> viewLabel(kind, axis, state)
             } ?: continue
-            // At the bottom left of its view: clear of the top bar.
+            // At the bottom left of its view: clear of the top bar, and of the capture bar for the
+            // views along the bottom.
+            val lift = if (rect.y + rect.height >= 0.999f) bottomInset else 0.dp
             Box(
                 Modifier.offset(maxWidth * rect.x, maxHeight * rect.y).size(
                     maxWidth * rect.width,
@@ -399,7 +424,7 @@ private fun ViewLabels(state: ViewState) {
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(8.dp)
+                        .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp + lift)
                         .background(NuanceColors.scrim, RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -434,14 +459,19 @@ internal fun viewLabel(kind: ViewKind, axis: String, state: ViewState): String =
     ViewKind.DeutanCorrectedSeen -> stringResource(Res.string.view_corrected_as_seen, axisName(Axis.Deutan), axis)
 }
 
+/**
+ * The panel under the image, kept short so the image stays large: the modes and what the picked
+ * one does, its one slider with the value on the same line, then one row of chips, each one tap
+ * (method, views, without correction, more settings).
+ */
 @Composable
 private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modifier: Modifier) {
     val state = controller.state
     val s = state.settings
     Surface(modifier, color = MaterialTheme.colorScheme.surface) {
         Column(
-            Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 for (mode in Mode.entries) {
@@ -450,64 +480,32 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                     }
                 }
             }
-            // What the picked mode is for, in a few words: the names alone assumed too much.
+            // What the picked mode does, in a few words: the names alone assumed too much.
             Text(
                 stringResource(modeCaption(state.mode)),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
             when (state.mode) {
-                Mode.Correct, Mode.Compare -> {
-                    LabeledSlider(
-                        stringResource(Res.string.intensity_value, percent(s.intensity)),
-                        s.intensity.toFloat(),
-                        { v -> controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) } }
-                    )
-                    // The method is one tap away: people compare both on what they look at.
-                    Choices(
-                        options = CorrectionStrategy.all,
-                        label = { strategyName(it) },
-                        onSelect = { st ->
-                            controller.update { it.copy(settings = it.settings.copy(strategyId = st.id)) }
-                        },
-                        isSelected = { it.id == s.strategyId }
-                    )
-                    if (state.mode == Mode.Compare) {
-                        Choices(
-                            options = listOf(4, 2),
-                            label = {
-                                stringResource(
-                                    if (it ==
-                                        4
-                                    ) {
-                                        Res.string.compare_four
-                                    } else {
-                                        Res.string.compare_two
-                                    }
-                                )
-                            },
-                            onSelect = { n -> controller.update { it.copy(compareCount = n) } },
-                            isSelected = { it == state.compareCount }
-                        )
+                Mode.Correct, Mode.Compare -> InlineSlider(
+                    stringResource(Res.string.intensity_value, percent(s.intensity)),
+                    s.intensity.toFloat()
+                ) { v -> controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) } }
+
+                // A mix keeps its proportions: the slider sets the strongest axis.
+                Mode.Simulate -> InlineSlider(
+                    stringResource(Res.string.severity_value, percent(s.profile.severity)),
+                    s.profile.severity.toFloat()
+                ) { v ->
+                    controller.update {
+                        it.copy(settings = it.settings.copy(profile = it.settings.profile.scaledTo(v.toDouble())))
                     }
                 }
 
-                Mode.Simulate -> LabeledSlider(
-                    stringResource(Res.string.severity_value, percent(s.profile.severity)),
-                    s.profile.severity.toFloat(),
-                    { v ->
-                        controller.update {
-                            it.copy(
-                                // A mix keeps its proportions: the slider sets the strongest axis.
-                                settings = it.settings.copy(profile = it.settings.profile.scaledTo(v.toDouble()))
-                            )
-                        }
-                    }
-                )
-
                 Mode.Isolate -> {
-                    Choices(
+                    // One line, scrolled sideways: the seven hues no longer take two rows.
+                    ChoicesRow(
                         options = HuePreset.entries,
                         label = { hueName(it) },
                         onSelect = { p ->
@@ -518,24 +516,49 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                     // Any colour of the scene, not only the presets: the pipette's button does it.
                     Text(
                         stringResource(Res.string.isolate_hint),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-            // Named after what it adjusts; Simulate has nothing more to adjust.
-            val adjust = when (state.mode) {
-                Mode.Correct -> Res.string.adjust_correct
-                Mode.Isolate -> Res.string.adjust_isolate
-                Mode.Compare -> Res.string.adjust_compare
-                Mode.Simulate -> null
-            }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (adjust != null) {
-                    OutlinedButton(onClick = onAdvanced, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text(stringResource(adjust), modifier = Modifier.padding(start = 8.dp))
-                    }
+                if (state.mode == Mode.Correct || state.mode == Mode.Compare) {
+                    // One tap switches the method: people compare both on what they look at.
+                    val strategy = CorrectionStrategy.byId(s.strategyId)
+                    val methodName = strategyShortName(strategy)
+                    val methodDescription = stringResource(Res.string.method_chip_description, methodName)
+                    AssistChip(
+                        onClick = {
+                            val all = CorrectionStrategy.all
+                            val next = all[(all.indexOf(strategy) + 1) % all.size]
+                            controller.update { it.copy(settings = it.settings.copy(strategyId = next.id)) }
+                        },
+                        label = { Text(stringResource(Res.string.method_chip, methodName), maxLines = 1) },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                        modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = methodDescription }
+                    )
+                }
+                if (state.mode == Mode.Compare) {
+                    val views = stringResource(
+                        if (state.compareCount ==
+                            4
+                        ) {
+                            Res.string.compare_four
+                        } else {
+                            Res.string.compare_two
+                        }
+                    )
+                    val viewsDescription = stringResource(Res.string.views_chip_description, views)
+                    AssistChip(
+                        onClick = { controller.update { it.copy(compareCount = if (it.compareCount == 4) 2 else 4) } },
+                        label = { Text(views, maxLines = 1) },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                        modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = viewsDescription }
+                    )
                 }
                 // Before/after without holding a finger on the image: for TalkBack and for
                 // anyone who finds the long press hard.
@@ -548,6 +571,21 @@ private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modif
                             { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
                         } else {
                             null
+                        },
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    )
+                }
+                // Simulate has nothing more to adjust.
+                if (state.mode != Mode.Simulate) {
+                    AssistChip(
+                        onClick = onAdvanced,
+                        label = { Text(stringResource(Res.string.adjust_more), maxLines = 1) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Filled.KeyboardArrowUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
                         },
                         modifier = Modifier.heightIn(min = 48.dp)
                     )
