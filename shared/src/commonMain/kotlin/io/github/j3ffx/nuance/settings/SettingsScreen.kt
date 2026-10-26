@@ -240,7 +240,7 @@ private fun UpdateRow(preferences: Preferences, platform: Platform) {
                 }
             },
             enabled = !busy,
-            modifier = Modifier.heightIn(min = 48.dp)
+            modifier = Modifier
         ) { Text(stringResource(Res.string.check_now)) }
         val update = preferences.availableUpdate
         if (update != null) {
@@ -256,7 +256,7 @@ private fun UpdateRow(preferences: Preferences, platform: Platform) {
                     }
                 },
                 enabled = !busy,
-                modifier = Modifier.heightIn(min = 48.dp)
+                modifier = Modifier
             ) {
                 if (progress != null) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)

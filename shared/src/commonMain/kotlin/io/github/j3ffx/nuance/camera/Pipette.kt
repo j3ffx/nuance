@@ -136,7 +136,7 @@ internal fun PipetteCard(controller: CameraController, modifier: Modifier) {
                                 controller.update { it.copy(settings = it.settings.copy(isolateHue = hue)) }
                             },
                             border = BorderStroke(1.dp, NuanceColors.onScrim),
-                            modifier = Modifier.heightIn(min = 48.dp)
+                            modifier = Modifier
                         ) {
                             Text(stringResource(Res.string.pipette_isolate), color = NuanceColors.onScrim)
                         }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,8 +66,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import io.github.j3ffx.nuance.core.correction.CorrectionStrategy
+import io.github.j3ffx.nuance.core.correction.ErrorRedistribution
 import io.github.j3ffx.nuance.core.cvd.Axis
 import io.github.j3ffx.nuance.core.modes.HuePreset
 import io.github.j3ffx.nuance.core.modes.Mode
@@ -83,8 +87,9 @@ import io.github.j3ffx.nuance.resources.compare_two
 import io.github.j3ffx.nuance.resources.hold_for_original
 import io.github.j3ffx.nuance.resources.intensity_value
 import io.github.j3ffx.nuance.resources.isolate_hint
-import io.github.j3ffx.nuance.resources.method_chip
 import io.github.j3ffx.nuance.resources.method_chip_description
+import io.github.j3ffx.nuance.resources.method_hue
+import io.github.j3ffx.nuance.resources.method_lightness
 import io.github.j3ffx.nuance.resources.mode_caption_compare
 import io.github.j3ffx.nuance.resources.mode_caption_correct
 import io.github.j3ffx.nuance.resources.mode_caption_isolate
@@ -97,6 +102,7 @@ import io.github.j3ffx.nuance.resources.profile_chip_description
 import io.github.j3ffx.nuance.resources.profile_modified
 import io.github.j3ffx.nuance.resources.severity_value
 import io.github.j3ffx.nuance.resources.show_original
+import io.github.j3ffx.nuance.resources.show_original_description
 import io.github.j3ffx.nuance.resources.update_chip
 import io.github.j3ffx.nuance.resources.update_chip_description
 import io.github.j3ffx.nuance.resources.update_done_chip
@@ -110,6 +116,7 @@ import io.github.j3ffx.nuance.resources.view_real
 import io.github.j3ffx.nuance.resources.view_real_seen
 import io.github.j3ffx.nuance.resources.view_real_seen_you
 import io.github.j3ffx.nuance.resources.views_chip_description
+import io.github.j3ffx.nuance.ui.CameraIcons
 import io.github.j3ffx.nuance.ui.Choices
 import io.github.j3ffx.nuance.ui.ChoicesRow
 import io.github.j3ffx.nuance.ui.InlineSlider
@@ -167,44 +174,55 @@ fun CameraScreen(
         }
     ) {
         val landscape = maxWidth > maxHeight
-        // In portrait the capture bar floats over the bottom of the image: what lies at the
-        // image's bottom (labels, hints, the pipette card) moves up by its height.
-        var captureHeight by remember { mutableStateOf(0.dp) }
+        // The capture buttons float over the image (portrait: its bottom; landscape: its right
+        // edge): what lies under them (labels, hints, the pipette card, the side buttons) moves
+        // out of their way.
+        var captureSize by remember { mutableStateOf(IntSize.Zero) }
         val density = LocalDensity.current
-        val image: @Composable (Modifier, Dp) -> Unit = { m, bottomInset ->
-            Box(m) {
-                CameraArea(controller, preferences, bottomInset, camera)
-                TopBar(controller, preferences, { showProfiles = true }, onOpenHelp, onOpenSettings)
-            }
-        }
-        val controls: @Composable (Modifier) -> Unit = { m -> Controls(controller, { showAdvanced = true }, m) }
-        val capture: @Composable (Modifier) -> Unit = { m ->
-            CaptureBar(
-                controller,
-                preferences.captureFormat == CaptureFormat.FilteredAndOriginal,
-                onOpenImage,
-                m.fillMaxWidth()
-            )
-        }
+        val withOriginal = preferences.captureFormat == CaptureFormat.FilteredAndOriginal
         if (landscape) {
+            // Like a camera app: the capture buttons in a column down the right edge, the
+            // settings panel under the image (over it, it hid half of the bottom views in
+            // Compare), both on the panel's colour.
             Row(Modifier.fillMaxSize()) {
-                image(Modifier.weight(1f).fillMaxHeight(), 0.dp)
-                // At the top of the side column: clear of the status bar.
-                Column(Modifier.width(320.dp).fillMaxHeight().background(NuanceColors.scrim)) {
-                    capture(Modifier.statusBarsPadding())
-                    controls(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()))
+                Column(Modifier.weight(1f).fillMaxHeight()) {
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                        CameraArea(controller, preferences, bottomInset = 0.dp, endInset = 0.dp, camera = camera)
+                        TopBar(controller, preferences, { showProfiles = true }, onOpenHelp, onOpenSettings)
+                    }
+                    Controls(controller, { showAdvanced = true }, wide = true, modifier = Modifier.fillMaxWidth())
+                }
+                Box(
+                    Modifier.fillMaxHeight().background(MaterialTheme.colorScheme.surface)
+                        .displayCutoutPadding().navigationBarsPadding(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CaptureBar(controller, withOriginal, onOpenImage, vertical = true, modifier = Modifier)
                 }
             }
         } else {
             Column(Modifier.fillMaxSize()) {
                 Box(Modifier.weight(1f).fillMaxWidth()) {
-                    image(Modifier.fillMaxSize(), captureHeight)
-                    capture(
-                        Modifier.align(Alignment.BottomCenter)
-                            .onSizeChanged { captureHeight = with(density) { it.height.toDp() } }
+                    Box(Modifier.fillMaxSize()) {
+                        CameraArea(
+                            controller,
+                            preferences,
+                            bottomInset = with(density) { captureSize.height.toDp() },
+                            endInset = 0.dp,
+                            camera = camera
+                        )
+                        TopBar(controller, preferences, { showProfiles = true }, onOpenHelp, onOpenSettings)
+                    }
+                    CaptureBar(
+                        controller,
+                        withOriginal,
+                        onOpenImage,
+                        vertical = false,
+                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                            .onSizeChanged { captureSize = it }
                     )
                 }
-                controls(Modifier.fillMaxWidth())
+                Controls(controller, { showAdvanced = true }, wide = false, modifier = Modifier.fillMaxWidth())
             }
         }
     }
@@ -225,6 +243,7 @@ private fun CameraArea(
     controller: CameraController,
     preferences: Preferences,
     bottomInset: Dp,
+    endInset: Dp,
     camera: @Composable (Modifier) -> Unit
 ) {
     val holdDescription = stringResource(Res.string.hold_for_original)
@@ -252,7 +271,11 @@ private fun CameraArea(
         )
         ViewLabels(controller.state, bottomInset)
         controller.pipette?.let { PipetteMarker(it) }
-        CameraButtons(controller, preferences, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
+        CameraButtons(
+            controller,
+            preferences,
+            Modifier.align(Alignment.CenterEnd).padding(end = endInset + 12.dp, bottom = bottomInset)
+        )
         CameraLabel(controller, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomInset + 48.dp))
         // The gestures can't be seen: said over the image until the pipette has been used once.
         // Above the view labels, where the camera's own messages go, and only when there is none.
@@ -329,7 +352,7 @@ private fun TopBar(
                     leadingIconContentColor = NuanceColors.onScrim,
                     trailingIconContentColor = NuanceColors.onScrim
                 ),
-                modifier = Modifier.heightIn(min = 48.dp)
+                modifier = Modifier
                     .semantics { contentDescription = description }
             )
         }
@@ -343,7 +366,7 @@ private fun TopBar(
                     labelColor = NuanceColors.onScrim,
                     leadingIconContentColor = NuanceColors.onScrim
                 ),
-                modifier = Modifier.heightIn(min = 48.dp).padding(end = 8.dp)
+                modifier = Modifier.padding(end = 8.dp)
             )
         }
         preferences.availableUpdate?.let { update ->
@@ -359,7 +382,7 @@ private fun TopBar(
                     labelColor = NuanceColors.onScrim,
                     leadingIconContentColor = NuanceColors.onScrim
                 ),
-                modifier = Modifier.heightIn(min = 48.dp).padding(end = 8.dp).semantics {
+                modifier = Modifier.padding(end = 8.dp).semantics {
                     contentDescription =
                         updateDescription
                 }
@@ -460,136 +483,194 @@ internal fun viewLabel(kind: ViewKind, axis: String, state: ViewState): String =
 }
 
 /**
- * The panel under the image, kept short so the image stays large: the modes and what the picked
- * one does, its one slider with the value on the same line, then one row of chips, each one tap
- * (method, views, without correction, more settings).
+ * The settings panel, kept short so the image stays large. In portrait, under the image: the
+ * modes and what the picked one does, its one slider with the value on the same line, then a row
+ * of icon chips (method, views, original) and the "more settings" icon. In landscape ([wide]),
+ * two lines under the image: modes and icons, then what the mode does and its slider.
  */
 @Composable
-private fun Controls(controller: CameraController, onAdvanced: () -> Unit, modifier: Modifier) {
+private fun Controls(controller: CameraController, onAdvanced: () -> Unit, wide: Boolean, modifier: Modifier) {
+    val state = controller.state
+    Surface(
+        modifier,
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            if (wide) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ModeRow(controller, wide = true, modifier = Modifier.weight(1f))
+                    ActionRow(controller, onAdvanced, Modifier.padding(start = 12.dp))
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ModeCaption(state.mode, Modifier.weight(0.4f).padding(end = 12.dp))
+                    Box(Modifier.weight(0.6f)) { ModeSetting(controller, hint = false) }
+                }
+            } else {
+                ModeRow(controller, wide = false, modifier = Modifier.fillMaxWidth())
+                ModeCaption(state.mode, Modifier)
+                ModeSetting(controller, hint = true)
+                ActionRow(controller, onAdvanced, Modifier)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeRow(controller: CameraController, wide: Boolean, modifier: Modifier) {
+    val content: @Composable () -> Unit = {
+        for (mode in Mode.entries) {
+            ModeButton(stringResource(modeName(mode)), controller.state.mode == mode) {
+                controller.update { it.copy(mode = mode, showingOriginal = false) }
+            }
+        }
+    }
+    if (wide) {
+        Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) { content() }
+    } else {
+        FlowRow(
+            modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) { content() }
+    }
+}
+
+/** What the picked mode does, in a few words: the names alone assumed too much. */
+@Composable
+private fun ModeCaption(mode: Mode, modifier: Modifier) {
+    Text(
+        stringResource(modeCaption(mode)),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite }
+    )
+}
+
+/** The mode's one setting: a slider, or the hues to keep. */
+@Composable
+private fun ModeSetting(controller: CameraController, hint: Boolean) {
     val state = controller.state
     val s = state.settings
-    Surface(modifier, color = MaterialTheme.colorScheme.surface) {
-        Column(
-            Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                for (mode in Mode.entries) {
-                    ModeButton(stringResource(modeName(mode)), state.mode == mode) {
-                        controller.update { it.copy(mode = mode, showingOriginal = false) }
-                    }
-                }
+    when (state.mode) {
+        Mode.Correct, Mode.Compare -> InlineSlider(
+            stringResource(Res.string.intensity_value, percent(s.intensity)),
+            s.intensity.toFloat()
+        ) { v -> controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) } }
+
+        // A mix keeps its proportions: the slider sets the strongest axis.
+        Mode.Simulate -> InlineSlider(
+            stringResource(Res.string.severity_value, percent(s.profile.severity)),
+            s.profile.severity.toFloat()
+        ) { v ->
+            controller.update {
+                it.copy(settings = it.settings.copy(profile = it.settings.profile.scaledTo(v.toDouble())))
             }
-            // What the picked mode does, in a few words: the names alone assumed too much.
-            Text(
-                stringResource(modeCaption(state.mode)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+        }
+
+        Mode.Isolate -> Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // One line, scrolled sideways: the seven hues no longer take two rows.
+            ChoicesRow(
+                options = HuePreset.entries,
+                label = { hueName(it) },
+                onSelect = { p -> controller.update { it.copy(settings = it.settings.copy(isolateHue = p.hue)) } },
+                isSelected = { it == nearestPreset(s.isolateHue) }
             )
-            when (state.mode) {
-                Mode.Correct, Mode.Compare -> InlineSlider(
-                    stringResource(Res.string.intensity_value, percent(s.intensity)),
-                    s.intensity.toFloat()
-                ) { v -> controller.update { it.copy(settings = it.settings.copy(intensity = v.toDouble())) } }
-
-                // A mix keeps its proportions: the slider sets the strongest axis.
-                Mode.Simulate -> InlineSlider(
-                    stringResource(Res.string.severity_value, percent(s.profile.severity)),
-                    s.profile.severity.toFloat()
-                ) { v ->
-                    controller.update {
-                        it.copy(settings = it.settings.copy(profile = it.settings.profile.scaledTo(v.toDouble())))
-                    }
-                }
-
-                Mode.Isolate -> {
-                    // One line, scrolled sideways: the seven hues no longer take two rows.
-                    ChoicesRow(
-                        options = HuePreset.entries,
-                        label = { hueName(it) },
-                        onSelect = { p ->
-                            controller.update { it.copy(settings = it.settings.copy(isolateHue = p.hue)) }
-                        },
-                        isSelected = { it == nearestPreset(s.isolateHue) }
-                    )
-                    // Any colour of the scene, not only the presets: the pipette's button does it.
-                    Text(
-                        stringResource(Res.string.isolate_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            // Any colour of the scene, not only the presets: the pipette's button does it.
+            if (hint) {
+                Text(
+                    stringResource(Res.string.isolate_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (state.mode == Mode.Correct || state.mode == Mode.Compare) {
-                    // One tap switches the method: people compare both on what they look at.
-                    val strategy = CorrectionStrategy.byId(s.strategyId)
-                    val methodName = strategyShortName(strategy)
-                    val methodDescription = stringResource(Res.string.method_chip_description, methodName)
-                    AssistChip(
-                        onClick = {
-                            val all = CorrectionStrategy.all
-                            val next = all[(all.indexOf(strategy) + 1) % all.size]
-                            controller.update { it.copy(settings = it.settings.copy(strategyId = next.id)) }
-                        },
-                        label = { Text(stringResource(Res.string.method_chip, methodName), maxLines = 1) },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                        },
-                        modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = methodDescription }
+        }
+    }
+}
+
+/**
+ * Icons with a word at most, each one tap: the method (by lightness / by hue), the number of
+ * views, the original, and "more settings". TalkBack reads each one's full name.
+ */
+@Composable
+private fun ActionRow(controller: CameraController, onAdvanced: () -> Unit, modifier: Modifier) {
+    val state = controller.state
+    val s = state.settings
+    FlowRow(
+        modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        itemVerticalAlignment = Alignment.CenterVertically
+    ) {
+        if (state.mode == Mode.Correct || state.mode == Mode.Compare) {
+            val strategy = CorrectionStrategy.byId(s.strategyId)
+            val byHue = strategy === ErrorRedistribution
+            val methodDescription = stringResource(Res.string.method_chip_description, strategyShortName(strategy))
+            AssistChip(
+                onClick = {
+                    val all = CorrectionStrategy.all
+                    val next = all[(all.indexOf(strategy) + 1) % all.size]
+                    controller.update { it.copy(settings = it.settings.copy(strategyId = next.id)) }
+                },
+                label = {
+                    Text(
+                        stringResource(if (byHue) Res.string.method_hue else Res.string.method_lightness),
+                        maxLines = 1
                     )
-                }
-                if (state.mode == Mode.Compare) {
-                    val views = stringResource(
-                        if (state.compareCount ==
-                            4
-                        ) {
-                            Res.string.compare_four
-                        } else {
-                            Res.string.compare_two
-                        }
+                },
+                leadingIcon = {
+                    Icon(
+                        if (byHue) CameraIcons.Hues else CameraIcons.Lightness,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
                     )
-                    val viewsDescription = stringResource(Res.string.views_chip_description, views)
-                    AssistChip(
-                        onClick = { controller.update { it.copy(compareCount = if (it.compareCount == 4) 2 else 4) } },
-                        label = { Text(views, maxLines = 1) },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                        },
-                        modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = viewsDescription }
+                },
+                modifier = Modifier.semantics { contentDescription = methodDescription }
+            )
+        }
+        if (state.mode == Mode.Compare) {
+            val four = state.compareCount == 4
+            val viewsDescription = stringResource(
+                Res.string.views_chip_description,
+                stringResource(if (four) Res.string.compare_four else Res.string.compare_two)
+            )
+            AssistChip(
+                onClick = { controller.update { it.copy(compareCount = if (it.compareCount == 4) 2 else 4) } },
+                label = { Text(if (four) "4" else "2", maxLines = 1) },
+                leadingIcon = {
+                    Icon(
+                        if (four) CameraIcons.FourViews else CameraIcons.TwoViews,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
                     )
-                }
-                // Before/after without holding a finger on the image: for TalkBack and for
-                // anyone who finds the long press hard.
-                if (state.mode == Mode.Correct) {
-                    FilterChip(
-                        selected = state.showingOriginal,
-                        onClick = { controller.update { it.copy(showingOriginal = !it.showingOriginal) } },
-                        label = { Text(stringResource(Res.string.show_original), maxLines = 1) },
-                        leadingIcon = if (state.showingOriginal) {
-                            { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.heightIn(min = 48.dp)
+                },
+                modifier = Modifier.semantics { contentDescription = viewsDescription }
+            )
+        }
+        // Before/after without holding a finger on the image: for TalkBack and for anyone who
+        // finds the long press hard. On: a check as well as the fill, never the colour alone.
+        if (state.mode == Mode.Correct) {
+            val originalDescription = stringResource(Res.string.show_original_description)
+            FilterChip(
+                selected = state.showingOriginal,
+                onClick = { controller.update { it.copy(showingOriginal = !it.showingOriginal) } },
+                label = { Text(stringResource(Res.string.show_original), maxLines = 1) },
+                leadingIcon = {
+                    Icon(
+                        if (state.showingOriginal) Icons.Filled.Check else CameraIcons.Eye,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
                     )
-                }
-                // Simulate has nothing more to adjust.
-                if (state.mode != Mode.Simulate) {
-                    AssistChip(
-                        onClick = onAdvanced,
-                        label = { Text(stringResource(Res.string.adjust_more), maxLines = 1) },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Filled.KeyboardArrowUp,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        },
-                        modifier = Modifier.heightIn(min = 48.dp)
-                    )
-                }
+                },
+                modifier = Modifier.semantics { contentDescription = originalDescription }
+            )
+        }
+        // Simulate has nothing more to adjust.
+        if (state.mode != Mode.Simulate) {
+            FilledTonalIconButton(onClick = onAdvanced) {
+                Icon(CameraIcons.Tune, contentDescription = stringResource(Res.string.adjust_more))
             }
         }
     }
@@ -605,7 +686,7 @@ private fun ModeButton(text: String, selected: Boolean, onClick: () -> Unit) {
         color = if (selected) colors.primary else colors.surface,
         contentColor = if (selected) colors.onPrimary else colors.onSurface,
         border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, colors.outline),
-        modifier = Modifier.heightIn(min = 48.dp).padding(vertical = 4.dp).semantics {
+        modifier = Modifier.semantics {
             role = Role.Tab
             this.selected = selected
         }

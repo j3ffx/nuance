@@ -100,14 +100,12 @@ internal fun CaptureBar(
     controller: CameraController,
     withOriginal: Boolean,
     onOpenImage: () -> Unit,
+    vertical: Boolean,
     modifier: Modifier
 ) {
     val status by controller.renderer.camera.collectAsState()
-    Row(
-        modifier.padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    // A row under the image in portrait, a column on its right edge in landscape.
+    val content: @Composable () -> Unit = {
         if (status.image) {
             CaptureButton(
                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -138,6 +136,19 @@ internal fun CaptureBar(
                 stringResource(if (status.recording) Res.string.camera_video_stop else Res.string.camera_video)
             ) { controller.toggleVideo() }
         }
+    }
+    if (vertical) {
+        Column(
+            modifier.padding(horizontal = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) { content() }
+    } else {
+        Row(
+            modifier.padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) { content() }
     }
 }
 
@@ -302,7 +313,7 @@ internal fun PausedCover(controller: CameraController) {
                 modifier = Modifier.padding(32.dp).semantics { liveRegion = LiveRegionMode.Polite }
             )
             // Any touch resumes, but a button says so plainly (and TalkBack can reach it).
-            Button(onClick = controller::noteTouch, modifier = Modifier.heightIn(min = 48.dp)) {
+            Button(onClick = controller::noteTouch, modifier = Modifier) {
                 Icon(CameraIcons.Play, contentDescription = null, modifier = Modifier.size(18.dp))
                 Text(stringResource(Res.string.camera_unpause), modifier = Modifier.padding(start = 8.dp))
             }

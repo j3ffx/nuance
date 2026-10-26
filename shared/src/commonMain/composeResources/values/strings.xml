@@ -13,8 +13,8 @@
     <string name="mode_caption_isolate">Keeps one colour, the rest turns grey</string>
     <string name="mode_caption_simulate">Shows others how you see colours</string>
     <string name="mode_caption_compare">The normal and the corrected image, side by side</string>
-    <string name="severity_value">Colour blindness strength: %1$d %</string>
-    <string name="intensity_value">Correction strength: %1$d %</string>
+    <string name="severity_value">Colour blindness: %1$d %</string>
+    <string name="intensity_value">Strength: %1$d %</string>
     <string name="compare_four">4 views</string>
     <string name="compare_two">2 views</string>
     <string name="view_original">Original</string>
@@ -28,7 +28,7 @@
     <string name="view_isolated">Only %1$s</string>
     <string name="hold_for_original">Camera image. Tap a point to know its colour, pinch to zoom, touch and hold to see it without correction.</string>
     <string name="camera_hint">Tap a point to name its colour · touch and hold to see it without correction</string>
-    <string name="show_original">Show without correction</string>
+    <string name="show_original">Original</string>
     <string name="camera_freeze">Freeze the image</string>
     <string name="camera_resume">Back to the live image</string>
     <string name="camera_frozen">Frozen image: pinch to zoom, drag to move</string>
@@ -198,9 +198,9 @@
     <string name="about_text">Nuance is free software (GPL-3.0 licence). Source code: github.com/j3ffx/nuance\n\nModels and references: Machado, Oliveira and Fernandes (2009); Viénot, Brettel and Mollon (1999); Brettel, Viénot and Mollon (1997); Fidaner, Lin and Ozguven (2005); Sharma, Wu and Dalal (2005); Oklab (Björn Ottosson, 2020); Farnsworth (1947) and Vingrys and King-Smith (1988) for the hue arrangement test. Values checked against DaltonLens (public domain and MIT) and colour-science (BSD-3-Clause).\n\nLibraries: Kotlin and Compose Multiplatform, AndroidX, CameraX and the Material icons (Apache-2.0 licence).</string>
     <string name="help_intro">Nuance changes the camera image to help you tell apart the colours you confuse.</string>
     <string name="help_modes_title">The modes</string>
-    <string name="help_modes">• Correct: changes colours so you can tell them apart. The slider sets the strength; “Method” switches between “by lightness” and “by hue”, two ways of doing it.\n• One colour: keeps one colour only, the rest turns grey.\n• My view: shows how you see colours, to help someone understand.\n• Compare: the normal and the corrected image side by side, in 4 views or 2.</string>
+    <string name="help_modes">• Correct: changes colours so you can tell them apart. The slider sets the strength; the “Lightness” / “Hues” button switches between two ways of doing it.\n• One colour: keeps one colour only, the rest turns grey.\n• My view: shows how you see colours, to help someone understand.\n• Compare: the normal and the corrected image side by side, in 4 views or 2.</string>
     <string name="help_image_title">The pipette and the image</string>
-    <string name="help_image">Tap a point of the image to know its real colour, and how you probably see it. Touch and hold, or “Show without correction”, to see the image without the filter. Pinch to zoom. The pause button freezes the image: you can then zoom into it and move around.</string>
+    <string name="help_image">Tap a point of the image to know its real colour, and how you probably see it. Touch and hold, or “Original”, to see the image without the filter. Pinch to zoom. The pause button freezes the image: you can then zoom into it and move around.</string>
     <string name="help_photos_title">Photos and videos</string>
     <string name="help_photos">Photos and videos go to the Nuance album of your gallery, without any location. Settings → Photos and videos → “Filtered + original” also keeps the original. “Gallery” opens a photo and puts the same filters on it; “Back” brings you back.</string>
     <string name="help_profile_title">Your profile</string>
@@ -272,8 +272,10 @@
     <string name="onb_start">Get started</string>
     <string name="strategy_short_lab_remap">by lightness</string>
     <string name="strategy_short_error_redistribution">by hue</string>
-    <string name="method_chip">Method: %1$s</string>
     <string name="method_chip_description">Correction method: %1$s. Tap to change.</string>
     <string name="views_chip_description">%1$s. Tap to change.</string>
     <string name="adjust_more">More settings</string>
+    <string name="method_lightness">Lightness</string>
+    <string name="method_hue">Hues</string>
+    <string name="show_original_description">See the image without correction</string>
 </resources>

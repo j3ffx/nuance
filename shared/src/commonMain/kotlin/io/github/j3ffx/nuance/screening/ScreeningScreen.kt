@@ -299,7 +299,7 @@ private fun ArrangementStep(session: Screening, see: (Rgb) -> Rgb, onPlace: (Int
             }
         }
     }
-    TextButton(onClick = onUndo, enabled = placed.isNotEmpty(), modifier = Modifier.heightIn(min = 48.dp)) {
+    TextButton(onClick = onUndo, enabled = placed.isNotEmpty(), modifier = Modifier) {
         Text(stringResource(Res.string.screening_arrange_undo))
     }
 }
@@ -400,7 +400,7 @@ private fun ResultStep(result: ScreeningResult, onKeep: (Profile) -> Unit, onFin
         Button(onClick = onFinish, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
             Text(stringResource(Res.string.camera_back))
         }
-        TextButton(onClick = { choosing = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+        TextButton(onClick = { choosing = true }, modifier = Modifier) {
             Text(stringResource(Res.string.screening_choose_anyway))
         }
     } else {
@@ -412,7 +412,7 @@ private fun ResultStep(result: ScreeningResult, onKeep: (Profile) -> Unit, onFin
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
         ) { Text(stringResource(Res.string.screening_use, profileSummary(kept))) }
     }
-    OutlinedButton(onClick = onRedo, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+    OutlinedButton(onClick = onRedo, modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(Res.string.screening_redo))
     }
 }

@@ -94,11 +94,14 @@ fun ProfileSheet(
                 modifier = Modifier.semantics { heading() }
             )
             ProfileChanges(controller, preferences)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onManage, modifier = Modifier.heightIn(min = 48.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(onClick = onManage, modifier = Modifier) {
                     Text(stringResource(Res.string.profiles_manage))
                 }
-                TextButton(onClick = onFindProfile, modifier = Modifier.heightIn(min = 48.dp)) {
+                TextButton(onClick = onFindProfile, modifier = Modifier) {
                     Text(stringResource(Res.string.settings_find_profile))
                 }
             }
@@ -158,20 +161,20 @@ fun ProfileChanges(controller: CameraController, preferences: Preferences) {
     if (modified) {
         val name = profileName(profile)
         Text(stringResource(Res.string.profile_changed_note, name), style = MaterialTheme.typography.bodyLarge)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!profile.isPreset) {
                 Button(
                     onClick = {
                         preferences.saveProfile(profile.with(state.settings, state.mode))
                         savedTo = name
                     },
-                    modifier = Modifier.heightIn(min = 48.dp)
+                    modifier = Modifier
                 ) { Text(stringResource(Res.string.save_to_profile, name), maxLines = 1) }
             }
-            OutlinedButton(onClick = { naming = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+            OutlinedButton(onClick = { naming = true }, modifier = Modifier) {
                 Text(stringResource(Res.string.save_as_new))
             }
-            TextButton(onClick = { controller.resetTo(profile) }, modifier = Modifier.heightIn(min = 48.dp)) {
+            TextButton(onClick = { controller.resetTo(profile) }, modifier = Modifier) {
                 Text(stringResource(Res.string.reset_to_profile, name), maxLines = 1)
             }
         }

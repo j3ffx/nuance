@@ -7,9 +7,12 @@
 - Le panneau sous l’image est bien plus court : le curseur et sa valeur tiennent sur une ligne, et
   les choix (méthode, nombre de vues, voir sans correction, plus de réglages) sur une rangée.
 - La caméra se voit derrière les boutons Galerie, Photo et Vidéo : plus de bande noire.
-- Des noms plus clairs : « Une couleur » et « Ma vision » pour les modes, « Force de la
-  correction », « Méthode : par la clarté / par les teintes », « Voir sans correction », « Plus de
-  réglages », « Couleurs plus vives »…
+- Des noms plus clairs et moins de texte : « Une couleur » et « Ma vision » pour les modes, « Force »,
+  et sous l’image des boutons à icône : ◐ Clarté / Teintes (la méthode), ⊞ 4 / 2 vues, 👁 Original, et
+  l’icône de réglages pour « Plus de réglages ».
+- Les boutons ne se touchent plus, dans toute l’appli.
+- En paysage, comme une appli photo : Galerie, Photo et Vidéo le long du bord droit, les réglages en
+  deux lignes sous l’image.
 
 ## 0.1.2 — 2026-10-23
 

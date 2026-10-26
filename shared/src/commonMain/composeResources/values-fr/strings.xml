@@ -13,8 +13,8 @@
     <string name="mode_caption_isolate">Garde une seule couleur, le reste passe en gris</string>
     <string name="mode_caption_simulate">Montre aux autres comment tu vois les couleurs</string>
     <string name="mode_caption_compare">L’image normale et l’image corrigée, côte à côte</string>
-    <string name="severity_value">Force du daltonisme : %1$d %</string>
-    <string name="intensity_value">Force de la correction : %1$d %</string>
+    <string name="severity_value">Daltonisme : %1$d %</string>
+    <string name="intensity_value">Force : %1$d %</string>
     <string name="compare_four">4 vues</string>
     <string name="compare_two">2 vues</string>
     <string name="view_original">Original</string>
@@ -28,7 +28,7 @@
     <string name="view_isolated">Seulement le %1$s</string>
     <string name="hold_for_original">Image de la caméra. Touche un point pour connaître sa couleur, pince pour zoomer, reste appuyé pour voir sans correction.</string>
     <string name="camera_hint">Touche un point pour connaître sa couleur · reste appuyé pour voir sans correction</string>
-    <string name="show_original">Voir sans correction</string>
+    <string name="show_original">Original</string>
     <string name="camera_freeze">Figer l’image</string>
     <string name="camera_resume">Reprendre l’image en direct</string>
     <string name="camera_frozen">Image figée : pince pour zoomer, glisse pour te déplacer</string>
@@ -198,9 +198,9 @@
     <string name="about_text">Nuance est un logiciel libre (licence GPL-3.0). Code source : github.com/j3ffx/nuance\n\nModèles et références : Machado, Oliveira et Fernandes (2009) ; Viénot, Brettel et Mollon (1999) ; Brettel, Viénot et Mollon (1997) ; Fidaner, Lin et Ozguven (2005) ; Sharma, Wu et Dalal (2005) ; Oklab (Björn Ottosson, 2020) ; Farnsworth (1947) et Vingrys et King-Smith (1988) pour le test de rangement des teintes. Valeurs vérifiées avec DaltonLens (domaine public et MIT) et colour-science (BSD-3-Clause).\n\nBibliothèques : Kotlin et Compose Multiplatform, AndroidX, CameraX et les icônes Material (licence Apache-2.0).</string>
     <string name="help_intro">Nuance modifie l’image de la caméra pour t’aider à distinguer les couleurs que tu confonds.</string>
     <string name="help_modes_title">Les modes</string>
-    <string name="help_modes">• Corriger : change les couleurs pour que tu les distingues mieux. Le curseur règle la force ; « Méthode » passe de « par la clarté » à « par les teintes », deux façons de faire.\n• Une couleur : garde une seule couleur, le reste passe en gris.\n• Ma vision : montre comment tu vois les couleurs, pour le faire comprendre à quelqu’un.\n• Comparer : l’image normale et l’image corrigée côte à côte, en 4 vues ou en 2.</string>
+    <string name="help_modes">• Corriger : change les couleurs pour que tu les distingues mieux. Le curseur règle la force ; le bouton « Clarté » / « Teintes » passe d’une façon de faire à l’autre.\n• Une couleur : garde une seule couleur, le reste passe en gris.\n• Ma vision : montre comment tu vois les couleurs, pour le faire comprendre à quelqu’un.\n• Comparer : l’image normale et l’image corrigée côte à côte, en 4 vues ou en 2.</string>
     <string name="help_image_title">La pipette et l’image</string>
-    <string name="help_image">Touche un point de l’image pour connaître sa couleur réelle, et comment tu la vois sans doute. Reste appuyé, ou « Voir sans correction », pour voir l’image sans filtre. Pince pour zoomer. Le bouton pause fige l’image : tu peux alors zoomer dedans et te déplacer.</string>
+    <string name="help_image">Touche un point de l’image pour connaître sa couleur réelle, et comment tu la vois sans doute. Reste appuyé, ou « Original », pour voir l’image sans filtre. Pince pour zoomer. Le bouton pause fige l’image : tu peux alors zoomer dedans et te déplacer.</string>
     <string name="help_photos_title">Photos et vidéos</string>
     <string name="help_photos">Les photos et vidéos vont dans l’album Nuance de ta galerie, sans position. Paramètres → Photos et vidéos → « Filtrée + originale » garde aussi l’original. « Galerie » ouvre une photo et lui applique les mêmes filtres ; « Retour » te ramène.</string>
     <string name="help_profile_title">Ton profil</string>
@@ -272,8 +272,10 @@
     <string name="onb_start">Commencer</string>
     <string name="strategy_short_lab_remap">par la clarté</string>
     <string name="strategy_short_error_redistribution">par les teintes</string>
-    <string name="method_chip">Méthode : %1$s</string>
     <string name="method_chip_description">Méthode de correction : %1$s. Touche pour changer.</string>
     <string name="views_chip_description">%1$s. Touche pour changer.</string>
     <string name="adjust_more">Plus de réglages</string>
+    <string name="method_lightness">Clarté</string>
+    <string name="method_hue">Teintes</string>
+    <string name="show_original_description">Voir l’image sans correction</string>
 </resources>

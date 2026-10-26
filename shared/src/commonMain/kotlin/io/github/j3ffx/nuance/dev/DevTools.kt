@@ -46,12 +46,18 @@ fun DevTools(renderer: CameraRenderer, preview: DevPreview, modifier: Modifier) 
         if (!open) return@Column
         Column(Modifier.background(Color(0xCC000000)).padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stats.describe(), fontFamily = FontFamily.Monospace, color = Color.White)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 for (name in renderer.sources) {
                     FilterChip(stats.source == name, { renderer.selectSource(name) }, { Text(name) })
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 FilterChip(preview.narrow, { preview.narrow = !preview.narrow }, { Text("360 dp") })
                 FilterChip(preview.largeText, { preview.largeText = !preview.largeText }, { Text("text ×1.3") })
                 FilterChip(preview.crossAxis, { preview.crossAxis = !preview.crossAxis }, { Text("P vs D corr") })

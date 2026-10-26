@@ -103,17 +103,17 @@ fun ProfilesScreen(
     val defaultName = stringResource(Res.string.profile_name_default)
 
     Page(stringResource(Res.string.profiles_title), onBack, snackbar) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = {
                 editing = Profile(newProfileId(), defaultName, Axis.Deutan, 60)
-            }, modifier = Modifier.heightIn(min = 48.dp)) {
+            }, modifier = Modifier) {
                 Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Text(stringResource(Res.string.profile_new), modifier = Modifier.padding(start = 8.dp))
             }
-            OutlinedButton(onClick = { importing = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+            OutlinedButton(onClick = { importing = true }, modifier = Modifier) {
                 Text(stringResource(Res.string.profile_import))
             }
-            OutlinedButton(onClick = onFindProfile, modifier = Modifier.heightIn(min = 48.dp)) {
+            OutlinedButton(onClick = onFindProfile, modifier = Modifier) {
                 Text(stringResource(Res.string.screening_title))
             }
         }
@@ -294,7 +294,7 @@ private fun ImportDialog(onImport: (Profile) -> Unit, onCancel: () -> Unit) {
                 if (invalid) Text(stringResource(Res.string.import_invalid), color = MaterialTheme.colorScheme.error)
                 TextButton(onClick = {
                     clipboard.getText()?.let { text = it.text }
-                }, modifier = Modifier.heightIn(min = 48.dp)) {
+                }, modifier = Modifier) {
                     Text(stringResource(Res.string.import_paste))
                 }
             }

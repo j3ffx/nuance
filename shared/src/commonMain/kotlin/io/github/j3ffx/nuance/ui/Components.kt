@@ -147,7 +147,11 @@ fun <T> Choices(
     isSelected: (T) -> Boolean,
     modifier: Modifier = Modifier
 ) {
-    FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(
+        modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         for (option in options) {
             val on = isSelected(option)
             FilterChip(
@@ -159,7 +163,7 @@ fun <T> Choices(
                 } else {
                     null
                 },
-                modifier = Modifier.heightIn(min = 48.dp)
+                modifier = Modifier
             )
         }
     }
@@ -186,7 +190,7 @@ fun <T> ChoicesRow(
                 } else {
                     null
                 },
-                modifier = Modifier.heightIn(min = 48.dp)
+                modifier = Modifier
             )
         }
     }
