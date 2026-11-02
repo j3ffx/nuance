@@ -77,7 +77,8 @@ l'appli a planté : à lancer après toute modification du rendu ou du cycle de 
 
 ## Clé de signature des versions publiées
 
-Les versions publiées sont signées avec une clé qui ne quitte que le PC et les secrets GitHub.
+Les versions publiées sont signées avec une clé gardée sur le PC et dans les secrets GitHub, nulle
+part ailleurs.
 **Sans elle, plus aucune mise à jour possible** : Android refuse d'installer une version signée
 par une autre clé par-dessus l'appli. Sauvegarde-la (gestionnaire de mots de passe, clé USB).
 
@@ -109,5 +110,5 @@ Un APK de release se construit aussi en local, signé par `keystore.properties` 
 
 ## iOS (plus tard, avec un Mac)
 
-À venir (jalon J7) : Xcode, compte Apple, installation sur un iPhone. En attendant, la CI compile le
-côté iOS sur un Mac de GitHub à chaque push.
+À venir : Xcode, compte Apple, installation sur un iPhone. En attendant, la CI compile le côté iOS
+sur un Mac de GitHub à chaque push.

@@ -16,7 +16,7 @@ couleur de sortie. Le shader de la caméra ne fait que lire chaque pixel et cher
 cette table, avec une interpolation trilinéaire faite par le GPU (`core/.../Lut3d.kt`,
 `androidApp/.../render/LutProgram.kt`).
 
-Conséquences : les algorithmes ne touchent jamais au shader, Android et iOS donnent le même rendu,
+Conséquences : les algorithmes ne touchent jamais au shader, iOS donnera le même rendu qu'Android,
 et le coût GPU ne dépend pas de la complexité de l'algorithme (0,7 à 1,3 ms par image en 1080p sur
 le téléphone de test).
 
@@ -35,15 +35,15 @@ entre la fonction exacte et ce que le GPU calcule :
 - **33³ en RGBA8** pour la simulation et la correction : 99 % des couleurs à moins d'un écart à
   peine perceptible (ΔE ≈ 1). Le passage en 8 bits n'ajoute presque rien (0,05 en moyenne) : une
   texture en flottants 16 bits n'apporterait rien de visible.
-- **Isoler une teinte** a des bords francs, que la table arrondit : la LUT de ce mode fera 49³
-  (25 ms de cuisson sur le PC, contre 7 ms en 33³ ; mesures sur le téléphone ci-dessous).
-- **Pendant le glissement d'un curseur**, la table sera cuite en 17³ (1,4 ms sur le PC), puis en
+- **Isoler une teinte** a des bords francs, que la table arrondit : la LUT de ce mode fait 49³
+  (environ trois fois plus de cuisson qu'en 33³ ; mesures sur le téléphone ci-dessous).
+- **Pendant le glissement d'un curseur**, la table est cuite en 17³ (quelques ms sur le PC), puis en
   33³ au relâchement : c'est imperceptible en mouvement.
 - **Sur le téléphone de test** (variante debug, sans compilation anticipée, en ms : premier essai puis
   essais suivants une fois le JIT chaud) : correction 33³ 176 puis 59 à 92 ; correction 17³ 15 puis
   7 à 9 ; isolement 49³ 288 puis 149. La caméra reste à 30 images/s pendant la cuisson, faite hors
-  du fil de rendu. La variante publiée (R8, compilation anticipée) sera plus rapide ; si besoin, la
-  cuisson se parallélise par tranches de bleu.
+  du fil de rendu. La variante publiée (R8, compilation anticipée) devrait être plus rapide ; si
+  besoin, la cuisson se parallélise par tranches de bleu.
 
 ## 2. Espaces de couleur
 
@@ -152,18 +152,18 @@ principal en `a=` et `s=` : la 0.1.1 lit un profil mixte comme son axe principal
 
 ## 4. Corrections
 
-L'interface `CorrectionStrategy` (`core/.../correction/`) en propose deux. L'intensité va de 0
-(l'image d'origine) à 1. Aucune ne bouge les gris ni le blanc : une couleur neutre ne perd rien
+L'interface `CorrectionStrategy` (`core/.../correction/`) en propose deux. L'intensité (« Force »
+dans l'appli) va de 0 (l'image d'origine) à 1. Aucune ne bouge les gris ni le blanc : une couleur neutre ne perd rien
 dans la simulation, il n'y a donc rien à déplacer (vérifié par les tests, ΔE < 0,5).
 
-- **Redistribution de l'erreur** (« Recoloration » dans l'appli ; la stratégie par défaut jusqu'à la
+- **Redistribution de l'erreur** (« Teintes » dans l'appli ; la stratégie par défaut jusqu'à la
   0.1.1), d'après Fidaner, Lin et Ozguven (2005), _Analysis of Color
   Blindness_, Stanford EE368. On simule, on calcule ce que la personne perd (original − simulé), et
   on l'ajoute aux canaux qu'elle perçoit encore. Pour protan et deutan, la matrice de l'article
   (le rouge perdu va vers le vert et le bleu) ; pour tritan, l'adaptation habituelle (le bleu perdu
   va vers le rouge et le vert), que l'article ne traite pas. Calculée en RGB linéaire, alors que
   l'original travaillait sur des valeurs encodées.
-- **Remappage CIELAB** (« Clair et foncé », la stratégie par défaut depuis la 0.1.2, intensité
+- **Remappage CIELAB** (« Clarté » dans l'appli, la stratégie par défaut depuis la 0.1.2, intensité
   100 %). Ce que la simulation retire sur l'axe opposé perdu
   (rouge-vert, a\*, pour protan et deutan ; bleu-jaune, b\*, pour tritan) est réécrit sur les axes
   que la personne perçoit encore : surtout la clarté, un peu l'autre axe opposé.
@@ -212,8 +212,8 @@ qu'un protan voit gris clair (#C6C6CE), à un écart de ΔE2000 4,5 seulement d'
 l'information « rouge » se retrouve sur l'axe neutre du protan. Avec le remappage, le même rouge
 devient jaune-orangé (#FFD678), vu jaune, à ΔE2000 24 du gris et 48 du vert. Le remappage est donc
 la stratégie par défaut depuis la 0.1.2 ; les profils enregistrés avec l'ancienne ont basculé une
-fois (elle n'avait jamais été choisie, seulement présélectionnée). La recoloration reste à un
-toucher, sous le curseur d'intensité.
+fois (elle n'avait jamais été choisie, seulement présélectionnée). « Teintes » reste à un toucher,
+à côté du curseur de force.
 
 La leçon : une simulation regardée par un œil typique ne remplace pas une personne concernée. Le
 critère de mesure (plus haut) préférait d'ailleurs déjà le remappage.
@@ -254,16 +254,16 @@ corr »), la **correction deutan** a été préférée : chaque profil garde la 
   sauve moins (environ 40 % des paires à 100 %). Dans les couleurs très claires, le gain de clarté
   bute sur le blanc.
 - **Le critère est un modèle** : il dit ce que la simulation prévoit, pas ce qu'un daltonien voit.
-  Le jugement final reviendra au test réel avec une personne concernée.
+  Le dernier mot revient aux personnes concernées (voir plus haut le retour du premier testeur).
 
 ## 5. Isoler une teinte, contraste et saturation
 
-- **Isoler une teinte** (`ColorFunction.isolation`) : en Oklch, les couleurs dont la teinte est à
-  moins de la largeur réglable (30° par défaut) de la cible gardent leur couleur, renforcée de
+- **Isoler une teinte** (`ColorFunction.isolation`, le mode « Une couleur ») : en Oklch, les couleurs
+  dont la teinte est à moins de la largeur réglable (30° par défaut) de la cible gardent leur couleur, renforcée de
   30 % ; les autres passent en gris **à clarté égale**. Le bord est progressif (sur les derniers
   40 % de la largeur), et les quasi-gris, dont la teinte n'a pas de sens, restent gris. Les teintes
   proposées sont définies par un échantillon sRGB (rouge, orange, jaune, vert, bleu, violet, rose),
-  dont on prend la teinte Oklch ; la pipette donnera la sienne de la même façon.
+  dont on prend la teinte Oklch ; la pipette donne la sienne de la même façon.
 - **Contraste et saturation** (`ColorFunction.enhancement`) : en Oklab, la clarté est étirée autour
   du gris moyen et le chroma multiplié. À 0 et 0, c'est l'identité ; les gris restent neutres.
   Ils s'appliquent après la correction.
@@ -293,7 +293,7 @@ de test (1080p, 30 images/s, intérieur) :
 Les performances sont équivalentes. Le **rendu direct** a été retenu : c'est l'appli qui gère la
 rotation et le cadrage à l'écran, si bien que les vues du mode Comparer sont de simples zones de
 l'écran. Avec l'effet, il aurait fallu les découper dans une image que l'aperçu fait ensuite
-tourner. La photo et la vidéo filtrées réutiliseront le même contexte OpenGL.
+tourner. La photo et la vidéo filtrées réutilisent le même contexte OpenGL.
 
 L'aperçu brut de la caméra, sans filtre, est estimé à environ 78 ms de la capture à l'affichage :
 il n'est pas mesurable directement, la caméra lui donnant des horodatages calés sur l'écran. Nuance
@@ -412,7 +412,7 @@ choix raisonnable, pas une mesure. D'où le niveau de confiance et l'avertisseme
   vert, turquoise, bleu, violet, rose) et les modificateurs « clair », « foncé », « grisâtre »,
   « vif ». Oklch plutôt que le LCh de CIELAB : CIELAB tord les bleus vers le violet (le bleu pur y
   est à 306°, un violet à 312°), alors qu'Oklch les sépare (264° et 294°) ; c'est aussi l'espace du
-  mode « Isoler », si bien que la pipette et « Isoler » s'accordent sur ce qu'est une teinte.
+  mode « Une couleur », si bien que la pipette et ce mode s'accordent sur ce qu'est une teinte.
   « Clair » et « foncé » sont relatifs à la clarté habituelle du terme (un jaune est plus clair
   qu'un bleu). Les seuils ont été réglés sur des couleurs de référence (`ColorNamingTest`).
 - **Telle que perçue** : la couleur passée par la simulation du profil, et son nom.

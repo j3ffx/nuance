@@ -16,9 +16,12 @@ npm run phone        # build the dev variant, install it on the paired phone, la
 npm run phone:find   # only (re)connect to the phone over wireless ADB
 npm run phone:logs   # install, launch, then follow the app's log
 npm run phone:stress # switch sources, modes, views and language quickly; fails if the app crashed
+npm run phone:latency # measure capture-to-display latency on the phone
 npm test             # every Kotlin test, on the JVM (the CI also runs core on the iOS simulator)
 npm run lint         # ktlint (Spotless) + Android Lint, warnings are errors
 npm run format       # ktlint and Prettier, in place
+npm run golden       # regenerate the golden images after a wanted change, then read the diff
+npm run report       # regenerate docs/report/ (measurements and comparison images)
 npm run check        # what the CI's Linux job runs, but gitleaks on the history
 ```
 
@@ -114,9 +117,8 @@ never edited by hand. Dependabot proposes grouped updates every Monday (Gradle, 
 
 ## Releases
 
-Semantic versioning. `0.1.0` comes out when the app is ready for a first real tester. After it: `0.x.0`
-for a milestone of features, `0.x.y` for fixes that matter between them; the smallest touches get no
-version of their own and are listed under `## Depuis la dernière version` at the top of `CHANGELOG.md`.
+Semantic versioning: `0.x.0` for a milestone of features, `0.x.y` for fixes that matter between them;
+the smallest touches get no version of their own and are listed under `## Depuis la dernière version` at the top of `CHANGELOG.md`.
 `CHANGELOG.md` (in French, for users) says what each version brings (`## x.y.z — YYYY-MM-DD`, then
 `### Nouveautés` / `### Corrections`). A lightweight tag `vX.Y.Z` makes `.github/workflows/release.yml`
 publish the signed APK, its SHA-256 and that version's notes; `versionCode` derives from the version.

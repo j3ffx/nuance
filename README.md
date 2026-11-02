@@ -22,9 +22,9 @@ côté de l'APK permet de vérifier qu'il n'a pas été altéré.
 ## Ce que fait Nuance
 
 - **Corriger** les couleurs selon ton profil (type et sévérité, ou un mélange de protan, deutan et
-  tritan), avec une intensité réglable.
-- **Isoler une teinte** : « montre-moi seulement le rouge », le reste passe en gris.
-- **Simuler** et **Comparer** : voir ce que perçoit une personne daltonienne, et ce qu'elle perçoit
+  tritan), avec une force réglable.
+- **Une couleur** : « montre-moi seulement le rouge », le reste passe en gris.
+- **Ma vision** et **Comparer** : voir ce que perçoit une personne daltonienne, et ce qu'elle perçoit
   de l'image corrigée, en quatre ou deux vues côte à côte. Utile pour les proches.
 - **Trouver mon profil** : un test d'orientation de 3 minutes (planches de points générées par
   l'appli, rangement de pastilles, carrés à comparer).
