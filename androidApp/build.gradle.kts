@@ -89,6 +89,9 @@ android {
     lint {
         warningsAsErrors = true
         abortOnError = true
+        // lifecycle-runtime 2.9.4 (via Compose) ships lint checks too old for the AGP 9.5 lint; they only
+        // cover APIs the app does not use.
+        disable += "ObsoleteLintCustomCheck"
     }
 
     compileOptions {
